@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ray Store</title>
+    <title>Lana Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -45,7 +45,7 @@
                         onkeyup="filterProducts()">
                 </div>
                 <div class="text-lg font-bold">
-                    RAY<span class="text-blue-500">STORE</span>
+                    LANA<span class="text-blue-500">STORE</span>
                 </div>
             </div>
         </div>
@@ -718,13 +718,10 @@
                 return alert('Harap isi email dan WhatsApp');
             }
 
-            // Redirect ke halaman pembayaran
-            document.getElementById('pageConfirmation').classList.add('hidden');
-            document.getElementById('pagePayment').classList.remove('hidden');
-            
             // Show loading
-            document.getElementById('paymentLoading').classList.remove('hidden');
-            document.getElementById('paymentContent').classList.add('hidden');
+            const btn = document.getElementById('btnPayNow');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
 
             try {
                 const res = await axios.post('/api/create-payment', {
@@ -732,49 +729,22 @@
                     target: confirmationData.target,
                     price_original: confirmationData.raw,
                     email: email,
-                    whatsapp: whatsapp
+                    whatsapp: whatsapp,
+                    item_name: confirmationData.name
                 });
 
                 if(res.data.status) {
-                    const d = res.data.data;
-                    metaData = d.meta;
-                    currentDepositId = d.deposit_id;
-                    
-                    // Update payment page
-                    const modal = parseInt(confirmationData.raw);
-                    const now = new Date();
-                    
-                    document.getElementById('payQrisImage').src = d.qr_image;
-                    document.getElementById('payAmount').textContent = 'Rp ' + d.amount.toLocaleString('id-ID');
-                    document.getElementById('payItemName').textContent = confirmationData.name;
-                    document.getElementById('payTarget').textContent = confirmationData.target;
-                    document.getElementById('payOrderId').textContent = d.deposit_id;
-                    document.getElementById('payTime').textContent = now.toLocaleString('id-ID', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                    }) + ' WIB';
-                    document.getElementById('payBasePrice').textContent = 'Rp ' + modal.toLocaleString('id-ID');
-                    
-                    // Show content
-                    document.getElementById('paymentLoading').classList.add('hidden');
-                    document.getElementById('paymentContent').classList.remove('hidden');
-                    
-                    // Start countdown timer
-                    startCountdown();
-                    
-                    // Start auto check
-                    checkStatusAuto(d.deposit_id);
+                    // Redirect ke halaman transaksi baru
+                    window.location.href = res.data.redirect_url;
                 } else {
                     alert('Gagal membuat pembayaran: ' + res.data.message);
-                    backToConfirmation();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
                 }
             } catch(e) {
                 alert('Error: ' + e.message);
-                backToConfirmation();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
             }
         }
 
