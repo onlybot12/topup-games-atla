@@ -11,7 +11,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
-const API_KEY = process.env.ATLANTIC_API_KEY;
+const API_KEY = 'LowtfcI9ksEptiuT7sSexGeQ51RRHfb0LoEMZysHXFAPk844Vw6JMP5SECm85j2320ouTMsASWwSymCputsQZRT1aIASLJi9z4s8';
+    
+    //process.env.ATLANTIC_API_KEY;
 
 const config = {
     headers: { 
