@@ -4,11 +4,17 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const qs = require('querystring');
+const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
 const API_KEY = 'LowtfcI9ksEptiuT7sSexGeQ51RRHfb0LoEMZysHXFAPk844Vw6JMP5SECm85j2320ouTMsASWwSymCputsQZRT1aIASLJi9z4s8';
@@ -21,6 +27,11 @@ const config = {
         'User-Agent': 'Atlantic-Vercel/5.0' 
     }
 };
+
+// Serve HTML
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
+});
 
 // 1. Ambil Data (Proxy ke Atlantic)
 app.get('/api/services', async (req, res) => {
@@ -128,4 +139,8 @@ app.post('/api/cancel-payment', async (req, res) => {
     }
 });
 
-module.exports = app;
+// Start Server
+app.listen(PORT, () => {
+    console.log(`🚀 Ray Store Server running on port ${PORT}`);
+    console.log(`📱 Access at: http://localhost:${PORT}`);
+});
