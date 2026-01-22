@@ -28,7 +28,7 @@ const config = {
 
 // Serve HTML
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
 });
 
 // 1. Ambil Data (Proxy ke Atlantic)
