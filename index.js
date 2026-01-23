@@ -13,7 +13,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
@@ -26,15 +25,14 @@ const config = {
     }
 };
 
-// In-memory storage untuk tracking transaksi
+
 const transactions = new Map();
 
-// Serve HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 1. Ambil Data (Proxy ke Atlantic)
+
 app.get('/api/services', async (req, res) => {
     try {
         const response = await axios.post(`${ATLANTIC_BASE_URL}/layanan/price_list`, 
@@ -47,14 +45,13 @@ app.get('/api/services', async (req, res) => {
     }
 });
 
-// 2. Create Payment (DENGAN REDIRECT URL)
+
 app.post('/api/create-payment', async (req, res) => {
     const { service_code, target, price_original, email, whatsapp, item_name } = req.body;
     
-    // Profit margin logic
     const modal = parseInt(price_original);
     const nominalBayar = Math.ceil((modal + 700) / 0.986);
-    const reff_id = `PAY-${Date.now()}`;
+    const reff_id = `LANA-${Date.now()}`;
 
     try {
         const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`, 
@@ -66,7 +63,6 @@ app.post('/api/create-payment', async (req, res) => {
         if (depoRes.data.status) {
             const depositId = depoRes.data.data.id;
             
-            // SIMPAN transaksi ke memory
             transactions.set(depositId, {
                 deposit_id: depositId,
                 order_id: `order-${depositId}`,
@@ -82,7 +78,6 @@ app.post('/api/create-payment', async (req, res) => {
                 meta: { code: service_code, target: target }
             });
 
-            // RETURN redirect URL
             res.json({
                 status: true,
                 redirect_url: `/transaction/${depositId}`,
@@ -103,7 +98,6 @@ app.post('/api/create-payment', async (req, res) => {
     }
 });
 
-// 3. Halaman Transaksi (SERVE payment.html)
 app.get('/transaction/:deposit_id', (req, res) => {
     const depositId = req.params.deposit_id;
     const transaction = transactions.get(depositId);
@@ -124,7 +118,6 @@ app.get('/transaction/:deposit_id', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'payment.html'));
 });
 
-// 4. Get Transaction Data (API untuk payment.html)
 app.get('/api/transaction/:deposit_id', (req, res) => {
     const depositId = req.params.deposit_id;
     const transaction = transactions.get(depositId);
@@ -139,7 +132,6 @@ app.get('/api/transaction/:deposit_id', (req, res) => {
     });
 });
 
-// 5. Check Status
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -148,7 +140,7 @@ app.post('/api/check-status', async (req, res) => {
         
         let status = statusRes.data.data.status;
 
-        // Auto process jika processing
+    
         if (status === 'processing') {
             try {
                 await axios.post(`${ATLANTIC_BASE_URL}/deposit/instant`,
