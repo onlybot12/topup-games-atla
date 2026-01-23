@@ -286,14 +286,24 @@
 
         window.onload = async () => {
             loadHistory();
+            console.log('Loading services...');
             try {
                 const res = await axios.get('/api/services');
-                if(res.data.status) {
+                console.log('Response:', res.data);
+                
+                if(res.data && res.data.status) {
                     allData = res.data.data;
+                    console.log('Services loaded:', allData.length);
                     processData();
+                } else {
+                    console.error('API returned error:', res.data);
+                    document.getElementById('categoriesContainer').innerHTML = 
+                        '<div class="text-center text-red-400 py-16">Gagal memuat produk: ' + (res.data.message || 'Unknown error') + '</div>';
                 }
             } catch(e) {
-                console.error('Failed to load services');
+                console.error('Failed to load services:', e);
+                document.getElementById('categoriesContainer').innerHTML = 
+                    '<div class="text-center text-red-400 py-16">Error: ' + e.message + '</div>';
             }
         };
 
@@ -510,6 +520,15 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
 
+            console.log('Creating payment...', {
+                service_code: confirmationData.code,
+                target: confirmationData.target,
+                price_original: confirmationData.raw,
+                email: email,
+                whatsapp: whatsapp,
+                item_name: confirmationData.name
+            });
+
             try {
                 const res = await axios.post('/api/create-payment', {
                     service_code: confirmationData.code,
@@ -520,14 +539,19 @@
                     item_name: confirmationData.name
                 });
 
-                if(res.data.status) {
+                console.log('Payment response:', res.data);
+
+                if(res.data && res.data.status) {
+                    console.log('Redirecting to:', res.data.redirect_url);
                     window.location.href = res.data.redirect_url;
                 } else {
-                    alert('Gagal membuat pembayaran: ' + res.data.message);
+                    console.error('Payment failed:', res.data);
+                    alert('Gagal membuat pembayaran: ' + (res.data.message || 'Unknown error'));
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
                 }
             } catch(e) {
+                console.error('Payment error:', e);
                 alert('Error: ' + e.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
