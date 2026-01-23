@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -27,20 +26,19 @@ const config = {
     }
 };
 
-// In-memory storage untuk tracking transaksi
-const transactions = new Map();
-
 // Serve HTML
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
 });
 
 // 1. Ambil Data (Proxy ke Atlantic)
 app.get('/api/services', async (req, res) => {
     try {
+        // Request ke Atlantic
         const response = await axios.post(`${ATLANTIC_BASE_URL}/layanan/price_list`, 
             qs.stringify({ api_key: API_KEY, type: 'prabayar' }), config);
         
+        // Langsung kirim full response (termasuk img_url) ke frontend
         res.json(response.data);
     } catch (error) {
         console.error("Error fetching services:", error.message);
@@ -48,9 +46,9 @@ app.get('/api/services', async (req, res) => {
     }
 });
 
-// 2. Create Payment (DENGAN REDIRECT URL)
+// 2. Create Payment
 app.post('/api/create-payment', async (req, res) => {
-    const { service_code, target, price_original, email, whatsapp, item_name } = req.body;
+    const { service_code, target, price_original } = req.body;
     
     // Profit margin logic
     const modal = parseInt(price_original);
@@ -65,31 +63,10 @@ app.post('/api/create-payment', async (req, res) => {
             }), config);
 
         if (depoRes.data.status) {
-            const depositId = depoRes.data.data.id;
-            
-            // SIMPAN transaksi ke memory
-            transactions.set(depositId, {
-                deposit_id: depositId,
-                order_id: `order-${depositId}`,
-                qr_image: depoRes.data.data.qr_image,
-                amount: nominalBayar,
-                base_price: modal,
-                item_name: item_name || 'Produk',
-                target: target,
-                email: email || 'N/A',
-                whatsapp: whatsapp || 'N/A',
-                status: 'pending',
-                created_at: new Date(),
-                meta: { code: service_code, target: target }
-            });
-
-            // RETURN redirect URL
             res.json({
                 status: true,
-                redirect_url: `/transaction/${depositId}`,
                 data: {
-                    deposit_id: depositId,
-                    order_id: `order-${depositId}`,
+                    deposit_id: depoRes.data.data.id,
                     qr_image: depoRes.data.data.qr_image,
                     amount: nominalBayar,
                     meta: { code: service_code, target: target }
@@ -99,48 +76,11 @@ app.post('/api/create-payment', async (req, res) => {
             res.json({ status: false, message: depoRes.data.message });
         }
     } catch (error) {
-        console.error("Error creating payment:", error.message);
         res.status(500).json({ status: false, message: "Server Error" });
     }
 });
 
-// 3. Halaman Transaksi (SERVE payment.html)
-app.get('/transaction/:deposit_id', (req, res) => {
-    const depositId = req.params.deposit_id;
-    const transaction = transactions.get(depositId);
-
-    if (!transaction) {
-        return res.status(404).send(`
-            <html>
-            <head><title>Transaksi Tidak Ditemukan</title></head>
-            <body style="font-family: Arial; text-align: center; padding: 50px;">
-                <h2>Transaksi tidak ditemukan</h2>
-                <p>Deposit ID: ${depositId}</p>
-                <a href="/">Kembali ke Home</a>
-            </body>
-            </html>
-        `);
-    }
-
-    res.sendFile(path.join(__dirname, 'public', 'payment.html'));
-});
-
-// 4. Get Transaction Data (API untuk payment.html)
-app.get('/api/transaction/:deposit_id', (req, res) => {
-    const depositId = req.params.deposit_id;
-    const transaction = transactions.get(depositId);
-
-    if (!transaction) {
-        return res.status(404).json({ status: false, message: 'Transaksi tidak ditemukan' });
-    }
-
-    res.json({
-        status: true,
-        data: transaction
-    });
-});
-
-// 5. Check Status
+// 3. Check Status
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -154,6 +94,7 @@ app.post('/api/check-status', async (req, res) => {
             try {
                 await axios.post(`${ATLANTIC_BASE_URL}/deposit/instant`,
                     qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }), config);
+                // Kita anggap success dulu agar lanjut cek transaksi, atau tunggu hit berikutnya
                 status = 'success'; 
             } catch (e) {}
         }
@@ -166,14 +107,6 @@ app.post('/api/check-status', async (req, res) => {
                 }), config);
 
             if (buyRes.data.status) {
-                // Update status di memory
-                const transaction = transactions.get(deposit_id);
-                if (transaction) {
-                    transaction.status = 'success';
-                    transaction.sn = buyRes.data.data.sn;
-                    transactions.set(deposit_id, transaction);
-                }
-                
                 res.json({ status: true, state: 'success', sn: buyRes.data.data.sn });
             } else {
                 if(buyRes.data.message.includes('uplicate') || buyRes.data.message.includes('sudah ada')) {
@@ -188,25 +121,16 @@ app.post('/api/check-status', async (req, res) => {
             res.json({ status: true, state: 'pending' });
         }
     } catch (error) {
-        console.error("Error check status:", error.message);
         res.status(500).json({ status: false });
     }
 });
 
-// 6. Cancel Payment
+// 4. Cancel Payment
 app.post('/api/cancel-payment', async (req, res) => {
     const { deposit_id } = req.body;
     try {
         const response = await axios.post(`${ATLANTIC_BASE_URL}/deposit/cancel`,
             qs.stringify({ api_key: API_KEY, id: deposit_id }), config);
-        
-        // Update status di memory
-        const transaction = transactions.get(deposit_id);
-        if (transaction) {
-            transaction.status = 'cancelled';
-            transactions.set(deposit_id, transaction);
-        }
-        
         res.json(response.data);
     } catch (error) {
         res.json({ status: true, message: "Force closed locally" });
