@@ -53,7 +53,7 @@
 
             <!-- Status Badge -->
             <div class="text-center mb-6">
-                <div class="inline-block bg-yellow-500/20 text-yellow-400 text-xs font-bold px-4 py-2 rounded-full">
+                <div id="statusBadge" class="inline-block bg-yellow-500/20 text-yellow-400 text-xs font-bold px-4 py-2 rounded-full">
                     <i class="fas fa-clock mr-1"></i>
                     MENUNGGU PEMBAYARAN
                 </div>
@@ -89,7 +89,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-400">Status</span>
-                        <span class="text-yellow-400 font-semibold">Menunggu Pembayaran</span>
+                        <span id="statusText" class="text-yellow-400 font-semibold">Menunggu Pembayaran</span>
                     </div>
                 </div>
             </div>
@@ -272,15 +272,67 @@
                         clearInterval(checkInterval);
                         clearInterval(countdownInterval);
                         
-                        showSuccessModal(res.data.sn);
+                        // Update status: Pembayaran Berhasil
+                        updateStatus('paid', 'Pembayaran Berhasil ✓');
+                        
+                        // Tunggu 1 detik, lalu proses transaksi
+                        setTimeout(() => {
+                            updateStatus('processing', 'Memproses Transaksi...');
+                            
+                            // Tunggu 2 detik lagi, lalu success
+                            setTimeout(() => {
+                                showSuccessModal(res.data.sn);
+                            }, 2000);
+                        }, 1000);
+                        
                     } else if (res.data.state === 'failed') {
                         clearInterval(checkInterval);
                         clearInterval(countdownInterval);
                         
+                        updateStatus('failed', 'Transaksi Gagal');
                         showFailedModal(res.data.message);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('Check status error:', e);
+                }
             }, 3000);
+        }
+
+        function updateStatus(type, text) {
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            
+            // Update badge
+            badge.className = 'inline-block text-xs font-bold px-4 py-2 rounded-full';
+            
+            if (type === 'paid') {
+                badge.classList.add('bg-blue-500/20', 'text-blue-400');
+                badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>' + text;
+            } else if (type === 'processing') {
+                badge.classList.add('bg-purple-500/20', 'text-purple-400');
+                badge.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>' + text;
+            } else if (type === 'failed') {
+                badge.classList.add('bg-red-500/20', 'text-red-400');
+                badge.innerHTML = '<i class="fas fa-times-circle mr-1"></i>' + text;
+            } else {
+                badge.classList.add('bg-yellow-500/20', 'text-yellow-400');
+                badge.innerHTML = '<i class="fas fa-clock mr-1"></i>' + text;
+            }
+            
+            // Update status text in info section
+            if (statusText) {
+                statusText.className = 'font-semibold';
+                if (type === 'paid') {
+                    statusText.classList.add('text-blue-400');
+                } else if (type === 'processing') {
+                    statusText.classList.add('text-purple-400');
+                } else if (type === 'failed') {
+                    statusText.classList.add('text-red-400');
+                } else {
+                    statusText.classList.add('text-yellow-400');
+                }
+                statusText.textContent = text;
+            }
         }
 
         function showSuccessModal(sn) {
