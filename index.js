@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
-const API_KEY = process.env.ATLANTIC_API_KEY || 'ftS3uUCMOztd71uxhWp9MsVQchbBNQXLOcLJpkQW1W9aQg3gyXvUzJQkHW7bV54P6fKeWrzIWJf44nuuUh7xPTMQHY8lCtslMfez';
+const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4hu1s4dPJrootJmQmhzfywCQ48sEe3b6fph8S59gtQKpRk3iXcAXe9L2eGOFqrsBsz5rkJ';
 
 const config = {
     headers: { 
