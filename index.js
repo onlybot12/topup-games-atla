@@ -31,7 +31,7 @@ const transactions = new Map();
 
 // Serve HTML
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 1. Ambil Data (Proxy ke Atlantic)
