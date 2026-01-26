@@ -30,7 +30,7 @@ const config = {
 connectDB();
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/api/services', async (req, res) => {
