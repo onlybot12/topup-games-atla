@@ -6,8 +6,7 @@ const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
-            useUnifiedTopology: true,
-            dbName: 'raystore'
+            useUnifiedTopology: true
         });
         console.log('MongoDB Connected');
     } catch (error) {
