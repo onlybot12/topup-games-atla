@@ -358,6 +358,113 @@
         let selectedItemName = '';
         let selectedSellPrice = 0;
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if(sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function switchPage(page) {
+            const pages = ['pageHome', 'pageDetail', 'pageHistory', 'pageFaq', 'pageConfirmation', 'pageSearch'];
+            
+            pages.forEach(p => document.getElementById(p).classList.add('hidden'));
+
+            if(page === 'home') {
+                document.getElementById('pageHome').classList.remove('hidden');
+                document.getElementById('mainHeader').classList.remove('hidden');
+            } else if(page === 'history') {
+                document.getElementById('pageHistory').classList.remove('hidden');
+                document.getElementById('mainHeader').classList.add('hidden');
+                loadHistory();
+            } else if(page === 'faq') {
+                document.getElementById('pageFaq').classList.remove('hidden');
+                document.getElementById('mainHeader').classList.add('hidden');
+            } else if(page === 'search') {
+                document.getElementById('pageSearch').classList.remove('hidden');
+                document.getElementById('mainHeader').classList.add('hidden');
+            }
+        }
+
+        function filterProducts() {
+            renderCategories();
+        }
+
+        function goBack() {
+            document.getElementById('pageDetail').classList.add('hidden');
+            document.getElementById('pageHome').classList.remove('hidden');
+            document.getElementById('mainHeader').classList.remove('hidden');
+        }
+
+        function backToDetail() {
+            document.getElementById('pageConfirmation').classList.add('hidden');
+            document.getElementById('pageDetail').classList.remove('hidden');
+        }
+
+        function searchTransaction() {
+            const trxId = document.getElementById('searchTrxId').value.trim();
+            
+            if(!trxId) {
+                return alert('Masukkan ID Transaksi');
+            }
+
+            window.location.href = `/history/${trxId}`;
+        }
+
+        function clearHistory() {
+            if(confirm('Hapus semua riwayat transaksi?')) {
+                localStorage.removeItem('ray_history');
+                loadHistory();
+            }
+        }
+
+        function generateTrxId() {
+            let counter = parseInt(localStorage.getItem('ray_trx_counter') || '0');
+            counter++;
+            localStorage.setItem('ray_trx_counter', counter);
+            return 'RAY' + String(counter).padStart(6, '0');
+        }
+
+        function loadHistory() {
+            const list = document.getElementById('historyList');
+            const empty = document.getElementById('emptyHistory');
+            const history = JSON.parse(localStorage.getItem('ray_history') || '[]');
+            
+            if(history.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.innerHTML = history.map(h => `
+                <div class="bg-dark-800 border border-dark-700 rounded-xl p-4 mb-3 border-l-4 border-l-blue-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 font-mono mb-1">#${h.trx_id}</p>
+                            <p class="font-semibold mb-1">${h.item_name}</p>
+                            <p class="text-xs text-gray-400">${h.date}</p>
+                        </div>
+                        <p class="text-lg font-bold text-blue-400">Rp ${parseInt(h.price).toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="bg-dark-900 border border-dark-700 rounded-lg px-3 py-2 mt-3">
+                        <p class="text-xs text-gray-500 mb-1">SN / Keterangan:</p>
+                        <p class="text-xs font-mono text-blue-300 break-all">${h.sn}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         window.onload = async () => {
             loadHistory();
             console.log('Loading services...');
