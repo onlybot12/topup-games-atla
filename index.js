@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -30,7 +31,15 @@ const config = {
 connectDB();
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'topup.html'));
+});
+
+app.get('/search', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'search.html'));
+});
+
+app.get('/faq', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'faq.html'));
 });
 
 app.get('/api/services', async (req, res) => {
@@ -253,7 +262,25 @@ app.get('/api/transactions', async (req, res) => {
     }
 });
 
+app.get('/api/transactions/recent', async (req, res) => {
+    try {
+        const transactions = await Transaction.find()
+            .sort({ created_at: -1 })
+            .limit(10)
+            .select('order_id whatsapp amount status created_at');
+        
+        res.json({
+            status: true,
+            data: transactions
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ status: false, message: 'Server Error' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Ray Store Server running on port ${PORT}`);
     console.log(`📱 Access at: http://localhost:${PORT}`);
 });
+                        
