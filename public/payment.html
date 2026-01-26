@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembayaran - Ray Store</title>
+    <title>Pembayaran - Lana Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -164,13 +164,13 @@
                     Jika Anda mengalami kesulitan dalam proses pembayaran atau memiliki pertanyaan, silakan hubungi tim dukungan kami.
                 </p>
                 <div class="space-y-3">
-                    <a href="https://wa.me/6283890074416?text=Halo%20admin%2C%20saya%20butuh%20bantuan%20untuk%20Order%20ID%3A%20" 
+                    <a href="https://wa.me/why?text=Halo%20admin%2C%20saya%20butuh%20bantuan%20untuk%20Order%20ID%3A%20" 
                         target="_blank"
                         class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-center">
                         <i class="fab fa-whatsapp mr-2"></i>
                         WhatsApp
                     </a>
-                    <a href="mailto:support@raystore.com?subject=Bantuan Order ID: " 
+                    <a href="mailto:support?subject=Bantuan Order ID: " 
                         class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors text-center">
                         <i class="fas fa-envelope mr-2"></i>
                         Email
@@ -228,18 +228,17 @@
                     metaData = transactionData.meta;
                     displayTransaction();
                     
-                    // CEK: Kalau transaksi sudah success, langsung tampilkan modal
                     if (transactionData.status === 'success' && transactionData.sn) {
                         document.getElementById('loadingScreen').classList.add('hidden');
                         document.getElementById('mainContent').classList.remove('hidden');
                         updateStatus('success', 'Transaksi Berhasil');
                         showSuccessModal(transactionData.sn);
                     } else if (transactionData.status === 'cancelled') {
-                        // Kalau dibatalkan, redirect ke home
+                        
                         alert('Transaksi dibatalkan');
                         window.location.href = '/';
                     } else {
-                        // Kalau masih pending, jalankan countdown & status check
+                        
                         startCountdown();
                         startStatusCheck();
                     }
@@ -272,9 +271,8 @@
             document.getElementById('basePrice').textContent = 'Rp ' + parseInt(transactionData.base_price).toLocaleString('id-ID');
             document.getElementById('totalPrice').textContent = 'Rp ' + parseInt(transactionData.amount).toLocaleString('id-ID');
 
-            // Update link bantuan dengan Order ID
-            const waLink = `https://wa.me/6283890074416?text=Halo%20admin%2C%20saya%20butuh%20bantuan%20untuk%20Order%20ID%3A%20${transactionData.order_id}`;
-            const emailLink = `mailto:support@raystore.com?subject=Bantuan Order ID: ${transactionData.order_id}`;
+            const waLink = `https://wa.me/ ?text=Halo%20admin%2C%20saya%20butuh%20bantuan%20untuk%20Order%20ID%3A%20${transactionData.order_id}`;
+            const emailLink = `mailto:support@?subject=Bantuan Order ID: ${transactionData.order_id}`;
             
             const waBtn = document.querySelector('a[href*="wa.me"]');
             const emailBtn = document.querySelector('a[href*="mailto"]');
@@ -317,15 +315,15 @@
                         clearInterval(checkInterval);
                         clearInterval(countdownInterval);
                         
-                        // Update badge: Pembayaran Berhasil
+                        
                         updateStatus('paid', 'Pembayaran Berhasil ✓');
                         
-                        // Langsung update: Memproses Transaksi
+                        
                         setTimeout(() => {
                             updateStatus('processing', 'Memproses Transaksi...');
                         }, 500);
                         
-                        // Langsung tampilkan success modal
+                        
                         setTimeout(() => {
                             showSuccessModal(res.data.sn);
                         }, 1000);
@@ -334,8 +332,7 @@
                         clearInterval(checkInterval);
                         clearInterval(countdownInterval);
                         
-                        // Cek apakah pembayaran sudah berhasil tapi pengiriman gagal
-                        // Biasanya ditandai dengan message tertentu dari backend
+                        
                         updateStatus('failed', 'Pengiriman Gagal');
                         showFailedModal(res.data.message || 'Pembayaran berhasil namun pengiriman item gagal. Hubungi admin dengan TRX ID Anda.');
                     }
@@ -600,10 +597,8 @@
         let countdownInterval = null;
         let metaData = null;
 
-        // Get deposit_id from URL
         const depositId = window.location.pathname.split('/').pop();
 
-        // Load transaction data
         window.onload = async () => {
             try {
                 const res = await axios.get(`/api/transaction/${depositId}`);
@@ -695,7 +690,7 @@
             document.getElementById('snCode').textContent = sn;
             document.getElementById('successModal').classList.remove('hidden');
 
-            // Save to history
+            
             saveToHistory(trxId, sn);
         }
 
@@ -726,7 +721,6 @@
             const text = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(text);
             
-            // Simple notification
             const btn = event.target.closest('button');
             const icon = btn.querySelector('i');
             icon.className = 'fas fa-check';
