@@ -2,228 +2,130 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - lana Store</title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <title>Management Layanan - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables Bootstrap 5 CSS -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main-container { padding: 30px; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 20px; background: white; }
-        .img-icon { width: 35px; height: 35px; object-fit: contain; border-radius: 5px; }
-        .profit-box { background: #ffffff; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #e0e0e0; }
-        
-        /* Custom DataTables Style agar mirip screenshot */
-        .dataTables_wrapper .dataTables_paginate .paginate_button { padding: 0; margin-left: -1px; }
-        .page-item.active .page-link { background-color: #0d6efd; border-color: #0d6efd; }
+        body { background: #f4f6f9; font-size: 13px; }
+        .card-main { border: none; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.05); background: #fff; padding: 20px; }
+        .img-icon { width: 25px; height: 25px; object-fit: contain; margin-right: 8px; }
+        .header-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #007bff; }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-<div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="fas fa-tasks text-primary"></i> Kelola Layanan Topup</h3>
-        <a href="/" class="btn btn-dark btn-sm"><i class="fas fa-external-link-alt"></i> Lihat Web</a>
-    </div>
-
-    <!-- BOX PENGATURAN PROFIT -->
-    <div class="profit-box shadow-sm">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <label class="form-label fw-bold"><i class="fas fa-chart-line"></i> Set Profit Global (%)</label>
-                <div class="input-group">
-                    <input type="number" id="profitPercent" class="form-control" value="5" placeholder="Contoh: 5">
-                    <span class="input-group-text">%</span>
-                    <button class="btn btn-success" id="btnSync" onclick="syncData()">
-                        <i class="fas fa-sync-alt"></i> GET LIST & APPLY
-                    </button>
-                </div>
-                <small class="text-muted">*Harga Jual = Modal + (Modal * % / 100) | Bulat ke Ratusan.</small>
+        <h4 class="fw-bold"><i class="fas fa-database me-2"></i> Kelola Layanan</h4>
+        
+        <div class="header-box shadow-sm d-flex gap-2 align-items-center">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text fw-bold">Profit</span>
+                <input type="number" id="profitInput" class="form-control text-center" value="5" style="width: 60px;">
+                <span class="input-group-text">%</span>
+                <button class="btn btn-primary" onclick="syncData()" id="btnSync"><i class="fas fa-sync"></i> SYNC</button>
             </div>
-            <div class="col-md-6 text-end">
-                <div class="p-2">
-                    <span class="text-muted small">Update Terakhir: </span>
-                    <span id="lastUpdate" class="badge bg-light text-dark border">-</span>
-                </div>
-            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteDb()" id="btnDel"><i class="fas fa-trash"></i> HAPUS DB</button>
         </div>
     </div>
 
-    <!-- TABEL DATA -->
-    <div class="card">
-        <div class="table-responsive">
-            <table id="tableServices" class="table table-striped table-hover align-middle" style="width:100%">
-                <thead class="table-light">
-                    <tr>
-                        <th>Layanan</th>
-                        <th>Kategori</th>
-                        <th>Modal</th>
-                        <th>Harga Jual</th>
-                        <th>Status API</th>
-                        <th>Aktif</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="serviceData">
-                    <!-- Data dimuat melalui AJAX -->
-                </tbody>
-            </table>
-        </div>
+    <div class="card-main">
+        <table id="tableServices" class="table table-bordered table-hover w-100">
+            <thead class="table-light text-uppercase" style="font-size: 11px;">
+                <tr>
+                    <th>CODE</th>
+                    <th>LAYANAN</th>
+                    <th>KATEGORI</th>
+                    <th>PROVIDER</th>
+                    <th>MODAL</th>
+                    <th>JUAL</th>
+                    <th>STATUS</th>
+                    <th>AKTIF</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-</div>
 
-<!-- SCRIPTS: jQuery, Bootstrap, DataTables -->
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    let dataTable;
-
-    // 1. Fungsi Load Data dari Database
-    async function loadServices() {
-        try {
-            const res = await fetch('/api/admin/services');
-            const result = await res.json();
-
-            // Jika DataTable sudah ada, hancurkan dulu (re-initialize)
-            if ($.fn.DataTable.isDataTable('#tableServices')) {
-                $('#tableServices').DataTable().destroy();
-            }
-
-            const tbody = document.getElementById('serviceData');
-            tbody.innerHTML = '';
-
-            if (result.data.length > 0) {
-                document.getElementById('lastUpdate').innerText = new Date(result.data[0].updated_at).toLocaleString();
-            }
-
-            result.data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="${item.img_url}" class="img-icon me-2">
-                                <div>
-                                    <div class="fw-bold">${item.name}</div>
-                                    <small class="text-muted">${item.brand} | ${item.service_id}</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-info text-dark">${item.category}</span></td>
-                        <td>Rp ${item.price_original.toLocaleString()}</td>
-                        <td>
-                            <input type="number" id="price-${item._id}" class="form-control form-control-sm" 
-                                   value="${item.price_sell}" style="width: 120px;">
-                        </td>
-                        <td>
-                            <span class="badge ${item.status_api === 'available' ? 'bg-success' : 'bg-danger'}">
-                                ${item.status_api}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="status-${item._id}" ${item.is_active ? 'checked' : ''}>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="updateItem('${item._id}')">
-                                <i class="fas fa-save"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            // 2. Inisialisasi DataTables (Fitur Search, Pagination, Entries)
-            $('#tableServices').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [[10, 30, 50, 100, 150], [10, 30, 50, 100, 150]],
-                "language": {
-                    "lengthMenu": "Tampilkan _MENU_ entri",
-                    "search": "Cari:",
-                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
-                    "paginate": {
-                        "next": "Next",
-                        "previous": "Prev"
-                    }
+$(document).ready(function() {
+    const table = $('#tableServices').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": { "url": "/api/admin/services", "type": "GET" },
+        "pageLength": 10,
+        "lengthMenu": [ [10, 20, 30, 50, -1], [10, 20, 30, 50, "All"] ],
+        "columns": [
+            { "data": "service_id" },
+            { 
+                "data": null,
+                "render": function(data) {
+                    return `<img src="${data.img_url}" class="img-icon"><span>${data.name}</span>`;
                 }
-            });
-
-        } catch (error) {
-            console.error("Gagal load data:", error);
-        }
-    }
-
-    // Fungsi Sync API (Tarik Data Baru)
-    async function syncData() {
-        const profit = document.getElementById('profitPercent').value;
-        const btn = document.getElementById('btnSync');
-        
-        if(!profit || profit < 0) return Swal.fire('Error', 'Input profit tidak valid', 'error');
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
-
-        try {
-            const res = await fetch('/api/admin/sync-services', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profit: profit })
-            });
-            const data = await res.json();
-            
-            if(data.status) {
-                Swal.fire('Sukses', data.message, 'success');
-                loadServices();
-            } else {
-                Swal.fire('Gagal', data.message, 'error');
+            },
+            { "data": "category" },
+            { "data": "brand" },
+            { "data": "price_original", "render": d => 'Rp '+d.toLocaleString() },
+            {
+                "data": null,
+                "render": d => `<input type="number" id="p-${d._id}" class="form-control form-control-sm" value="${d.price_sell}" style="width:90px">`
+            },
+            { 
+                "data": "status_api",
+                "render": d => `<span class="badge bg-${d==='available'?'success':'danger'}">${d}</span>`
+            },
+            {
+                "data": null,
+                "render": d => `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="s-${d._id}" ${d.is_active?'checked':''} onchange="updateRow('${d._id}')"></div>`
+            },
+            {
+                "data": null,
+                "render": d => `<button class="btn btn-sm btn-primary" onclick="updateRow('${d._id}')"><i class="fas fa-save"></i></button>`
             }
-        } catch (e) {
-            Swal.fire('Error', 'Gagal menghubungi server', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sync-alt"></i> GET LIST & APPLY';
-        }
-    }
-
-    // Fungsi Update Manual per baris
-    async function updateItem(id) {
-        const price = document.getElementById(`price-${id}`).value;
-        const active = document.getElementById(`status-${id}`).checked;
-
-        const res = await fetch(`/api/admin/services/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ price_sell: price, is_active: active })
-        });
-
-        const data = await res.json();
-        if(data.status) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Data berhasil disimpan',
-                showConfirmButton: false,
-                timer: 1500
-            });
-        }
-    }
-
-    // Jalankan Load Data saat halaman dibuka
-    $(document).ready(function() {
-        loadServices();
+        ]
     });
-</script>
+});
 
+async function syncData() {
+    const profit = $('#profitInput').val();
+    $('#btnSync').attr('disabled', true).text('Syncing...');
+    const res = await fetch('/api/admin/sync-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profit })
+    });
+    const data = await res.json();
+    Swal.fire(data.status?'Berhasil':'Gagal', data.message, data.status?'success':'error');
+    $('#tableServices').DataTable().ajax.reload();
+    $('#btnSync').attr('disabled', false).html('<i class="fas fa-sync"></i> SYNC');
+}
+
+async function deleteDb() {
+    const ask = await Swal.fire({ title: 'Hapus Database?', text: "Data akan kosong!", icon: 'warning', showCancelButton: true });
+    if(ask.isConfirmed) {
+        await fetch('/api/admin/delete-services', { method: 'DELETE' });
+        Swal.fire('Dihapus!', 'Database kosong.', 'success');
+        $('#tableServices').DataTable().ajax.reload();
+    }
+}
+
+async function updateRow(id) {
+    const price_sell = $(`#p-${id}`).val();
+    const is_active = $(`#s-${id}`).is(':checked');
+    await fetch(`/api/admin/services/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price_sell, is_active })
+    });
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000 });
+    Toast.fire({ icon: 'success', title: 'Saved' });
+}
+</script>
 </body>
 </html>
