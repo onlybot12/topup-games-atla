@@ -1,0 +1,34 @@
+<!-- Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] hidden opacity-0 transition-opacity" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-400 flex flex-col z-[1000] lg:translate-x-0">
+    <div class="p-6 border-b border-slate-800 flex items-center justify-between text-white font-black text-xl">
+        <span><i class="fas fa-rocket text-blue-500 mr-2"></i>LANA ADMIN</span>
+        <button onclick="toggleSidebar()" class="lg:hidden text-slate-500"><i class="fas fa-times"></i></button>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/layanan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'layanan' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
+            <i class="fas fa-box"></i> <span>Kelola Layanan</span>
+        </a>
+        <a href="/admin/voucher" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'voucher' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
+            <i class="fas fa-ticket-alt"></i> <span>Buat Voucher</span>
+        </a>
+        <a href="/admin/pengaturan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'pengaturan' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
+            <i class="fas fa-cog"></i> <span>Pengaturan QRIS</span>
+        </a>
+        <div class="my-4 border-t border-slate-800"></div>
+        <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all text-sm">
+            <i class="fas fa-external-link-alt"></i> <span>Lihat Toko</span>
+        </a>
+    </nav>
+</aside>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        const overlay = document.getElementById('sidebar-overlay');
+        overlay.classList.toggle('hidden');
+        setTimeout(() => overlay.classList.toggle('opacity-100'), 10);
+    }
+</script>
