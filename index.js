@@ -26,6 +26,7 @@ connectDB();
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
 const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4hu1s4dPJrootJmQmhzfywCQ48sEe3b6fph8S59gtQKpRk3iXcAXe9L2eGOFqrsBsz5rkJ';
 
+
 const config = {
     headers: { 
         'Content-Type': 'application/x-www-form-urlencoded', 
