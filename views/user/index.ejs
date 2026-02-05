@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Lana Store - Topup Game</title>
+    <%- include('../partials/user/heads') %>
+</head>
+<body class="bg-dark-900 text-gray-100">
+
+    <header id="mainHeader" class="sticky top-0 z-40 bg-dark-900/95 backdrop-blur-lg border-b border-dark-700">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
+            <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center hover:bg-dark-700">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="searchInput" placeholder="Cari produk..." class="w-full bg-dark-800 border border-dark-700 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500" onkeyup="filterProducts()">
+            </div>
+        </div>
+    </header>
+
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-dark-800 border-r border-dark-700 z-50 transform -translate-x-full transition-transform duration-300">
+        <div class="p-6">
+            <div class="text-xl font-bold mb-8 text-blue-500">LANA STORE</div>
+            <nav class="space-y-2">
+                <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-dark-700 text-white"><i class="fas fa-home"></i> Beranda</a>
+                <a href="/search" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-dark-700"><i class="fas fa-search"></i> Cari Transaksi</a>
+                <button onclick="switchPage('history')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-dark-700 text-left"><i class="fas fa-receipt"></i> Riwayat</button>
+            </nav>
+        </div>
+    </aside>
+
+    <main id="mainContent">
+        <!-- Home -->
+        <div id="pageHome" class="max-w-7xl mx-auto px-4 py-6">
+            <div id="categoriesContainer"></div>
+        </div>
+
+        <!-- Detail -->
+        <div id="pageDetail" class="hidden max-w-3xl mx-auto px-4 py-6">
+            <button onclick="goBack()" class="mb-6 flex items-center gap-2 text-gray-400"><i class="fas fa-arrow-left"></i> Kembali</button>
+            <div class="flex items-center gap-4 mb-6">
+                <img id="detailImg" src="" class="w-16 h-16 rounded-xl object-cover border border-dark-700">
+                <div>
+                    <h1 id="detailTitle" class="text-xl font-bold"></h1>
+                    <p id="detailCat" class="text-sm text-gray-400"></p>
+                </div>
+            </div>
+            <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 mb-6">
+                <label id="inputLabel" class="text-xs font-bold text-gray-400 uppercase mb-3 block">Data Akun</label>
+                <div id="singleInput"><input type="text" id="targetSingle" placeholder="Masukkan ID" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 focus:border-blue-500 outline-none"></div>
+                <div id="dualInput" class="hidden grid grid-cols-7 gap-3">
+                    <input type="tel" id="targetId" placeholder="User ID" class="col-span-4 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 outline-none">
+                    <input type="tel" id="targetZone" placeholder="Zone" class="col-span-3 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 outline-none">
+                </div>
+            </div>
+            <div id="productsList" class="grid grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- Confirmation & Voucher -->
+        <div id="pageConfirmation" class="hidden max-w-2xl mx-auto px-4 py-6">
+            <button onclick="backToDetail()" class="mb-6 text-gray-400"><i class="fas fa-arrow-left"></i> Kembali</button>
+            
+            <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 mb-4">
+                <h3 class="font-bold mb-4">Konfirmasi Pesanan</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span>Produk</span><span id="confItemName" class="font-bold"></span></div>
+                    <div class="flex justify-between"><span>ID Tujuan</span><span id="confTarget" class="font-mono text-blue-400"></span></div>
+                </div>
+            </div>
+
+            <!-- VOUCHER BOX -->
+            <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 mb-4">
+                <h3 class="text-sm font-bold mb-3">VOUCHER PROMO</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="voucherInput" placeholder="KODE VOUCHER" class="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-4 py-2 uppercase text-sm outline-none focus:border-blue-500">
+                    <button onclick="checkVoucher()" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">CEK</button>
+                </div>
+                <p id="voucherMsg" class="text-[10px] mt-2"></p>
+            </div>
+
+            <div class="bg-dark-800 border border-dark-700 rounded-2xl p-5 mb-6">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-400"><span>Harga</span><span id="confBasePrice"></span></div>
+                    <div id="discRow" class="hidden flex justify-between text-green-400"><span>Potongan Promo</span><span id="confDiscPrice"></span></div>
+                    <div class="flex justify-between text-gray-400"><span>Biaya Admin</span><span id="confAdminPrice"></span></div>
+                    <div class="border-t border-dark-700 pt-3 flex justify-between text-lg font-black">
+                        <span>Total Bayar</span><span id="confTotalPrice" class="text-blue-400"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="processPayment()" id="btnPayNow" class="w-full bg-blue-600 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20">BAYAR SEKARANG</button>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        let groupedData = {};
+        let selectedProduct = null;
+        let appliedVoucher = null;
+        let currentDiscount = 0;
+
+        window.onload = async () => {
+            const res = await axios.get('/api/services');
+            if(res.data.status) {
+                res.data.data.forEach(item => {
+                    if(!groupedData[item.brand]) groupedData[item.brand] = { name: item.brand, category: item.category, image: item.img_url, items: [] };
+                    groupedData[item.brand].items.push(item);
+                });
+                renderCategories();
+            }
+        };
+
+        function renderCategories() {
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            const cats = {};
+            Object.values(groupedData).forEach(b => {
+                if(b.name.toLowerCase().includes(search)) {
+                    if(!cats[b.category]) cats[b.category] = [];
+                    cats[b.category].push(b);
+                }
+            });
+
+            for(const [name, brands] of Object.entries(cats)) {
+                container.innerHTML += `
+                    <div class="mb-6">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 ml-2">${name}</h3>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                            ${brands.map(b => `
+                                <button onclick="openDetail('${b.name}')" class="bg-dark-800 p-2 rounded-2xl border border-dark-700">
+                                    <img src="${b.image}" class="w-full aspect-square object-cover rounded-xl mb-2">
+                                    <p class="text-[10px] font-bold truncate">${b.name}</p>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function openDetail(brand) {
+            const data = groupedData[brand];
+            document.getElementById('pageHome').classList.add('hidden');
+            document.getElementById('pageDetail').classList.remove('hidden');
+            document.getElementById('detailTitle').innerText = brand;
+            document.getElementById('detailImg').src = data.image;
+            document.getElementById('detailCat').innerText = data.category;
+
+            const isML = brand.toLowerCase().includes('mobile legends');
+            document.getElementById('mlInput').classList.toggle('hidden', !isML);
+            document.getElementById('normalInput').classList.toggle('hidden', isML);
+
+            const list = document.getElementById('productsList');
+            list.innerHTML = '';
+            data.items.sort((a,b) => a.price_sell - b.price_sell).forEach(item => {
+                list.innerHTML += `
+                    <button onclick="selectProduct('${item.service_id}', '${item.name}', ${item.price_sell})" class="bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 transition-all">
+                        <p class="text-[10px] text-gray-400 mb-1">${item.name}</p>
+                        <p class="font-bold text-blue-400 text-sm">Rp ${item.price_sell.toLocaleString()}</p>
+                    </button>
+                `;
+            });
+        }
+
+        function selectProduct(id, name, price) {
+            selectedProduct = { id, name, price };
+            let target = '';
+            if(document.getElementById('detailTitle').innerText.toLowerCase().includes('mobile legends')) {
+                const uid = document.getElementById('targetId').value;
+                const zone = document.getElementById('targetZone').value;
+                if(!uid || !zone) return alert("Lengkapi ID & Zone");
+                target = `${uid}(${zone})`;
+            } else {
+                target = document.getElementById('targetSingle').value;
+                if(!target) return alert("Masukkan ID Tujuan");
+            }
+            selectedProduct.target = target;
+            
+            document.getElementById('pageDetail').classList.add('hidden');
+            document.getElementById('pageConfirmation').classList.remove('hidden');
+            document.getElementById('confItemName').innerText = name;
+            document.getElementById('confTarget').innerText = target;
+            appliedVoucher = null;
+            currentDiscount = 0;
+            updateSummary();
+        }
+
+        async function checkVoucher() {
+            const code = document.getElementById('voucherInput').value;
+            if(!code) return;
+            try {
+                const res = await axios.post('/api/vouchers/verify', { code, amount: selectedProduct.price });
+                const msg = document.getElementById('voucherMsg');
+                if(res.data.status) {
+                    appliedVoucher = res.data.code;
+                    currentDiscount = res.data.discount;
+                    msg.className = "text-[10px] mt-2 text-green-400 font-bold";
+                    msg.innerText = "Voucher Berhasil Terpasang!";
+                    updateSummary();
+                } else {
+                    appliedVoucher = null;
+                    currentDiscount = 0;
+                    msg.className = "text-[10px] mt-2 text-red-400 font-bold";
+                    msg.innerText = res.data.message;
+                    updateSummary();
+                }
+            } catch (e) { alert("Server error"); }
+        }
+
+        async function updateSummary() {
+            // Kita ambil pengaturan biaya admin dari backend (biar akurat)
+            const confRes = await axios.get('/api/admin/config');
+            const conf = confRes.data.data;
+            
+            const base = selectedProduct.price;
+            const discounted = base - currentDiscount;
+            
+            // Rumus QRIS dari backend
+            const multiplier = (100 - conf.tax_percent) / 100;
+            const total = Math.ceil((discounted + conf.admin_fee) / multiplier);
+
+            document.getElementById('confBasePrice').innerText = "Rp " + base.toLocaleString();
+            document.getElementById('confAdminPrice').innerText = "Rp " + (total - discounted).toLocaleString();
+            document.getElementById('confTotalPrice').innerText = "Rp " + total.toLocaleString();
+            
+            const discRow = document.getElementById('discRow');
+            if(currentDiscount > 0) {
+                discRow.classList.remove('hidden');
+                document.getElementById('confDiscPrice').innerText = "- Rp " + currentDiscount.toLocaleString();
+            } else {
+                discRow.classList.add('hidden');
+            }
+        }
+
+        async function processPayment() {
+            const btn = document.getElementById('btnPayNow');
+            btn.disabled = true; btn.innerText = "Memproses...";
+            try {
+                const res = await axios.post('/api/create-payment', {
+                    service_id: selectedProduct.id,
+                    target: selectedProduct.target,
+                    voucher_code: appliedVoucher,
+                    whatsapp: "628" // Sesuaikan input jika ada field WA
+                });
+                if(res.data.status) window.location.href = res.data.redirect_url;
+                else { alert(res.data.message); btn.disabled = false; btn.innerText = "BAYAR SEKARANG"; }
+            } catch (e) { alert("Error"); btn.disabled = false; }
+        }
+
+        function toggleSidebar() {
+            const s = document.getElementById('sidebar');
+            const o = document.getElementById('sidebarOverlay');
+            s.classList.toggle('-translate-x-full');
+            o.classList.toggle('hidden');
+        }
+        function goBack() { document.getElementById('pageDetail').classList.add('hidden'); document.getElementById('pageHome').classList.remove('hidden'); }
+        function backToDetail() { document.getElementById('pageConfirmation').classList.add('hidden'); document.getElementById('pageDetail').classList.remove('hidden'); }
+    </script>
+</body>
+</html>
