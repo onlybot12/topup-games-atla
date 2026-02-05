@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Lana Admin - Pengaturan QRIS</title>
+    <%- include('../partials/head') %>
+    <style>
+        .config-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; transition: all 0.3s; }
+        .config-card:hover { border-color: #3b82f6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <%- include('../partials/sidebar') %>
+
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800">Pengaturan Biaya</h1>
+            </div>
+            <button onclick="saveSettings()" id="btnSave" class="bg-blue-600 text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase">
+                Simpan
+            </button>
+        </header>
+
+        <main class="p-4 md:p-6 max-w-4xl">
+            <div class="mb-8">
+                <h2 class="text-xl font-black text-slate-800">Konfigurasi QRIS</h2>
+                <p class="text-xs text-slate-500">Sesuaikan biaya admin tambahan dan pajak MDR Atlantic.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Admin Fee -->
+                <div class="config-card shadow-sm">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Admin Fee (Tetap)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">Rp</span>
+                        <input type="number" id="admin_fee" class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-800 focus:outline-none focus:border-blue-500 text-lg">
+                    </div>
+                </div>
+
+                <!-- MDR Fee -->
+                <div class="config-card shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">MDR Pajak (Atlantic)</label>
+                    <div class="relative">
+                        <input type="number" id="tax_percent" step="0.1" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-black text-slate-800 focus:outline-none focus:border-purple-500 text-lg">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hint Box -->
+            <div class="mt-8 bg-slate-900 rounded-[32px] p-6 text-white shadow-xl">
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-info-circle text-blue-400 mt-1"></i>
+                    <div>
+                        <h4 class="font-bold text-sm mb-1">Informasi Rumus</h4>
+                        <p class="text-slate-400 text-[11px] leading-relaxed">
+                            Total Bayar = (Harga Jual + Admin Fee) / (1 - MDR%). <br>
+                            MDR (%) adalah potongan otomatis dari Atlantic (biasanya 0.7% - 1.5%).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function loadConfig() {
+            const res = await fetch('/api/admin/config');
+            const json = await res.json();
+            if(json.status) {
+                $('#admin_fee').val(json.data.admin_fee);
+                $('#tax_percent').val(json.data.tax_percent);
+            }
+        }
+
+        async function saveSettings() {
+            const btn = $('#btnSave').attr('disabled', true).text('...');
+            const data = {
+                admin_fee: $('#admin_fee').val(),
+                tax_percent: $('#tax_percent').val()
+            };
+
+            const res = await fetch('/api/admin/config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await res.json();
+            if(result.status) {
+                Swal.fire({ icon: 'success', title: 'Tersimpan', timer: 1500, showConfirmButton: false });
+            }
+            btn.attr('disabled', false).text('Simpan');
+        }
+
+        $(document).ready(loadConfig);
+    </script>
+</body>
+</html>
