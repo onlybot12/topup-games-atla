@@ -33,7 +33,7 @@ connectDB();
 // ==========================
 // ROUTE HALAMAN (VIEW)
 // ==========================
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'topup.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/search', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
 app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
 app.get('/admin/services', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'services.html')));
