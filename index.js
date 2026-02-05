@@ -10,16 +10,24 @@ const connectDB = require('./config/database');
 const Transaction = require('./models/Transaction');
 const Service = require('./models/Service');
 const Voucher = require('./models/Voucher');
-const Config = require('./models/Config'); // Model Baru untuk Biaya Admin
+const Config = require('./models/Config');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ==========================
+// CONFIGURATION & MIDDLEWARE
+// ==========================
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Set EJS View Engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Database Connection
 connectDB();
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
@@ -31,17 +39,20 @@ const requestHeaders = {
 };
 
 // ==========================
-// ROUTE VIEW (PAGES)
+// ROUTE VIEW (USER & ADMIN)
 // ==========================
+
+// User Pages (Static HTML inside public/)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'topup.html')));
 app.get('/search', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
 app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
-app.get('/history/:trx_id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'history.html')));
-app.get('/admin/layanan', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'kelola-layanan.html')));
-app.get('/admin/voucher', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-voucher.html')));
-app.get('/admin/pengaturan', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'pengaturan.html')));
 
-// Redirect Pembayaran
+// Admin Pages (EJS with Sidebars)
+app.get('/admin/layanan', (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
+app.get('/admin/voucher', (req, res) => res.render('admin/creat-voucher', { currentPage: 'voucher' }));
+app.get('/admin/pengaturan', (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
+
+// Redirect Pembayaran (QRIS Page)
 app.get('/transaction/:deposit_id', async (req, res) => {
     const depositId = req.params.deposit_id;
     try {
@@ -52,27 +63,33 @@ app.get('/transaction/:deposit_id', async (req, res) => {
 });
 
 // ==========================
-// ADMIN: CONFIG FEE (QRIS)
+// API: PENGATURAN BIAYA (QRIS)
 // ==========================
 app.get('/api/admin/config', async (req, res) => {
-    let conf = await Config.findOne({ key: 'qris_settings' });
-    if (!conf) conf = await Config.create({ key: 'qris_settings', admin_fee: 700, tax_percent: 1.4 });
-    res.json({ status: true, data: conf });
+    try {
+        let conf = await Config.findOne({ key: 'qris_settings' });
+        if (!conf) conf = await Config.create({ key: 'qris_settings', admin_fee: 700, tax_percent: 1.4 });
+        res.json({ status: true, data: conf });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.put('/api/admin/config', async (req, res) => {
     const { admin_fee, tax_percent } = req.body;
-    await Config.findOneAndUpdate(
-        { key: 'qris_settings' },
-        { admin_fee: parseInt(admin_fee), tax_percent: parseFloat(tax_percent) },
-        { upsert: true }
-    );
-    res.json({ status: true });
+    try {
+        await Config.findOneAndUpdate(
+            { key: 'qris_settings' },
+            { admin_fee: parseInt(admin_fee), tax_percent: parseFloat(tax_percent) },
+            { upsert: true }
+        );
+        res.json({ status: true });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 // ==========================
-// ADMIN: LAYANAN (SERVER-SIDE)
+// API: LAYANAN (SERVER-SIDE)
 // ==========================
+
+// Sync API ke MongoDB dengan Profit %
 app.post('/api/admin/sync-services', async (req, res) => {
     const { profit } = req.body;
     const profitPercent = parseFloat(profit) || 0;
@@ -84,6 +101,7 @@ app.post('/api/admin/sync-services', async (req, res) => {
             const services = response.data.data;
             const operations = services.map(item => {
                 const modal = parseInt(item.price) || 0;
+                // Markup & Bulatkan ke 100 terdekat
                 let jual = Math.ceil((modal + (modal * profitPercent / 100)) / 100) * 100;
                 return {
                     updateOne: {
@@ -101,17 +119,25 @@ app.post('/api/admin/sync-services', async (req, res) => {
                 };
             });
             await Service.bulkWrite(operations);
-            res.json({ status: true, message: `Berhasil Sinkronisasi!` });
+            res.json({ status: true, message: `Sync ${services.length} data berhasil!` });
+        } else {
+            res.json({ status: false, message: response.data.message });
         }
     } catch (e) { res.status(500).json({ status: false, message: e.message }); }
 });
 
+// Server-Side Get Services (Anti-Lag)
 app.get('/api/admin/services', async (req, res) => {
     try {
         let { draw, start, length, search } = req.query;
         start = parseInt(start) || 0;
         length = parseInt(length) || 10;
-        let query = search.value ? { $or: [ { name: { $regex: search.value, $options: 'i' } }, { service_id: { $regex: search.value, $options: 'i' } } ] } : {};
+        let query = search && search.value ? {
+            $or: [
+                { name: { $regex: search.value, $options: 'i' } },
+                { service_id: { $regex: search.value, $options: 'i' } }
+            ]
+        } : {};
 
         const total = await Service.countDocuments();
         const filtered = await Service.countDocuments(query);
@@ -123,25 +149,30 @@ app.get('/api/admin/services', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
+// Update & Delete Services
 app.put('/api/admin/services/:id', async (req, res) => {
-    const { price_sell, is_active } = req.body;
     try {
+        const { price_sell, is_active } = req.body;
         await Service.findByIdAndUpdate(req.params.id, { price_sell, is_active });
         res.json({ status: true });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.delete('/api/admin/delete-services', async (req, res) => {
-    await Service.deleteMany({});
-    res.json({ status: true });
+    try {
+        await Service.deleteMany({});
+        res.json({ status: true });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 // ==========================
-// ADMIN: VOUCHER
+// API: VOUCHER (MANAGEMENT)
 // ==========================
 app.get('/api/admin/vouchers', async (req, res) => {
-    const data = await Voucher.find().sort({ created_at: -1 });
-    res.json({ status: true, data });
+    try {
+        const data = await Voucher.find().sort({ created_at: -1 });
+        res.json({ status: true, data });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.post('/api/admin/vouchers', async (req, res) => {
@@ -153,49 +184,62 @@ app.post('/api/admin/vouchers', async (req, res) => {
 });
 
 app.delete('/api/admin/vouchers/:id', async (req, res) => {
-    await Voucher.findByIdAndDelete(req.params.id);
-    res.json({ status: true });
+    try {
+        await Voucher.findByIdAndDelete(req.params.id);
+        res.json({ status: true });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 // ==========================
-// USER: API TRANSAKSI
+// USER: TRANSAKSI & VOUCHER
 // ==========================
-app.get('/api/services', async (req, res) => {
-    const data = await Service.find({ is_active: true, status_api: 'available' }).sort({ category: 1, name: 1 });
-    res.json({ status: true, data });
-});
 
+// Verify Voucher
 app.post('/api/vouchers/verify', async (req, res) => {
     const { code, amount } = req.body;
-    const v = await Voucher.findOne({ code: code.toUpperCase(), is_active: true });
-    if (!v || v.used_count >= v.quota || amount < v.min_order) return res.json({ status: false, message: "Voucher Tidak Berlaku" });
+    try {
+        const v = await Voucher.findOne({ code: code.toUpperCase(), is_active: true });
+        if (!v) return res.json({ status: false, message: "Voucher Tidak Valid" });
+        if (v.used_count >= v.quota) return res.json({ status: false, message: "Kuota Voucher Habis" });
+        if (amount < v.min_order) return res.json({ status: false, message: `Min. Belanja Rp ${v.min_order.toLocaleString()}` });
 
-    let discount = v.type === 'percentage' ? (amount * v.value / 100) : v.value;
-    res.json({ status: true, discount, code: v.code });
+        let discount = v.type === 'percentage' ? (amount * v.value / 100) : v.value;
+        res.json({ status: true, discount, code: v.code });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
+// Get Services Public
+app.get('/api/services', async (req, res) => {
+    try {
+        const data = await Service.find({ is_active: true, status_api: 'available' }).sort({ category: 1, name: 1 });
+        res.json({ status: true, data });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
+// Create Payment (Sistem Redirect)
 app.post('/api/create-payment', async (req, res) => {
     const { service_id, target, whatsapp, voucher_code, email } = req.body;
     try {
         const service = await Service.findOne({ service_id, is_active: true });
-        if (!service) return res.json({ status: false, message: "Layanan Offline" });
+        if (!service) return res.json({ status: false, message: "Layanan Tidak Tersedia" });
 
-        // Ambil Biaya Admin Dinamis dari DB
+        // Ambil Biaya Admin Dinamis
         let conf = await Config.findOne({ key: 'qris_settings' });
         if (!conf) conf = { admin_fee: 700, tax_percent: 1.4 };
 
         let sellPrice = service.price_sell;
 
-        // Validasi Voucher & Kurangi Kuota
+        // Validasi Voucher & Kurangi Kuota Otomatis
         if (voucher_code) {
             const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
             if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
-                sellPrice -= v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                let disc = v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                sellPrice -= disc;
                 await Voucher.updateOne({ _id: v._id }, { $inc: { used_count: 1 } });
             }
         }
 
-        // Kalkulasi Nominal Bayar (Admin Fee + MDR %)
+        // Rumus QRIS (Fee & MDR)
         const multiplier = (100 - conf.tax_percent) / 100;
         const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
         const reff_id = `PAY-${Date.now()}`;
@@ -205,25 +249,29 @@ app.post('/api/create-payment', async (req, res) => {
             { headers: requestHeaders });
 
         if (depoRes.data.status) {
+            const depositId = depoRes.data.data.id;
             const tr = new Transaction({
-                deposit_id: depoRes.data.data.id,
-                order_id: `ORD-${depoRes.data.data.id}`,
+                deposit_id: depositId,
+                order_id: `ORD-${depositId}`,
                 qr_image: depoRes.data.data.qr_image,
                 amount: nominalBayar,
                 base_price: service.price_original,
                 item_name: service.name,
                 target, whatsapp, status: 'pending',
-                email: email || 'N/A',
+                email: email || 'customer@example.com',
                 meta: { code: service.service_id, target }
             });
             await tr.save();
-            res.json({ status: true, redirect_url: `/transaction/${depoRes.data.data.id}` });
+            
+            // RESPON REDIRECT KE FRONTEND
+            res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else {
             res.json({ status: false, message: depoRes.data.message });
         }
     } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 
+// Check Status Pembayaran
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -238,6 +286,7 @@ app.post('/api/check-status', async (req, res) => {
         }
 
         if (status === 'success') {
+            // Langsung Beli Produk ke Atlantic
             const buyRes = await axios.post(`${ATLANTIC_BASE_URL}/transaksi/create`,
                 qs.stringify({ api_key: API_KEY, code: meta.code, target: meta.target, reff_id: `TRX-${deposit_id}` }), 
                 { headers: requestHeaders });
@@ -246,7 +295,8 @@ app.post('/api/check-status', async (req, res) => {
                 await Transaction.updateOne({ deposit_id }, { $set: { status: 'success', sn: buyRes.data.data.sn, updated_at: new Date() } });
                 res.json({ status: true, state: 'success', sn: buyRes.data.data.sn });
             } else {
-                if(buyRes.data.message.includes('uplicate')) return res.json({ status: true, state: 'success', sn: 'Diproses' });
+                if(buyRes.data.message.includes('uplicate')) return res.json({ status: true, state: 'success', sn: 'Sudah Terproses' });
+                await Transaction.updateOne({ deposit_id }, { $set: { status: 'failed' } });
                 res.json({ status: true, state: 'failed', message: buyRes.data.message });
             }
         } else if (status === 'cancel') {
@@ -255,9 +305,10 @@ app.post('/api/check-status', async (req, res) => {
         } else {
             res.json({ status: true, state: 'pending' });
         }
-    } catch (e) { res.status(500).json({ status: false }); }
+    } catch (error) { res.status(500).json({ status: false }); }
 });
 
+// Transaction Detail by ID
 app.get('/api/transaction/:id', async (req, res) => {
     try {
         const tr = await Transaction.findOne({ $or: [{ deposit_id: req.params.id }, { order_id: req.params.id }] });
@@ -265,4 +316,7 @@ app.get('/api/transaction/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server Berjalan di Port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Lana Store Server Berjalan di Port ${PORT}`);
+    console.log(`📱 Kelola Layanan: http://localhost:${PORT}/admin/layanan`);
+});
