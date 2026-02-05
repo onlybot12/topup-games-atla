@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Lana Store - Topup Game & Digital</title>
+    <title>Lana Store - Topup Game & Pulsa</title>
     <%- include('../partials/user/heads') %>
     <style>
         .game-card { 
@@ -12,17 +12,15 @@
         }
         .game-card:active { transform: scale(0.92); background: #334155; }
         
-        /* Animasi Slide Up untuk Order Sheet */
         @keyframes slideUp {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-dark-900 text-gray-100">
+<body class="bg-dark-900 text-gray-100 overflow-x-hidden">
 
     <!-- Header -->
     <header class="sticky top-0 z-40 bg-dark-900/90 backdrop-blur-lg border-b border-dark-700 px-4 py-4 flex items-center gap-3">
@@ -31,34 +29,34 @@
         </button>
         <div class="flex-1 relative">
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-            <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari Game atau Pulsa..." 
+            <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari Game, Pulsa, atau PLN..." 
                 class="w-full bg-dark-800 border-none rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
     </header>
 
     <%- include('../partials/sidebar-user') %>
 
-    <main class="p-4 max-w-7xl mx-auto">
+    <main class="p-4 max-w-7xl mx-auto min-h-screen">
         <!-- Hero Banner -->
         <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-blue-900/20 relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="text-2xl font-black leading-tight">Topup Kilat,<br>Harga Sahabat.</h2>
-                <p class="text-blue-100 text-[10px] mt-2 font-bold uppercase tracking-widest opacity-80">Otomatis 24 Jam Nonstop</p>
+                <h2 class="text-2xl font-black leading-tight">Lana Store<br>Topup Otomatis.</h2>
+                <p class="text-blue-100 text-[10px] mt-2 font-bold uppercase tracking-widest opacity-80">Proses 1-3 Detik 24 Jam</p>
             </div>
-            <i class="fas fa-bolt absolute -right-4 -bottom-4 text-8xl text-white/10 -rotate-12"></i>
+            <i class="fas fa-gamepad absolute -right-4 -bottom-4 text-8xl text-white/10 -rotate-12"></i>
         </div>
 
-        <!-- Section List Kategori & Produk -->
+        <!-- Container Kategori -->
         <div id="categoriesContainer" class="space-y-10">
-            <!-- Loading State -->
+            <!-- Loading Spinner -->
             <div id="loading" class="flex flex-col items-center justify-center py-20">
                 <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
-                <p class="text-gray-500 text-sm font-bold">Menghubungkan ke Database...</p>
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Memuat Layanan...</p>
             </div>
         </div>
     </main>
 
-    <!-- Order Sheet (Android Style Modal) -->
+    <!-- Order Sheet (Modal Android Style) -->
     <div id="orderSheet" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeSheet()"></div>
         <div class="absolute bottom-0 inset-x-0 bg-dark-800 rounded-t-[40px] p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto no-scrollbar border-t border-dark-700">
@@ -72,25 +70,26 @@
                 </div>
             </div>
 
-            <!-- Input Data Akun -->
+            <!-- Input Data -->
             <div class="bg-dark-900/50 p-5 rounded-3xl border border-dark-700 mb-8">
-                <label class="text-[10px] font-black text-gray-500 uppercase mb-3 block tracking-widest">Data Tujuan</label>
+                <label class="text-[10px] font-black text-gray-500 uppercase mb-3 block tracking-widest">Lengkapi Data Tujuan</label>
                 
                 <div id="mlInput" class="hidden grid grid-cols-7 gap-3">
-                    <input type="tel" id="targetId" placeholder="User ID" class="col-span-4 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold">
-                    <input type="tel" id="targetZone" placeholder="Zone" class="col-span-3 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold">
+                    <input type="tel" id="targetId" placeholder="User ID" class="col-span-4 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
+                    <input type="tel" id="targetZone" placeholder="Zone" class="col-span-3 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
                 </div>
                 
                 <div id="normalInput">
-                    <input type="text" id="targetSingle" placeholder="Masukkan Nomor HP / ID Player" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold">
+                    <input type="text" id="targetSingle" placeholder="Masukkan ID / Nomor HP" 
+                        class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
                 </div>
+                <p id="inputHint" class="text-[9px] text-gray-500 mt-3 italic font-medium"></p>
             </div>
 
             <!-- List Nominal -->
-            <label class="text-[10px] font-black text-gray-500 uppercase mb-4 block tracking-widest ml-2">Pilih Nominal</label>
+            <label class="text-[10px] font-black text-gray-500 uppercase mb-4 block tracking-widest ml-2">Pilih Item</label>
             <div id="sheetProducts" class="grid grid-cols-2 gap-3 pb-10">
-                <!-- Produk akan muncul disini -->
+                <!-- Nominal akan di-render disini -->
             </div>
         </div>
     </div>
@@ -98,42 +97,39 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         let allServices = [];
-        let groupedData = {};
+        let groupedByBrand = {};
 
-        // 1. Ambil data dari Backend
         window.onload = async () => {
             try {
                 const res = await axios.get('/api/services');
                 if(res.data.status) {
                     allServices = res.data.data;
-                    processGrouping();
+                    processData();
                 }
             } catch (e) {
-                document.getElementById('loading').innerHTML = '<p class="text-red-500">Gagal memuat data.</p>';
+                document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Gagal memuat data.</p>';
             }
         };
 
-        // 2. Kelompokkan berdasarkan Brand
-        function processGrouping() {
-            groupedData = {};
+        function processData() {
+            groupedByBrand = {};
             allServices.forEach(item => {
-                // Pastikan menggunakan field brand atau provider
-                const brand = item.brand || item.provider || "Lainnya";
-                if(!groupedData[brand]) {
-                    groupedData[brand] = {
+                // Logika Grouping berdasarkan Brand sesuai JSON result Anda
+                const brand = item.brand || "LAINNYA";
+                if(!groupedByBrand[brand]) {
+                    groupedByBrand[brand] = {
                         name: brand,
                         category: item.category,
                         image: item.img_url,
                         items: []
                     };
                 }
-                groupedData[brand].items.push(item);
+                groupedByBrand[brand].items.push(item);
             });
-            renderCategories();
+            renderUI();
         }
 
-        // 3. Render Tampilan Utama
-        function renderCategories() {
+        function renderUI() {
             const container = document.getElementById('categoriesContainer');
             const search = document.getElementById('searchInput').value.toLowerCase();
             const loading = document.getElementById('loading');
@@ -142,8 +138,8 @@
             container.innerHTML = '';
             const categories = {};
 
-            // Filter berdasarkan pencarian nama brand
-            Object.values(groupedData).forEach(b => {
+            // Masukkan Brand ke dalam Kategori masing-masing
+            Object.values(groupedByBrand).forEach(b => {
                 if(b.name.toLowerCase().includes(search)) {
                     if(!categories[b.category]) categories[b.category] = [];
                     categories[b.category].push(b);
@@ -151,21 +147,22 @@
             });
 
             if(Object.keys(categories).length === 0) {
-                container.innerHTML = '<div class="text-center py-20 text-gray-500 font-bold">Produk tidak ditemukan</div>';
+                container.innerHTML = '<div class="text-center py-20 text-gray-600 font-bold">Produk tidak ditemukan</div>';
                 return;
             }
 
+            // Loop Kategori
             for(const [catName, brands] of Object.entries(categories)) {
                 container.innerHTML += `
-                    <div>
-                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-4 ml-2 flex items-center gap-2">
-                            <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span> ${catName}
+                    <div class="animate-fade-in">
+                        <h3 class="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] mb-5 ml-2 flex items-center gap-2">
+                            <span class="w-1 h-4 bg-blue-600 rounded-full"></span> ${catName}
                         </h3>
                         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                             ${brands.map(b => `
-                                <div onclick="openOrder('${b.name}')" class="game-card p-2 shadow-lg active:scale-95 transition-all cursor-pointer">
-                                    <img src="${b.image}" class="w-full aspect-square object-cover rounded-2xl mb-2 shadow-inner border border-dark-700/50">
-                                    <p class="text-[10px] font-black text-center truncate px-1 text-gray-200 uppercase tracking-tighter">${b.name}</p>
+                                <div onclick="openOrder('${b.name}')" class="game-card p-2 shadow-lg cursor-pointer">
+                                    <img src="${b.image}" class="w-full aspect-square object-cover rounded-2xl mb-2 border border-dark-700/50">
+                                    <p class="text-[10px] font-black text-center truncate px-1 text-gray-300 uppercase">${b.name}</p>
                                 </div>
                             `).join('')}
                         </div>
@@ -174,28 +171,31 @@
             }
         }
 
-        // 4. Buka Sheet Order
         function openOrder(brandName) {
-            const group = groupedData[brandName];
+            const group = groupedByBrand[brandName];
             document.getElementById('sheetTitle').innerText = brandName;
             document.getElementById('sheetImg').src = group.image;
             document.getElementById('sheetCat').innerText = group.category;
             
-            // Logika Input Mobile Legends
             const isML = brandName.toLowerCase().includes('mobile legends');
             document.getElementById('mlInput').classList.toggle('hidden', !isML);
             document.getElementById('normalInput').classList.toggle('hidden', isML);
+            
+            const hint = document.getElementById('inputHint');
+            const cat = group.category.toLowerCase();
+            if(isML) hint.innerText = "*Contoh: 12345678(1234)";
+            else if(cat.includes('perdana') || cat.includes('pulsa')) hint.innerText = "*Masukkan Nomor HP aktif (08xxx)";
+            else hint.innerText = "*Pastikan data yang Anda masukkan benar.";
 
-            // Render Daftar Produk di Modal
             const list = document.getElementById('sheetProducts');
             list.innerHTML = '';
             
-            // Urutkan harga dari yang termurah
+            // Tampilkan Item dan urutkan harga (price_sell)
             group.items.sort((a,b) => a.price_sell - b.price_sell).forEach(item => {
                 list.innerHTML += `
                     <button onclick="createOrder('${item.service_id}')" 
-                        class="bg-dark-900 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 active:bg-blue-900/50 transition-all flex flex-col justify-between h-full">
-                        <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight">${item.name}</p>
+                        class="bg-dark-900 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 active:bg-blue-900/40 transition-all flex flex-col justify-between h-full group">
+                        <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight group-hover:text-white">${item.name}</p>
                         <p class="text-sm font-black text-blue-400 mt-auto">Rp ${item.price_sell.toLocaleString('id-ID')}</p>
                     </button>
                 `;
@@ -205,7 +205,6 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // 5. Kirim ke API Create Payment
         async function createOrder(service_id) {
             let target = '';
             const brand = document.getElementById('sheetTitle').innerText;
@@ -214,7 +213,7 @@
             if(isML) {
                 const id = document.getElementById('targetId').value;
                 const zone = document.getElementById('targetZone').value;
-                if(!id || !zone) return alert("Masukkan User ID dan Zone!");
+                if(!id || !zone) return alert("Lengkapi User ID & Zone!");
                 target = `${id}(${zone})`;
             } else {
                 target = document.getElementById('targetSingle').value;
@@ -222,11 +221,11 @@
             }
 
             try {
-                // Memanggil API Create Payment (redirect ke QRIS)
+                // Tembak API Create Payment dari server.js
                 const res = await axios.post('/api/create-payment', { 
                     service_id, 
                     target, 
-                    whatsapp: '628', // Placeholder, bisa ditambah input field WA di modal
+                    whatsapp: '628', // Placeholder
                     email: 'customer@lanastore.com'
                 });
 
@@ -236,19 +235,12 @@
                     alert(res.data.message);
                 }
             } catch (e) {
-                alert("Gagal membuat pesanan.");
+                alert("Koneksi server terputus.");
             }
         }
 
-        function filterProducts() {
-            renderCategories();
-        }
-
-        function closeSheet() {
-            document.getElementById('orderSheet').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
+        function filterProducts() { renderUI(); }
+        function closeSheet() { document.getElementById('orderSheet').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         function toggleSidebar() {
             const s = document.getElementById('sidebar');
             const o = document.getElementById('sidebarOverlay');
