@@ -9,77 +9,89 @@ const path = require('path');
 const connectDB = require('./config/database');
 const Transaction = require('./models/Transaction');
 const Service = require('./models/Service');
+const Voucher = require('./models/Voucher');
+const Config = require('./models/Config'); // Model Baru untuk Biaya Admin
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection
 connectDB();
 
-// Konfigurasi Atlantic
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
 const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4hu1s4dPJrootJmQmhzfywCQ48sEe3b6fph8S59gtQKpRk3iXcAXe9L2eGOFqrsBsz5rkJ';
 
-// Headers untuk menghindari 403 Forbidden
 const requestHeaders = {
     'Content-Type': 'application/x-www-form-urlencoded',
     'User-Agent': 'Atlantic-Vercel/5.0' 
-    
 };
 
 // ==========================
-// ROUTE VIEW (HALAMAN)
+// ROUTE VIEW (PAGES)
 // ==========================
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'topup.html')));
 app.get('/search', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
-app.get('/admin/services', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'services.html')));
-app.get('/transaction/:deposit_id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment.html')));
+app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
+app.get('/history/:trx_id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'history.html')));
+app.get('/admin/layanan', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'kelola-layanan.html')));
+app.get('/admin/voucher', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-voucher.html')));
+
+// Redirect Pembayaran
+app.get('/transaction/:deposit_id', async (req, res) => {
+    const depositId = req.params.deposit_id;
+    try {
+        const transaction = await Transaction.findOne({ deposit_id: depositId });
+        if (!transaction) return res.status(404).send("Transaksi tidak ditemukan");
+        res.sendFile(path.join(__dirname, 'public', 'payment.html'));
+    } catch (error) { res.status(500).send('Server Error'); }
+});
 
 // ==========================
-// ADMIN: MANAGEMENT LAYANAN
+// ADMIN: CONFIG FEE (QRIS)
 // ==========================
+app.get('/api/admin/config', async (req, res) => {
+    let conf = await Config.findOne({ key: 'qris_settings' });
+    if (!conf) conf = await Config.create({ key: 'qris_settings', admin_fee: 700, tax_percent: 1.4 });
+    res.json({ status: true, data: conf });
+});
 
-// 1. Sync Data dengan Profit % (Optimized for Large Data)
+app.put('/api/admin/config', async (req, res) => {
+    const { admin_fee, tax_percent } = req.body;
+    await Config.findOneAndUpdate(
+        { key: 'qris_settings' },
+        { admin_fee: parseInt(admin_fee), tax_percent: parseFloat(tax_percent) },
+        { upsert: true }
+    );
+    res.json({ status: true });
+});
+
+// ==========================
+// ADMIN: LAYANAN (SERVER-SIDE)
+// ==========================
 app.post('/api/admin/sync-services', async (req, res) => {
     const { profit } = req.body;
     const profitPercent = parseFloat(profit) || 0;
-
-    console.log(`--- Memulai Sinkronisasi (Profit: ${profitPercent}%) ---`);
-
     try {
         const response = await axios.post(`${ATLANTIC_BASE_URL}/layanan/price_list`,
-            qs.stringify({ api_key: API_KEY, type: 'prabayar' }),
-            { headers: requestHeaders, timeout: 60000 } // Timeout 60 detik
-        );
+            qs.stringify({ api_key: API_KEY, type: 'prabayar' }), { headers: requestHeaders, timeout: 60000 });
 
-        if (response.data && response.data.status === true) {
+        if (response.data.status) {
             const services = response.data.data;
-
             const operations = services.map(item => {
                 const modal = parseInt(item.price) || 0;
-                // Hitung Jual + Pembulatan 100 terdekat ke atas
-                let jual = modal + (modal * profitPercent / 100);
-                jual = Math.ceil(jual / 100) * 100;
-
+                let jual = Math.ceil((modal + (modal * profitPercent / 100)) / 100) * 100;
                 return {
                     updateOne: {
                         filter: { service_id: item.code },
                         update: {
                             $set: {
-                                name: item.name,
-                                category: item.category,
-                                brand: item.provider,
-                                price_original: modal,
-                                price_sell: jual,
-                                status_api: item.status ? item.status.toLowerCase() : 'empty',
-                                img_url: item.img_url,
-                                updated_at: new Date()
+                                name: item.name, category: item.category, brand: item.provider,
+                                price_original: modal, price_sell: jual,
+                                status_api: item.status.toLowerCase(), img_url: item.img_url, updated_at: new Date()
                             },
                             $setOnInsert: { is_active: true }
                         },
@@ -87,108 +99,109 @@ app.post('/api/admin/sync-services', async (req, res) => {
                     }
                 };
             });
-
             await Service.bulkWrite(operations);
-            console.log("Sinkronisasi MongoDB Berhasil.");
-            res.json({ status: true, message: `Sync Berhasil! ${services.length} layanan diperbarui.` });
-        } else {
-            res.json({ status: false, message: response.data.message || "Gagal dari API Atlantic" });
+            res.json({ status: true, message: `Berhasil Sinkronisasi!` });
         }
-    } catch (error) {
-        console.error("Sync Error:", error.message);
-        res.status(500).json({ status: false, message: "Terjadi kesalahan koneksi ke Atlantic. Pastikan IP Whitelist sudah benar." });
-    }
+    } catch (e) { res.status(500).json({ status: false, message: e.message }); }
 });
 
-// 2. Server-Side Get Services (Untuk DataTables Anti-Lag)
 app.get('/api/admin/services', async (req, res) => {
     try {
         let { draw, start, length, search } = req.query;
         start = parseInt(start) || 0;
         length = parseInt(length) || 10;
-        let searchValue = search ? search.value : '';
+        let query = search.value ? { $or: [ { name: { $regex: search.value, $options: 'i' } }, { service_id: { $regex: search.value, $options: 'i' } } ] } : {};
 
-        let query = {};
-        if (searchValue) {
-            query = {
-                $or: [
-                    { name: { $regex: searchValue, $options: 'i' } },
-                    { service_id: { $regex: searchValue, $options: 'i' } },
-                    { brand: { $regex: searchValue, $options: 'i' } },
-                    { category: { $regex: searchValue, $options: 'i' } }
-                ]
-            };
-        }
-
-        const totalRecords = await Service.countDocuments();
-        const filteredRecords = await Service.countDocuments(query);
-
+        const total = await Service.countDocuments();
+        const filtered = await Service.countDocuments(query);
         let mongoQuery = Service.find(query).sort({ category: 1, name: 1 }).skip(start);
-        if (length != -1) mongoQuery = mongoQuery.limit(length);
-
+        if (parseInt(length) !== -1) mongoQuery = mongoQuery.limit(length);
+        
         const data = await mongoQuery;
-
-        res.json({
-            draw: parseInt(draw),
-            recordsTotal: totalRecords,
-            recordsFiltered: filteredRecords,
-            data: data
-        });
-    } catch (error) {
-        res.status(500).json({ status: false });
-    }
+        res.json({ draw: parseInt(draw), recordsTotal: total, recordsFiltered: filtered, data });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// 3. Update Manual Layanan
 app.put('/api/admin/services/:id', async (req, res) => {
+    const { price_sell, is_active } = req.body;
     try {
-        const { price_sell, is_active } = req.body;
-        await Service.findByIdAndUpdate(req.params.id, { price_sell: parseInt(price_sell), is_active });
+        await Service.findByIdAndUpdate(req.params.id, { price_sell, is_active });
         res.json({ status: true });
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// 4. Hapus Database Layanan
 app.delete('/api/admin/delete-services', async (req, res) => {
-    try {
-        await Service.deleteMany({});
-        res.json({ status: true, message: "Seluruh database layanan telah dihapus." });
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
+    await Service.deleteMany({});
+    res.json({ status: true });
 });
 
 // ==========================
-// USER: TRANSAKSI & PUBLIC
+// ADMIN: VOUCHER
 // ==========================
+app.get('/api/admin/vouchers', async (req, res) => {
+    const data = await Voucher.find().sort({ created_at: -1 });
+    res.json({ status: true, data });
+});
 
-// Ambil Layanan Aktif untuk Pembeli
+app.post('/api/admin/vouchers', async (req, res) => {
+    try {
+        const v = new Voucher(req.body);
+        await v.save();
+        res.json({ status: true });
+    } catch (e) { res.status(400).json({ status: false, message: "Kode Duplikat" }); }
+});
+
+app.delete('/api/admin/vouchers/:id', async (req, res) => {
+    await Voucher.findByIdAndDelete(req.params.id);
+    res.json({ status: true });
+});
+
+// ==========================
+// USER: API TRANSAKSI
+// ==========================
 app.get('/api/services', async (req, res) => {
-    try {
-        const data = await Service.find({ is_active: true, status_api: 'available' }).sort({ category: 1, name: 1 });
-        res.json({ status: true, data });
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
+    const data = await Service.find({ is_active: true, status_api: 'available' }).sort({ category: 1, name: 1 });
+    res.json({ status: true, data });
 });
 
-// Buat Pembayaran (Create Deposit)
+app.post('/api/vouchers/verify', async (req, res) => {
+    const { code, amount } = req.body;
+    const v = await Voucher.findOne({ code: code.toUpperCase(), is_active: true });
+    if (!v || v.used_count >= v.quota || amount < v.min_order) return res.json({ status: false, message: "Voucher Tidak Berlaku" });
+
+    let discount = v.type === 'percentage' ? (amount * v.value / 100) : v.value;
+    res.json({ status: true, discount, code: v.code });
+});
+
 app.post('/api/create-payment', async (req, res) => {
-    const { service_id, target, email, whatsapp } = req.body;
+    const { service_id, target, whatsapp, voucher_code, email } = req.body;
     try {
         const service = await Service.findOne({ service_id, is_active: true });
-        if (!service) return res.json({ status: false, message: "Layanan tidak tersedia." });
+        if (!service) return res.json({ status: false, message: "Layanan Offline" });
 
-        // Rumus Nominal Bayar (Harga Jual + Admin Fee QRIS)
-        const nominalBayar = Math.ceil((service.price_sell + 700) / 0.986);
+        // Ambil Biaya Admin Dinamis dari DB
+        let conf = await Config.findOne({ key: 'qris_settings' });
+        if (!conf) conf = { admin_fee: 700, tax_percent: 1.4 };
+
+        let sellPrice = service.price_sell;
+
+        // Validasi Voucher & Kurangi Kuota
+        if (voucher_code) {
+            const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
+            if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
+                sellPrice -= v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                await Voucher.updateOne({ _id: v._id }, { $inc: { used_count: 1 } });
+            }
+        }
+
+        // Kalkulasi Nominal Bayar (Admin Fee + MDR %)
+        const multiplier = (100 - conf.tax_percent) / 100;
+        const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
         const reff_id = `PAY-${Date.now()}`;
 
         const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`,
-            qs.stringify({ api_key: API_KEY, reff_id, nominal: nominalBayar, type: 'ewallet', metode: 'qris' }),
-            { headers: requestHeaders }
-        );
+            qs.stringify({ api_key: API_KEY, reff_id, nominal: nominalBayar, type: 'ewallet', metode: 'qris' }), 
+            { headers: requestHeaders });
 
         if (depoRes.data.status) {
             const tr = new Transaction({
@@ -198,81 +211,57 @@ app.post('/api/create-payment', async (req, res) => {
                 amount: nominalBayar,
                 base_price: service.price_original,
                 item_name: service.name,
-                target, email, whatsapp,
-                status: 'pending',
-                meta: { code: service.service_id, target: target }
+                target, whatsapp, status: 'pending',
+                email: email || 'N/A',
+                meta: { code: service.service_id, target }
             });
             await tr.save();
             res.json({ status: true, redirect_url: `/transaction/${depoRes.data.data.id}` });
         } else {
             res.json({ status: false, message: depoRes.data.message });
         }
-    } catch (e) {
-        res.status(500).json({ status: false, message: "Server Error" });
-    }
+    } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 
-// Cek Status Pembayaran & Proses Produk Otomatis
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
         const statusRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/status`,
             qs.stringify({ api_key: API_KEY, id: deposit_id }), { headers: requestHeaders });
-
         let status = statusRes.data.data.status;
 
-        // Jika processing, trigger instant deposit agar saldo masuk cepat
         if (status === 'processing') {
-            try {
-                await axios.post(`${ATLANTIC_BASE_URL}/deposit/instant`,
-                    qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }), { headers: requestHeaders });
-                status = 'success';
-            } catch (e) {}
+            await axios.post(`${ATLANTIC_BASE_URL}/deposit/instant`, 
+                qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }), { headers: requestHeaders });
+            status = 'success';
         }
 
         if (status === 'success') {
-            // Tembak API Beli Produk
             const buyRes = await axios.post(`${ATLANTIC_BASE_URL}/transaksi/create`,
-                qs.stringify({ api_key: API_KEY, code: meta.code, target: meta.target, reff_id: `TRX-${deposit_id}` }),
+                qs.stringify({ api_key: API_KEY, code: meta.code, target: meta.target, reff_id: `TRX-${deposit_id}` }), 
                 { headers: requestHeaders });
 
             if (buyRes.data.status) {
                 await Transaction.updateOne({ deposit_id }, { $set: { status: 'success', sn: buyRes.data.data.sn, updated_at: new Date() } });
                 res.json({ status: true, state: 'success', sn: buyRes.data.data.sn });
             } else {
-                if (buyRes.data.message.includes('uplicate')) {
-                    res.json({ status: true, state: 'success', sn: 'Sedang Diproses' });
-                } else {
-                    await Transaction.updateOne({ deposit_id }, { $set: { status: 'failed' } });
-                    res.json({ status: true, state: 'failed', message: buyRes.data.message });
-                }
+                if(buyRes.data.message.includes('uplicate')) return res.json({ status: true, state: 'success', sn: 'Diproses' });
+                res.json({ status: true, state: 'failed', message: buyRes.data.message });
             }
+        } else if (status === 'cancel') {
+            await Transaction.updateOne({ deposit_id }, { $set: { status: 'cancelled' } });
+            res.json({ status: true, state: 'expired' });
         } else {
-            res.json({ status: true, state: status });
+            res.json({ status: true, state: 'pending' });
         }
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// Detail Transaksi by ID
 app.get('/api/transaction/:id', async (req, res) => {
     try {
         const tr = await Transaction.findOne({ $or: [{ deposit_id: req.params.id }, { order_id: req.params.id }] });
         res.json({ status: !!tr, data: tr });
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// History Terakhir
-app.get('/api/transactions', async (req, res) => {
-    try {
-        const data = await Transaction.find().sort({ created_at: -1 }).limit(100);
-        res.json({ status: true, data });
-    } catch (e) {
-        res.status(500).json({ status: false });
-    }
-});
-
-app.listen(PORT, () => console.log(`🚀 Lana Store Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server Berjalan di Port ${PORT}`));
