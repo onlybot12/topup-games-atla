@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Lana Store - Topup Game & Pulsa</title>
+    <title>Lana Store - Topup Game & Digital</title>
     <%- include('../partials/user/heads') %>
     <style>
         .game-card { 
@@ -18,9 +18,13 @@
         }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Tambahan agar scroll mulus dan tidak terpotong */
+        html { scroll-behavior: smooth; }
+        body { padding-bottom: 80px; } /* Kompensasi Bottom Nav */
     </style>
 </head>
-<body class="bg-dark-900 text-gray-100 overflow-x-hidden">
+<body class="bg-dark-900 text-gray-100">
 
     <!-- Header -->
     <header class="sticky top-0 z-40 bg-dark-900/90 backdrop-blur-lg border-b border-dark-700 px-4 py-4 flex items-center gap-3">
@@ -29,75 +33,134 @@
         </button>
         <div class="flex-1 relative">
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-            <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari Game, Pulsa, atau PLN..." 
+            <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari Game atau Pulsa..." 
                 class="w-full bg-dark-800 border-none rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
     </header>
 
     <%- include('../partials/sidebar-user') %>
 
-    <main class="p-4 max-w-7xl mx-auto min-h-screen">
-        <!-- Hero Banner -->
-        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-blue-900/20 relative overflow-hidden">
-            <div class="relative z-10">
-                <h2 class="text-2xl font-black leading-tight">Lana Store<br>Topup Otomatis.</h2>
-                <p class="text-blue-100 text-[10px] mt-2 font-bold uppercase tracking-widest opacity-80">Proses 1-3 Detik 24 Jam</p>
+    <!-- Main Content dengan Padding Bottom Extra agar tidak terpotong -->
+    <main class="p-4 max-w-7xl mx-auto pb-32">
+        
+        <div id="pageHome">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[32px] p-6 mb-8 shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-black leading-tight text-white">Lana Store<br>Topup Otomatis.</h2>
+                    <p class="text-blue-100 text-[10px] mt-2 font-bold uppercase tracking-widest opacity-80">Proses 1-3 Detik 24 Jam</p>
+                </div>
+                <i class="fas fa-bolt absolute -right-4 -bottom-4 text-8xl text-white/10 -rotate-12"></i>
             </div>
-            <i class="fas fa-gamepad absolute -right-4 -bottom-4 text-8xl text-white/10 -rotate-12"></i>
+
+            <div id="categoriesContainer" class="space-y-10">
+                <!-- Loading -->
+                <div id="loading" class="flex flex-col items-center justify-center py-20">
+                    <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+                    <p class="text-gray-500 text-xs font-bold uppercase">Memuat Layanan...</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Container Kategori -->
-        <div id="categoriesContainer" class="space-y-10">
-            <!-- Loading Spinner -->
-            <div id="loading" class="flex flex-col items-center justify-center py-20">
-                <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Memuat Layanan...</p>
+        <!-- Detail Section -->
+        <div id="pageDetail" class="hidden">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="goBack()" class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <img id="detailImg" src="" class="w-14 h-14 rounded-xl object-cover border border-dark-700">
+                    <div class="flex-1">
+                        <h1 id="detailTitle" class="text-lg font-bold"></h1>
+                        <p id="detailCat" class="text-sm text-gray-400"></p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6 flex gap-3">
+                    <i class="fas fa-info-circle text-blue-400 mt-0.5"></i>
+                    <p id="detailInfo" class="text-xs text-blue-200">Masukkan data dengan benar</p>
+                </div>
+
+                <!-- Input Data -->
+                <div class="bg-dark-800 border border-dark-700 rounded-3xl p-5 mb-6 shadow-sm">
+                    <label id="inputLabel" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 block">Data Akun</label>
+                    <div id="singleInput">
+                        <input type="text" id="targetSingle" placeholder="Masukkan ID" class="w-full bg-dark-900 border border-dark-700 rounded-2xl px-4 py-4 focus:border-blue-500 outline-none font-bold text-white">
+                    </div>
+                    <div id="dualInput" class="hidden grid grid-cols-7 gap-3">
+                        <input type="tel" id="targetId" placeholder="User ID" class="col-span-4 bg-dark-900 border border-dark-700 rounded-2xl px-4 py-4 outline-none font-bold">
+                        <input type="tel" id="targetZone" placeholder="Zone" class="col-span-3 bg-dark-900 border border-dark-700 rounded-2xl px-4 py-4 outline-none font-bold">
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 ml-2">Pilih Nominal</h3>
+                <div id="productsList" class="grid grid-cols-2 gap-3 mb-10"></div>
+
+                <!-- Contact & Voucher Form (Hidden until product selected) -->
+                <div id="contactForm" class="hidden space-y-4 fade-in">
+                    <!-- Voucher Box -->
+                    <div class="bg-dark-800 border border-dark-700 rounded-3xl p-6">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Gunakan Voucher</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="voucherInput" placeholder="KODE PROMO" class="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 uppercase text-sm font-bold focus:border-blue-500 outline-none">
+                            <button onclick="checkVoucher()" class="bg-slate-700 px-6 py-3 rounded-xl text-xs font-black">CEK</button>
+                        </div>
+                        <p id="voucherMsg" class="text-[10px] mt-2"></p>
+                    </div>
+
+                    <div class="bg-dark-800 border border-dark-700 rounded-3xl p-6">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Informasi Kontak</h3>
+                        <div class="space-y-4">
+                            <input type="tel" id="confWhatsapp" placeholder="Nomor WhatsApp (628xxx)" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-4 text-sm font-bold focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-dark-800 border border-dark-700 rounded-3xl p-6">
+                        <div class="space-y-3 mb-6 text-sm">
+                            <div class="flex justify-between text-gray-400"><span>Produk</span><span id="sumItemName" class="text-white font-bold"></span></div>
+                            <div class="flex justify-between text-gray-400"><span>Target</span><span id="sumTarget" class="text-white font-mono"></span></div>
+                            <div id="sumDiscRow" class="hidden flex justify-between text-green-400 font-bold"><span>Potongan Promo</span><span id="sumDiscPrice"></span></div>
+                        </div>
+                        <div class="pt-4 border-t border-dark-700 flex justify-between items-center">
+                            <span class="font-bold text-white uppercase text-xs">Total Bayar</span>
+                            <span id="sumTotalPrice" class="text-2xl font-black text-blue-500"></span>
+                        </div>
+                        <p class="text-[9px] text-gray-500 mt-2">*Sudah termasuk biaya admin QRIS otomatis.</p>
+                    </div>
+
+                    <button id="btnPayNow" onclick="processPayment()" class="w-full bg-blue-600 py-5 rounded-[24px] font-black text-white shadow-xl shadow-blue-900/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
+                        <i class="fas fa-credit-card"></i> BAYAR SEKARANG
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- Section Riwayat & FAQ tetap sama... -->
+        <div id="pageHistory" class="hidden"><%- include('../partials/history-content') %></div>
+        <div id="pageFaq" class="hidden"><%- include('../partials/faq-content') %></div>
+
     </main>
 
-    <!-- Order Sheet (Modal Android Style) -->
-    <div id="orderSheet" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeSheet()"></div>
-        <div class="absolute bottom-0 inset-x-0 bg-dark-800 rounded-t-[40px] p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto no-scrollbar border-t border-dark-700">
-            <div class="w-12 h-1 bg-dark-600 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex items-center gap-4 mb-8">
-                <img id="sheetImg" class="w-16 h-16 rounded-2xl object-cover border border-dark-600 shadow-lg">
-                <div>
-                    <h3 id="sheetTitle" class="font-black text-xl text-white"></h3>
-                    <p id="sheetCat" class="text-blue-400 text-[10px] font-black uppercase tracking-wider"></p>
-                </div>
-            </div>
-
-            <!-- Input Data -->
-            <div class="bg-dark-900/50 p-5 rounded-3xl border border-dark-700 mb-8">
-                <label class="text-[10px] font-black text-gray-500 uppercase mb-3 block tracking-widest">Lengkapi Data Tujuan</label>
-                
-                <div id="mlInput" class="hidden grid grid-cols-7 gap-3">
-                    <input type="tel" id="targetId" placeholder="User ID" class="col-span-4 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
-                    <input type="tel" id="targetZone" placeholder="Zone" class="col-span-3 bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
-                </div>
-                
-                <div id="normalInput">
-                    <input type="text" id="targetSingle" placeholder="Masukkan ID / Nomor HP" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm focus:border-blue-500 outline-none font-bold text-white">
-                </div>
-                <p id="inputHint" class="text-[9px] text-gray-500 mt-3 italic font-medium"></p>
-            </div>
-
-            <!-- List Nominal -->
-            <label class="text-[10px] font-black text-gray-500 uppercase mb-4 block tracking-widest ml-2">Pilih Item</label>
-            <div id="sheetProducts" class="grid grid-cols-2 gap-3 pb-10">
-                <!-- Nominal akan di-render disini -->
-            </div>
-        </div>
-    </div>
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 bg-dark-800/95 backdrop-blur-md border-t border-dark-700 px-6 py-3 z-50 flex justify-around items-center">
+        <button id="navHome" onclick="switchPage('home')" class="flex flex-col items-center gap-1 text-blue-500">
+            <i class="fas fa-home text-xl"></i><span class="text-[9px] font-black uppercase tracking-widest">Home</span>
+        </button>
+        <button id="navHistory" onclick="switchPage('history')" class="flex flex-col items-center gap-1 text-gray-500">
+            <i class="fas fa-receipt text-xl"></i><span class="text-[9px] font-black uppercase tracking-widest">Riwayat</span>
+        </button>
+        <button id="navFaq" onclick="switchPage('faq')" class="flex flex-col items-center gap-1 text-gray-500">
+            <i class="fas fa-question-circle text-xl"></i><span class="text-[9px] font-black uppercase tracking-widest">Bantuan</span>
+        </button>
+    </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         let allServices = [];
-        let groupedByBrand = {};
+        let groupedData = {};
+        let selectedProduct = null;
+        let appliedVoucher = null;
+        let discountVal = 0;
 
         window.onload = async () => {
             try {
@@ -106,61 +169,42 @@
                     allServices = res.data.data;
                     processData();
                 }
-            } catch (e) {
-                document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Gagal memuat data.</p>';
-            }
+            } catch(e) { document.getElementById('categoriesContainer').innerHTML = '<p class="text-center py-20 text-red-400">Gagal memuat data.</p>'; }
         };
 
         function processData() {
-            groupedByBrand = {};
+            groupedData = {};
             allServices.forEach(item => {
-                // Logika Grouping berdasarkan Brand sesuai JSON result Anda
-                const brand = item.brand || "LAINNYA";
-                if(!groupedByBrand[brand]) {
-                    groupedByBrand[brand] = {
-                        name: brand,
-                        category: item.category,
-                        image: item.img_url,
-                        items: []
-                    };
+                if(!item.is_active) return;
+                let brand = item.brand || 'Lainnya';
+                if(!groupedData[brand]) {
+                    groupedData[brand] = { name: brand, category: item.category, image: item.img_url, items: [] };
                 }
-                groupedByBrand[brand].items.push(item);
+                groupedData[brand].items.push(item);
             });
-            renderUI();
+            renderCategories();
         }
 
-        function renderUI() {
+        function renderCategories() {
             const container = document.getElementById('categoriesContainer');
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const loading = document.getElementById('loading');
-            if(loading) loading.remove();
-
             container.innerHTML = '';
-            const categories = {};
+            const cats = {};
 
-            // Masukkan Brand ke dalam Kategori masing-masing
-            Object.values(groupedByBrand).forEach(b => {
+            Object.values(groupedData).forEach(b => {
                 if(b.name.toLowerCase().includes(search)) {
-                    if(!categories[b.category]) categories[b.category] = [];
-                    categories[b.category].push(b);
+                    if(!cats[b.category]) cats[b.category] = [];
+                    cats[b.category].push(b);
                 }
             });
 
-            if(Object.keys(categories).length === 0) {
-                container.innerHTML = '<div class="text-center py-20 text-gray-600 font-bold">Produk tidak ditemukan</div>';
-                return;
-            }
-
-            // Loop Kategori
-            for(const [catName, brands] of Object.entries(categories)) {
+            for(const [name, brands] of Object.entries(cats)) {
                 container.innerHTML += `
-                    <div class="animate-fade-in">
-                        <h3 class="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] mb-5 ml-2 flex items-center gap-2">
-                            <span class="w-1 h-4 bg-blue-600 rounded-full"></span> ${catName}
-                        </h3>
-                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    <div>
+                        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 ml-2 flex items-center gap-2"><span class="w-1 h-3 bg-blue-600 rounded-full"></span> ${name}</h3>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                             ${brands.map(b => `
-                                <div onclick="openOrder('${b.name}')" class="game-card p-2 shadow-lg cursor-pointer">
+                                <div onclick="openDetail('${b.name}')" class="game-card p-2 shadow-lg cursor-pointer">
                                     <img src="${b.image}" class="w-full aspect-square object-cover rounded-2xl mb-2 border border-dark-700/50">
                                     <p class="text-[10px] font-black text-center truncate px-1 text-gray-300 uppercase">${b.name}</p>
                                 </div>
@@ -171,81 +215,114 @@
             }
         }
 
-        function openOrder(brandName) {
-            const group = groupedByBrand[brandName];
-            document.getElementById('sheetTitle').innerText = brandName;
-            document.getElementById('sheetImg').src = group.image;
-            document.getElementById('sheetCat').innerText = group.category;
-            
-            const isML = brandName.toLowerCase().includes('mobile legends');
+        function openDetail(brand) {
+            const data = groupedData[brand];
+            document.getElementById('pageHome').classList.add('hidden');
+            document.getElementById('pageDetail').classList.remove('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('detailTitle').innerText = brand;
+            document.getElementById('detailImg').src = data.image;
+            document.getElementById('detailCat').innerText = data.category;
+
+            const isML = brand.toLowerCase().includes('mobile legends');
             document.getElementById('mlInput').classList.toggle('hidden', !isML);
             document.getElementById('normalInput').classList.toggle('hidden', isML);
-            
-            const hint = document.getElementById('inputHint');
-            const cat = group.category.toLowerCase();
-            if(isML) hint.innerText = "*Contoh: 12345678(1234)";
-            else if(cat.includes('perdana') || cat.includes('pulsa')) hint.innerText = "*Masukkan Nomor HP aktif (08xxx)";
-            else hint.innerText = "*Pastikan data yang Anda masukkan benar.";
 
-            const list = document.getElementById('sheetProducts');
+            const list = document.getElementById('productsList');
             list.innerHTML = '';
-            
-            // Tampilkan Item dan urutkan harga (price_sell)
-            group.items.sort((a,b) => a.price_sell - b.price_sell).forEach(item => {
+            data.items.sort((a,b) => a.price_sell - b.price_sell).forEach(item => {
                 list.innerHTML += `
-                    <button onclick="createOrder('${item.service_id}')" 
-                        class="bg-dark-900 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 active:bg-blue-900/40 transition-all flex flex-col justify-between h-full group">
-                        <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight group-hover:text-white">${item.name}</p>
-                        <p class="text-sm font-black text-blue-400 mt-auto">Rp ${item.price_sell.toLocaleString('id-ID')}</p>
+                    <button onclick="pickProduct('${item.service_id}', '${item.name}', ${item.price_sell})" class="bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 transition-all flex flex-col justify-between">
+                        <p class="text-[10px] text-gray-400 font-bold mb-1">${item.name}</p>
+                        <p class="text-sm font-black text-blue-400">Rp ${item.price_sell.toLocaleString()}</p>
                     </button>
                 `;
             });
-
-            document.getElementById('orderSheet').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            window.scrollTo(0,0);
         }
 
-        async function createOrder(service_id) {
-            let target = '';
-            const brand = document.getElementById('sheetTitle').innerText;
-            const isML = brand.toLowerCase().includes('mobile legends');
+        async function checkVoucher() {
+            const code = document.getElementById('voucherInput').value;
+            if(!code) return;
+            try {
+                const res = await axios.post('/api/vouchers/verify', { code, amount: selectedProduct.price });
+                const msg = document.getElementById('voucherMsg');
+                if(res.data.status) {
+                    appliedVoucher = res.data.code;
+                    discountVal = res.data.discount;
+                    msg.className = "text-[10px] mt-2 text-green-400 font-bold";
+                    msg.innerText = "Voucher Berhasil Terpasang!";
+                    calculateTotal();
+                } else {
+                    appliedVoucher = null; discountVal = 0;
+                    msg.className = "text-[10px] mt-2 text-red-500 font-bold";
+                    msg.innerText = res.data.message;
+                    calculateTotal();
+                }
+            } catch (e) { alert("Server error"); }
+        }
+
+        function pickProduct(id, name, price) {
+            selectedProduct = { id, name, price };
+            appliedVoucher = null; discountVal = 0;
+            document.getElementById('voucherInput').value = '';
+            document.getElementById('voucherMsg').innerText = '';
             
+            document.getElementById('contactForm').classList.remove('hidden');
+            document.getElementById('sumItemName').innerText = name;
+            calculateTotal();
+            document.getElementById('contactForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function calculateTotal() {
+            // Kita hitung simulasi harga akhir + fee QRIS (Logic backend)
+            const configRes = await axios.get('/api/admin/config');
+            const conf = configRes.data.data;
+            
+            let currentPrice = selectedProduct.price - discountVal;
+            const multiplier = (100 - conf.tax_percent) / 100;
+            const total = Math.ceil((currentPrice + conf.admin_fee) / multiplier);
+
+            document.getElementById('sumTotalPrice').innerText = "Rp " + total.toLocaleString('id-ID');
+            document.getElementById('sumDiscRow').classList.toggle('hidden', discountVal <= 0);
+            document.getElementById('sumDiscPrice').innerText = "- Rp " + discountVal.toLocaleString('id-ID');
+        }
+
+        async function processPayment() {
+            const whatsapp = document.getElementById('confWhatsapp').value;
+            if(!whatsapp || whatsapp.length < 10) return alert("Masukkan Nomor WhatsApp yang valid!");
+
+            const btn = document.getElementById('btnPayNow');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MEMPROSES...';
+
+            let target = '';
+            const isML = document.getElementById('detailTitle').innerText.toLowerCase().includes('mobile legends');
             if(isML) {
-                const id = document.getElementById('targetId').value;
-                const zone = document.getElementById('targetZone').value;
-                if(!id || !zone) return alert("Lengkapi User ID & Zone!");
-                target = `${id}(${zone})`;
+                target = document.getElementById('targetId').value + "(" + document.getElementById('targetZone').value + ")";
             } else {
                 target = document.getElementById('targetSingle').value;
-                if(!target) return alert("Masukkan ID/Nomor tujuan!");
             }
 
             try {
-                // Tembak API Create Payment dari server.js
-                const res = await axios.post('/api/create-payment', { 
-                    service_id, 
-                    target, 
-                    whatsapp: '628', // Placeholder
-                    email: 'customer@lanastore.com'
+                const res = await axios.post('/api/create-payment', {
+                    service_id: selectedProduct.id,
+                    target: target,
+                    whatsapp: whatsapp,
+                    voucher_code: appliedVoucher
                 });
-
-                if(res.data.status) {
-                    window.location.href = res.data.redirect_url;
-                } else {
-                    alert(res.data.message);
-                }
-            } catch (e) {
-                alert("Koneksi server terputus.");
-            }
+                if(res.data.status) window.location.href = res.data.redirect_url;
+                else { alert(res.data.message); btn.disabled = false; btn.innerText = "BAYAR SEKARANG"; }
+            } catch (e) { alert("Error Server"); btn.disabled = false; }
         }
 
-        function filterProducts() { renderUI(); }
-        function closeSheet() { document.getElementById('orderSheet').classList.add('hidden'); document.body.style.overflow = 'auto'; }
-        function toggleSidebar() {
-            const s = document.getElementById('sidebar');
-            const o = document.getElementById('sidebarOverlay');
-            s.classList.toggle('-translate-x-full');
-            o.classList.toggle('hidden');
+        function filterProducts() { renderCategories(); }
+        function goBack() { document.getElementById('pageDetail').classList.add('hidden'); document.getElementById('pageHome').classList.remove('hidden'); document.getElementById('mainHeader').classList.remove('hidden'); document.getElementById('contactForm').classList.add('hidden'); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebarOverlay').classList.toggle('hidden'); }
+        
+        function switchPage(page) {
+            ['pageHome', 'pageHistory', 'pageFaq'].forEach(p => document.getElementById(p).classList.add('hidden'));
+            document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).classList.remove('hidden');
+            // Logic warna Nav disesuaikan...
         }
     </script>
 </body>
