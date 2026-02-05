@@ -1,0 +1,102 @@
+<!-- Sidebar Overlay -->
+<div id="sidebarOverlay" 
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[50] transition-opacity duration-300" 
+    onclick="toggleSidebar()">
+</div>
+
+<!-- Sidebar Container -->
+<aside id="sidebar" 
+    class="fixed top-0 left-0 h-full w-72 bg-dark-800 border-r border-dark-700 z-[60] transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col shadow-2xl">
+    
+    <!-- Sidebar Header -->
+    <div class="p-6 border-b border-dark-700 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/40">
+                <i class="fas fa-bolt text-white"></i>
+            </div>
+            <span class="font-black text-xl tracking-tighter text-white">LANA STORE</span>
+        </div>
+        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-dark-700 hover:text-white transition-colors">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
+        <p class="px-4 mb-2 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Menu Utama</p>
+        
+        <a href="/" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-blue-600/10 text-blue-400 font-bold border border-blue-500/20">
+            <i class="fas fa-home w-5 text-center"></i>
+            <span>Beranda</span>
+        </a>
+
+        <a href="/search" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 font-bold hover:bg-dark-700 hover:text-white transition-all">
+            <i class="fas fa-search w-5 text-center"></i>
+            <span>Lacak Pesanan</span>
+        </a>
+
+        <button onclick="window.location.href='/#history'" class="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 font-bold hover:bg-dark-700 hover:text-white transition-all">
+            <i class="fas fa-receipt w-5 text-center"></i>
+            <span>Riwayat Saya</span>
+        </button>
+
+        <div class="pt-6 pb-2 border-t border-dark-700 mt-4">
+            <p class="px-4 mb-2 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Bantuan & Sosial</p>
+        </div>
+
+        <a href="https://wa.me/628xxx" target="_blank" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 font-bold hover:bg-dark-700 hover:text-white transition-all">
+            <i class="fab fa-whatsapp w-5 text-center text-green-500"></i>
+            <span>WhatsApp Admin</span>
+        </a>
+
+        <a href="/faq" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 font-bold hover:bg-dark-700 hover:text-white transition-all">
+            <i class="fas fa-question-circle w-5 text-center text-blue-500"></i>
+            <span>Pertanyaan (FAQ)</span>
+        </a>
+
+        <!-- Admin Shortcut (Hanya untuk pemilik) -->
+        <a href="/admin/layanan" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-500 font-bold hover:bg-red-500/10 hover:text-red-400 transition-all mt-10">
+            <i class="fas fa-user-shield w-5 text-center"></i>
+            <span class="text-xs uppercase">Dashboard Admin</span>
+        </a>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="p-6 border-t border-dark-700">
+        <div class="bg-dark-900/50 rounded-2xl p-4 border border-dark-700">
+            <p class="text-[9px] text-gray-500 font-black uppercase text-center tracking-widest leading-none">v5.0 Stable Engine</p>
+            <p class="text-[8px] text-gray-600 text-center mt-1">Managed by Lana Store</p>
+        </div>
+    </div>
+</aside>
+
+<script>
+    // Fungsi Global Toggle Sidebar
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        const isHidden = sidebar.classList.contains('-translate-x-full');
+        
+        if (isHidden) {
+            // Membuka Sidebar
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Lock Scroll
+        } else {
+            // Menutup Sidebar
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Unlock Scroll
+        }
+    }
+
+    // Menutup sidebar jika link diklik (khusus anchor link)
+    document.querySelectorAll('#sidebar a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 1024) {
+                toggleSidebar();
+            }
+        });
+    });
+</script>
