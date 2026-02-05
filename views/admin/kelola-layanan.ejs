@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Lana Admin - Kelola Layanan</title>
+    <%- include('../partials/head') %>
+    <style>
+        .table-container { border-radius: 20px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
+        .table td { white-space: nowrap; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <%- include('../partials/sidebar') %>
+
+    <!-- Main Content -->
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 border">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800">Kelola Layanan</h1>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">A</div>
+        </header>
+
+        <main class="p-4 md:p-6">
+            <!-- Toolbar -->
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+                <div class="bg-white border rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Profit</span>
+                    <input type="number" id="profitInput" value="5" class="w-10 font-bold text-blue-600 focus:outline-none bg-transparent text-center">
+                    <span class="text-xs font-bold text-slate-400">%</span>
+                </div>
+                <button onclick="syncData()" id="btnSync" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-[11px] uppercase shadow-md transition-all active:scale-95">
+                    <i class="fas fa-sync mr-1"></i> SYNCR ATL
+                </button>
+            </div>
+
+            <!-- Table Card -->
+            <div class="table-container shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table id="tableServices" class="table table-hover align-middle">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
+                                <th>CODE</th><th>LAYANAN</th><th>MODAL</th><th>JUAL</th><th>STATUS</th><th>AKTIF</th><th>SAVE</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600 font-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            $('#tableServices').DataTable({
+                "processing": true, "serverSide": true,
+                "ajax": { "url": "/api/admin/services", "type": "GET" },
+                "pageLength": 10,
+                "columns": [
+                    { "data": "service_id" },
+                    { "data": null, "render": d => `<div class="flex items-center gap-3"><img src="${d.img_url}" class="w-8 h-8 object-contain rounded-lg"><span>${d.name}</span></div>` },
+                    { "data": "price_original", "render": d => `Rp ${parseInt(d).toLocaleString()}` },
+                    { "data": null, "render": d => `<input type="number" id="p-${d._id}" class="w-24 border rounded-lg px-2 py-1.5 font-bold text-blue-600" value="${d.price_sell}">` },
+                    { "data": "status_api", "render": d => `<span class="px-2 py-1 rounded-full text-[10px] font-black uppercase ${d==='available'?'bg-green-100 text-green-600':'bg-red-100 text-red-600'}">${d}</span>` },
+                    { "data": null, "render": d => `<div class="form-check form-switch"><input class="form-check-input scale-110" type="checkbox" id="s-${d._id}" ${d.is_active?'checked':''} onchange="updateRow('${d._id}')"></div>` },
+                    { "data": null, "render": d => `<button onclick="updateRow('${d._id}')" class="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white"><i class="fas fa-save"></i></button>` }
+                ]
+            });
+        });
+
+        async function syncData() {
+            const profit = $('#profitInput').val();
+            $('#btnSync').attr('disabled', true).text('SYNCING...');
+            const res = await fetch('/api/admin/sync-services', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profit }) });
+            const data = await res.json();
+            Swal.fire({ icon: data.status ? 'success' : 'error', title: data.message, timer: 2000, showConfirmButton: false });
+            $('#tableServices').DataTable().ajax.reload();
+            $('#btnSync').attr('disabled', false).html('<i class="fas fa-sync mr-1"></i> SYNCR ATL');
+        }
+
+        async function updateRow(id) {
+            const price_sell = $(`#p-${id}`).val();
+            const is_active = $(`#s-${id}`).is(':checked');
+            await fetch(`/api/admin/services/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ price_sell, is_active }) });
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000 });
+            Toast.fire({ icon: 'success', title: 'Tersimpan' });
+        }
+    </script>
+</body>
+</html>
