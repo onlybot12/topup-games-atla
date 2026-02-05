@@ -39,6 +39,7 @@ app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.h
 app.get('/history/:trx_id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'history.html')));
 app.get('/admin/layanan', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'kelola-layanan.html')));
 app.get('/admin/voucher', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-voucher.html')));
+app.get('/admin/pengaturan', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'pengaturan.html')));
 
 // Redirect Pembayaran
 app.get('/transaction/:deposit_id', async (req, res) => {
