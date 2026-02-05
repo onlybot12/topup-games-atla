@@ -29,7 +29,8 @@ const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4
 // Headers untuk menghindari 403 Forbidden
 const requestHeaders = {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    'User-Agent': 'Atlantic-Vercel/5.0' 
+    
 };
 
 // ==========================
