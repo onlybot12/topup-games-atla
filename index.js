@@ -33,6 +33,7 @@ connectDB();
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
 const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4hu1s4dPJrootJmQmhzfywCQ48sEe3b6fph8S59gtQKpRk3iXcAXe9L2eGOFqrsBsz5rkJ';
 
+// Request Headers sesuai instruksi
 const requestHeaders = {
     'Content-Type': 'application/x-www-form-urlencoded',
     'User-Agent': 'Atlantic-Vercel/5.0' 
@@ -42,23 +43,25 @@ const requestHeaders = {
 // ROUTE VIEW (USER & ADMIN)
 // ==========================
 
-// User Pages (Static HTML inside public/)
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'topup.html')));
+// User Pages
+app.get('/', (req, res) => res.render('user/topup'));
 app.get('/search', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
 app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
 
 // Admin Pages (EJS with Sidebars)
 app.get('/admin/layanan', (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
-app.get('/admin/voucher', (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
+app.get('/admin/voucher', (req, res) => res.render('admin/creat-voucher', { currentPage: 'voucher' }));
 app.get('/admin/pengaturan', (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
 
 // Redirect Pembayaran (QRIS Page)
 app.get('/transaction/:deposit_id', async (req, res) => {
     const depositId = req.params.deposit_id;
     try {
-        const transaction = await Transaction.findOne({ deposit_id: depositId });
-        if (!transaction) return res.status(404).send("Transaksi tidak ditemukan");
-        res.sendFile(path.join(__dirname, 'public', 'payment.html'));
+        const tr = await Transaction.findOne({ deposit_id: depositId });
+        if (!tr) return res.status(404).send("Transaksi tidak ditemukan");
+        
+        // Render EJS Payment dan kirim data transaksi
+        res.render('user/payment', { tr: tr });
     } catch (error) { res.status(500).send('Server Error'); }
 });
 
@@ -89,7 +92,6 @@ app.put('/api/admin/config', async (req, res) => {
 // API: LAYANAN (SERVER-SIDE)
 // ==========================
 
-// Sync API ke MongoDB dengan Profit %
 app.post('/api/admin/sync-services', async (req, res) => {
     const { profit } = req.body;
     const profitPercent = parseFloat(profit) || 0;
@@ -101,7 +103,7 @@ app.post('/api/admin/sync-services', async (req, res) => {
             const services = response.data.data;
             const operations = services.map(item => {
                 const modal = parseInt(item.price) || 0;
-                // Markup & Bulatkan ke 100 terdekat
+                // Hitung jual & bulatkan ke 100 teratas
                 let jual = Math.ceil((modal + (modal * profitPercent / 100)) / 100) * 100;
                 return {
                     updateOne: {
@@ -126,7 +128,6 @@ app.post('/api/admin/sync-services', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false, message: e.message }); }
 });
 
-// Server-Side Get Services (Anti-Lag)
 app.get('/api/admin/services', async (req, res) => {
     try {
         let { draw, start, length, search } = req.query;
@@ -135,7 +136,8 @@ app.get('/api/admin/services', async (req, res) => {
         let query = search && search.value ? {
             $or: [
                 { name: { $regex: search.value, $options: 'i' } },
-                { service_id: { $regex: search.value, $options: 'i' } }
+                { service_id: { $regex: search.value, $options: 'i' } },
+                { brand: { $regex: search.value, $options: 'i' } }
             ]
         } : {};
 
@@ -149,7 +151,6 @@ app.get('/api/admin/services', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// Update & Delete Services
 app.put('/api/admin/services/:id', async (req, res) => {
     try {
         const { price_sell, is_active } = req.body;
@@ -161,7 +162,7 @@ app.put('/api/admin/services/:id', async (req, res) => {
 app.delete('/api/admin/delete-services', async (req, res) => {
     try {
         await Service.deleteMany({});
-        res.json({ status: true });
+        res.json({ status: true, message: "Database Layanan Dikosongkan" });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
@@ -191,10 +192,9 @@ app.delete('/api/admin/vouchers/:id', async (req, res) => {
 });
 
 // ==========================
-// USER: TRANSAKSI & VOUCHER
+// USER: API TRANSAKSI & VOUCHER
 // ==========================
 
-// Verify Voucher
 app.post('/api/vouchers/verify', async (req, res) => {
     const { code, amount } = req.body;
     try {
@@ -208,7 +208,6 @@ app.post('/api/vouchers/verify', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// Get Services Public
 app.get('/api/services', async (req, res) => {
     try {
         const data = await Service.find({ is_active: true, status_api: 'available' }).sort({ category: 1, name: 1 });
@@ -216,7 +215,6 @@ app.get('/api/services', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-// Create Payment (Sistem Redirect)
 app.post('/api/create-payment', async (req, res) => {
     const { service_id, target, whatsapp, voucher_code, email } = req.body;
     try {
@@ -228,18 +226,19 @@ app.post('/api/create-payment', async (req, res) => {
         if (!conf) conf = { admin_fee: 700, tax_percent: 1.4 };
 
         let sellPrice = service.price_sell;
+        let discountApplied = 0;
 
         // Validasi Voucher & Kurangi Kuota Otomatis
         if (voucher_code) {
             const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
             if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
-                let disc = v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
-                sellPrice -= disc;
+                discountApplied = v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                sellPrice -= discountApplied;
                 await Voucher.updateOne({ _id: v._id }, { $inc: { used_count: 1 } });
             }
         }
 
-        // Rumus QRIS (Fee & MDR)
+        // Kalkulasi Nominal Bayar (Admin Fee + MDR %)
         const multiplier = (100 - conf.tax_percent) / 100;
         const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
         const reff_id = `PAY-${Date.now()}`;
@@ -271,7 +270,6 @@ app.post('/api/create-payment', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 
-// Check Status Pembayaran
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -286,7 +284,7 @@ app.post('/api/check-status', async (req, res) => {
         }
 
         if (status === 'success') {
-            // Langsung Beli Produk ke Atlantic
+            // Tembak API Beli Produk
             const buyRes = await axios.post(`${ATLANTIC_BASE_URL}/transaksi/create`,
                 qs.stringify({ api_key: API_KEY, code: meta.code, target: meta.target, reff_id: `TRX-${deposit_id}` }), 
                 { headers: requestHeaders });
@@ -303,12 +301,12 @@ app.post('/api/check-status', async (req, res) => {
             await Transaction.updateOne({ deposit_id }, { $set: { status: 'cancelled' } });
             res.json({ status: true, state: 'expired' });
         } else {
-            res.json({ status: true, state: 'pending' });
+            res.json({ status: true, state: status });
         }
     } catch (error) { res.status(500).json({ status: false }); }
 });
 
-// Transaction Detail by ID
+// Detail Transaksi
 app.get('/api/transaction/:id', async (req, res) => {
     try {
         const tr = await Transaction.findOne({ $or: [{ deposit_id: req.params.id }, { order_id: req.params.id }] });
@@ -318,5 +316,4 @@ app.get('/api/transaction/:id', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`🚀 Lana Store Server Berjalan di Port ${PORT}`);
-    console.log(`📱 Kelola Layanan: http://localhost:${PORT}/admin/layanan`);
 });
