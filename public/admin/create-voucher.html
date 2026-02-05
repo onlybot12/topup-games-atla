@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Lana Admin - Buat Voucher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        #sidebar { transition: all 0.3s; width: 260px; position: fixed; left: -260px; top: 0; bottom: 0; z-index: 1000; }
+        #sidebar.active { left: 0; }
+        #main-content { transition: all 0.3s; width: 100%; }
+
+        /* UI Voucher Tiket */
+        .coupon-card {
+            background: white; border: 1px solid #e2e8f0; border-left: 6px solid #3b82f6;
+            position: relative; border-radius: 16px; transition: transform 0.2s;
+        }
+        .coupon-card:hover { transform: translateY(-5px); }
+        .coupon-card::before, .coupon-card::after {
+            content: ''; position: absolute; left: -10px; width: 16px; height: 16px; 
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50%;
+        }
+        .coupon-card::before { top: 20%; } .coupon-card::after { bottom: 20%; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- SIDEBAR (Sama dengan kelola-layanan) -->
+    <aside id="sidebar" class="bg-slate-900 text-slate-400 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3 text-white font-black text-xl">
+            <i class="fas fa-rocket text-blue-500"></i> LANA ADMIN
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="/admin/layanan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all font-semibold">
+                <i class="fas fa-box"></i> <span>Kelola Layanan</span>
+            </a>
+            <a href="/admin/voucher" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold">
+                <i class="fas fa-ticket-alt"></i> <span>Buat Voucher</span>
+            </a>
+            <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all border-t border-slate-800 mt-4">
+                <i class="fas fa-external-link-alt"></i> <span>Lihat Toko</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div id="main-content">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-50 px-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800">Manajemen Voucher</h1>
+            </div>
+        </header>
+
+        <main class="p-6">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Kupon Promo</h2>
+                    <p class="text-xs text-slate-500">Daftar voucher aktif yang tersedia.</p>
+                </div>
+                <button onclick="openVoucherModal()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-blue-600 transition-all">
+                    <i class="fas fa-plus mr-2"></i> TAMBAH VOUCHER
+                </button>
+            </div>
+
+            <div id="voucher-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Voucher cards render here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function toggleSidebar() { $('#sidebar').toggleClass('active'); }
+
+        async function loadVouchers() {
+            const res = await fetch('/api/admin/vouchers');
+            const json = await res.json();
+            const grid = $('#voucher-grid').empty();
+
+            if(json.data.length === 0) {
+                grid.html('<div class="col-span-full py-20 text-center text-slate-400">Belum ada voucher.</div>');
+                return;
+            }
+
+            json.data.forEach(v => {
+                const sisa = v.quota - v.used_count;
+                const percent = (v.used_count / v.quota) * 100;
+                grid.append(`
+                    <div class="coupon-card p-5 shadow-sm flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${v.type === 'percentage' ? 'Persentase %' : 'Potongan Tunai'}</div>
+                                <h3 class="text-xl font-extrabold text-slate-800 uppercase">${v.code}</h3>
+                            </div>
+                            <button onclick="deleteVoucher('${v._id}')" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div class="text-2xl font-black text-slate-900 mb-4">${v.type === 'percentage' ? v.value + '%' : 'Rp ' + v.value.toLocaleString()}</div>
+                        <div class="bg-slate-50 p-3 rounded-2xl">
+                            <div class="flex justify-between text-[10px] font-bold mb-2">
+                                <span class="text-slate-400 uppercase">Pemakaian</span>
+                                <span class="text-slate-700 font-black">${v.used_count} / ${v.quota}</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold uppercase">
+                            <span class="${sisa > 0 ? 'text-green-500' : 'text-red-500'}">● ${sisa > 0 ? 'Aktif' : 'Habis'}</span>
+                            <span class="text-slate-400">Min: Rp ${v.min_order.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        async function openVoucherModal() {
+            const { value: v } = await Swal.fire({
+                title: 'Buat Voucher Baru',
+                html: `<div class="text-left text-xs font-bold text-slate-400 mb-1 uppercase">Kode Voucher</div><input id="v-code" class="swal2-input !mt-0 !text-sm" placeholder="PROMO10">` +
+                     `<div class="text-left text-xs font-bold text-slate-400 mb-1 mt-3 uppercase">Tipe & Nilai</div><div class="flex gap-2"><select id="v-type" class="swal2-input !mt-0 !text-sm"><option value="fixed">Rp</option><option value="percentage">%</option></select><input id="v-val" type="number" class="swal2-input !mt-0 !text-sm" placeholder="5000"></div>` +
+                     `<div class="grid grid-cols-2 gap-3 mt-3"><div class="text-left"><div class="text-xs font-bold text-slate-400 mb-1 uppercase">Min. Belanja</div><input id="v-min" type="number" class="swal2-input !mt-0 !text-sm" value="0"></div><div class="text-left"><div class="text-xs font-bold text-slate-400 mb-1 uppercase">Kuota</div><input id="v-quota" type="number" class="swal2-input !mt-0 !text-sm" value="10"></div></div>`,
+                preConfirm: () => ({ code: $('#v-code').val().toUpperCase(), type: $('#v-type').val(), value: $('#v-val').val(), min_order: $('#v-min').val(), quota: $('#v-quota').val() })
+            });
+            if(v) {
+                await fetch('/api/admin/vouchers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) });
+                loadVouchers();
+            }
+        }
+
+        async function deleteVoucher(id) {
+            const confirm = await Swal.fire({ title: 'Hapus Voucher?', icon: 'warning', showCancelButton: true });
+            if(confirm.isConfirmed) { await fetch(`/api/admin/vouchers/${id}`, { method: 'DELETE' }); loadVouchers(); }
+        }
+
+        loadVouchers();
+    </script>
+</body>
+</html>
