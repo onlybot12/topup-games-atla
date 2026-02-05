@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Pembayaran - Lana Store</title>
+    <%- include('../partials/user/head') %>
+</head>
+<body class="bg-dark-900 text-gray-100">
+
+    <div id="mainContent" class="fade-in max-w-2xl mx-auto px-4 py-6">
+        
+        <div class="flex items-center justify-between mb-8">
+            <a href="/" class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h2 class="font-bold text-lg">Konfirmasi Pembayaran</h2>
+            <div class="bg-dark-800 px-3 py-1 rounded-lg border border-dark-700">
+                <span id="qrTimer" class="text-blue-400 font-mono font-bold">60:00</span>
+            </div>
+        </div>
+
+        <div class="text-center mb-8">
+            <div id="statusBadge" class="inline-block bg-yellow-500/20 text-yellow-400 text-[10px] font-black uppercase px-4 py-2 rounded-full border border-yellow-500/10">
+                <i class="fas fa-clock mr-1"></i> MENUNGGU PEMBAYARAN
+            </div>
+        </div>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 text-center shadow-xl">
+            <p class="text-xs text-gray-400 mb-6">Scan QRIS untuk membayar otomatis</p>
+            <div class="bg-white p-3 rounded-2xl inline-block mb-6">
+                <img id="qrImage" src="<%= tr.qr_image %>" class="w-64 h-64 mx-auto rounded-lg">
+            </div>
+            <h2 class="text-3xl font-black text-white">Rp <%= tr.amount.toLocaleString('id-ID') %></h2>
+        </div>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-3">
+                <span class="text-gray-500 text-xs font-bold uppercase">Order ID</span>
+                <span class="font-mono text-sm font-bold text-blue-400"><%= tr.order_id %></span>
+            </div>
+            <div class="flex justify-between items-center border-b border-dark-700 pb-3">
+                <span class="text-gray-500 text-xs font-bold uppercase">Produk</span>
+                <span class="text-sm font-bold"><%= tr.item_name %></span>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+                <span class="text-gray-500 text-xs font-bold uppercase">Tujuan</span>
+                <span class="text-sm font-mono text-gray-300"><%= tr.target %></span>
+            </div>
+        </div>
+
+        <a href="/" class="block text-center mt-10 text-gray-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-all">
+            <i class="fas fa-home mr-1"></i> Kembali ke Beranda
+        </a>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md bg-black/60">
+        <div class="bg-dark-800 border border-dark-700 rounded-[40px] p-8 w-full max-w-sm text-center shadow-2xl fade-in">
+            <div class="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                <i class="fas fa-check"></i>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-2">Sukses!</h3>
+            <p class="text-gray-400 text-sm mb-6">Pembayaran telah kami terima.</p>
+            <div class="bg-dark-900 border border-dark-700 rounded-2xl p-4 text-left mb-8">
+                <label class="text-[10px] font-black text-gray-500 uppercase block mb-1">Serial Number (SN)</label>
+                <p id="snDisplay" class="font-mono font-bold text-blue-400 break-all">Memproses...</p>
+            </div>
+            <button onclick="window.location.href='/'" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase tracking-widest active:scale-95 transition-all">Selesai</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const depositId = "<%= tr.deposit_id %>";
+        const meta = <%- JSON.stringify(tr.meta) %>;
+
+        function checkStatus() {
+            const checkInterval = setInterval(async () => {
+                try {
+                    const res = await axios.post('/api/check-status', { deposit_id: depositId, meta: meta });
+                    if(res.data.state === 'success') {
+                        clearInterval(checkInterval);
+                        document.getElementById('successModal').classList.remove('hidden');
+                        document.getElementById('snDisplay').innerText = res.data.sn;
+                        saveToLocal(res.data.sn);
+                    } else if(res.data.state === 'failed') {
+                        clearInterval(checkInterval);
+                        alert("Gagal: " + res.data.message);
+                    }
+                } catch (e) {}
+            }, 3000);
+        }
+
+        function saveToLocal(sn) {
+            let history = JSON.parse(localStorage.getItem('ray_history') || '[]');
+            history.unshift({ trx_id: 'TRX'+depositId.substr(-6), item_name: "<%= tr.item_name %>", price: "<%= tr.amount %>", sn: sn, date: new Date().toLocaleString() });
+            localStorage.setItem('ray_history', JSON.stringify(history.slice(0, 20)));
+        }
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            setInterval(() => {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+                document.getElementById('qrTimer').textContent = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+                if (--timer < 0) window.location.href = "/";
+            }, 1000);
+        }
+
+        window.onload = () => {
+            checkStatus();
+            startTimer(3600);
+        };
+    </script>
+</body>
+</html>
