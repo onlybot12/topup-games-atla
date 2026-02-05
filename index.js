@@ -49,7 +49,7 @@ app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.h
 
 // Admin Pages (EJS with Sidebars)
 app.get('/admin/layanan', (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
-app.get('/admin/voucher', (req, res) => res.render('admin/creat-voucher', { currentPage: 'voucher' }));
+app.get('/admin/voucher', (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
 app.get('/admin/pengaturan', (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
 
 // Redirect Pembayaran (QRIS Page)
