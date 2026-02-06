@@ -314,6 +314,18 @@ app.get('/api/transaction/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
+app.get('/api/transactions/recent', async (req, res) => {
+    try {
+        const data = await Transaction.find()
+            .sort({ created_at: -1 })
+            .limit(10)
+            .select('order_id whatsapp amount status item_name target created_at');
+        res.json({ status: true, data });
+    } catch (error) {
+        res.status(500).json({ status: false });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Lana Store Server Berjalan di Port ${PORT}`);
 });
