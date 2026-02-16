@@ -1,4 +1,4 @@
-<!-- Sidebar Overlay (Latar belakang gelap saat sidebar muncul di HP) -->
+<!-- Sidebar Overlay -->
 <div id="sidebar-overlay" 
      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9998] hidden opacity-0 transition-opacity duration-300" 
      onclick="toggleSidebar()">
@@ -10,7 +10,6 @@
     
     <div class="p-6 border-b border-slate-800 flex items-center justify-between text-white font-black text-xl">
         <span><i class="fas fa-rocket text-blue-500 mr-2"></i>LANA ADMIN</span>
-        <!-- Tombol Close (Hanya muncul di Mobile) -->
         <button onclick="toggleSidebar()" class="lg:hidden text-slate-500 hover:text-white p-2">
             <i class="fas fa-times"></i>
         </button>
@@ -49,10 +48,6 @@
 </aside>
 
 <script>
-    /**
-     * FUNGSI TOGGLE SIDEBAR GLOBAL
-     * Pastikan diletakkan di luar $(document).ready agar terbaca oleh atribut onclick HTML
-     */
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
@@ -62,20 +57,14 @@
         const isHidden = sidebar.classList.contains('-translate-x-full');
         
         if (isHidden) {
-            // Membuka Sidebar
             sidebar.classList.remove('-translate-x-full');
             overlay.classList.remove('hidden');
-            setTimeout(() => {
-                overlay.classList.add('opacity-100');
-            }, 10);
+            setTimeout(() => overlay.classList.add('opacity-100'), 10);
             document.body.style.overflow = 'hidden'; 
         } else {
-            // Menutup Sidebar
             sidebar.classList.add('-translate-x-full');
             overlay.classList.remove('opacity-100');
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 300);
+            setTimeout(() => overlay.classList.add('hidden'), 300);
             document.body.style.overflow = 'auto'; 
         }
     }
