@@ -4,9 +4,12 @@
     <title>Set Layanan: <%= brand.name %></title>
     <%- include('../partials/head') %>
     <style>
-        .service-row { transition: all 0.2s; border-radius: 12px; margin-bottom: 8px; border: 1px solid #e2e8f0; background: white; }
-        .service-row:hover { border-color: #3b82f6; }
-        .check-custom { width: 20px; height: 20px; border-radius: 6px; cursor: pointer; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .table-container { border-radius: 24px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
+        .table { font-size: 13px !important; }
+        .img-icon { width: 28px; height: 28px; object-fit: contain; }
+        .form-check-input { width: 22px; height: 22px; cursor: pointer; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -14,124 +17,95 @@
     <%- include('../partials/sidebar') %>
 
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <header class="h-16 bg-white border-b px-4 flex items-center justify-between sticky top-0 z-40">
+        <header class="h-16 bg-white border-b sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="/admin/brand" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600"><i class="fas fa-arrow-left text-xs"></i></a>
+                <a href="/admin/brand" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
                 <div>
-                    <h1 class="font-black text-slate-800 text-xs uppercase leading-none"><%= brand.name %></h1>
+                    <h1 class="font-bold text-slate-800 text-xs md:text-sm uppercase leading-none"><%= brand.name %></h1>
                     <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Pilih Produk Layanan</p>
                 </div>
             </div>
-            <button onclick="saveChecklist()" id="btnSave" class="bg-blue-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-blue-500/20">
+            <button onclick="saveChecklist()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
                 Simpan (<span id="check-count">0</span>)
             </button>
         </header>
 
         <main class="p-4 md:p-6">
-            <!-- Search Filter -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-6 shadow-sm">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchService" onkeyup="filterServices()" placeholder="Cari ID atau Nama Layanan (Contoh: Free Fire)..." 
-                        class="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <div class="table-container shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table id="tableChecklist" class="table table-hover align-middle w-100">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
+                                <th width="40">PILIH</th>
+                                <th>CODE</th>
+                                <th>NAMA LAYANAN</th>
+                                <th>KATEGORI</th>
+                                <th>HARGA JUAL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600 font-semibold"></tbody>
+                    </table>
                 </div>
-            </div>
-
-            <!-- List Checklist -->
-            <div id="services-container" class="space-y-2">
-                <div class="text-center py-20 text-slate-400 font-bold">Memuat data layanan...</div>
             </div>
         </main>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         const brandId = "<%= brand._id %>";
-        let allServices = [];
-        let selectedServices = <%- JSON.stringify(brand.services || []) %>; // Mengambil data yang sudah tercentang sebelumnya
+        // Persistence Checklist
+        let selectedServices = <%- JSON.stringify(brand.services || []) %>;
 
-        async function loadServices() {
-            const res = await fetch('/api/admin/all-services');
-            const json = await res.json();
-            allServices = json.data;
-            renderServices();
+        $(document).ready(function() {
             updateCounter();
-        }
-
-        function renderServices() {
-            const container = $('#services-container').empty();
-            const search = $('#searchService').val().toLowerCase();
-
-            const filtered = allServices.filter(s => 
-                s.name.toLowerCase().includes(search) || 
-                s.service_id.toLowerCase().includes(search) ||
-                s.brand.toLowerCase().includes(search)
-            );
-
-            if(filtered.length === 0) {
-                container.html('<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">Layanan tidak ditemukan</div>');
-                return;
-            }
-
-            filtered.forEach(s => {
-                const isChecked = selectedServices.includes(s.service_id) ? 'checked' : '';
-                container.append(`
-                    <label class="service-row p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all">
-                        <div class="flex items-center gap-4">
-                            <input type="checkbox" class="check-custom form-check-input mt-0" 
-                                value="${s.service_id}" ${isChecked} onchange="handleCheck(this)">
-                            <div>
-                                <p class="text-xs font-black text-slate-800 leading-none uppercase">${s.name}</p>
-                                <p class="text-[9px] text-slate-400 font-bold mt-1 uppercase">${s.brand} | ID: ${s.service_id} | Rp ${s.price_sell.toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <i class="fas fa-check-circle text-blue-500 text-sm ${isChecked ? '' : 'hidden'}"></i>
-                    </label>
-                `);
+            $('#tableChecklist').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": { "url": "/api/admin/services", "type": "GET" },
+                "pageLength": 20,
+                "columns": [
+                    { 
+                        "data": null, "orderable": false,
+                        "render": function(data) {
+                            const isChecked = selectedServices.includes(data.service_id) ? 'checked' : '';
+                            return `<input type="checkbox" class="form-check-input" onchange="toggleItem('${data.service_id}', this)" ${isChecked}>`;
+                        }
+                    },
+                    { "data": "service_id" },
+                    { "data": null, "render": d => `<div class="flex items-center gap-2"><img src="${d.img_url}" class="img-icon"><span>${d.name}</span></div>` },
+                    { "data": "category" },
+                    { "data": "price_sell", "render": d => `<span class="text-blue-600 font-black">Rp ${parseInt(d).toLocaleString()}</span>` }
+                ],
+                "language": { "search": "", "searchPlaceholder": "Cari produk..." }
             });
-        }
+        });
 
-        function handleCheck(el) {
-            const id = el.value;
-            if(el.checked) {
-                if(!selectedServices.includes(id)) selectedServices.push(id);
-            } else {
-                selectedServices = selectedServices.filter(item => item !== id);
-            }
+        function toggleItem(id, el) {
+            if (el.checked) { if (!selectedServices.includes(id)) selectedServices.push(id); }
+            else { selectedServices = selectedServices.filter(i => i !== id); }
             updateCounter();
-            // Toggle icon centang di sebelah kanan
-            $(el).closest('label').find('i').toggleClass('hidden', !el.checked);
         }
 
-        function updateCounter() {
-            $('#check-count').text(selectedServices.length);
-        }
-
-        function filterServices() { renderServices(); }
+        function updateCounter() { $('#check-count').text(selectedServices.length); }
 
         async function saveChecklist() {
             const btn = $('#btnSave');
-            btn.attr('disabled', true).text('Menyimpan...');
-
-            try {
-                const res = await fetch(`/api/admin/brands/${brandId}/services`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ services: selectedServices })
-                });
-                const data = await res.json();
-                if(data.status) {
-                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: data.message, timer: 2000, showConfirmButton: false });
-                }
-            } catch (e) {
-                Swal.fire('Error', 'Gagal menyimpan', 'error');
-            } finally {
-                btn.attr('disabled', false).html(`Simpan (<span id="check-count">${selectedServices.length}</span>)`);
-            }
+            btn.attr('disabled', true).text('Saving...');
+            const res = await fetch(`/api/admin/brands/${brandId}/services`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ services: selectedServices })
+            });
+            const data = await res.json();
+            if(data.status) Swal.fire({ icon: 'success', title: 'Berhasil!', timer: 1500, showConfirmButton: false });
+            btn.attr('disabled', false).html(`Simpan (<span id="check-count">${selectedServices.length}</span>)`);
         }
-
-        $(document).ready(loadServices);
     </script>
 </body>
 </html>
