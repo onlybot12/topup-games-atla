@@ -136,6 +136,25 @@ app.put('/api/admin/config', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
+
+// Halaman Checklist Layanan untuk Brand
+app.get('/admin/brand/services/:id', async (req, res) => {
+    try {
+        const brand = await Brand.findById(req.params.id);
+        if (!brand) return res.status(404).send("Brand tidak ditemukan");
+        res.render('admin/brand-services', { currentPage: 'brand', brand });
+    } catch (e) { res.status(500).send("Error Server"); }
+});
+
+// API untuk Update Daftar Layanan di dalam Brand
+app.put('/api/admin/brands/:id/services', async (req, res) => {
+    try {
+        const { services } = req.body; // Array ID layanan: ["ASP7K4", "API B1"]
+        await Brand.findByIdAndUpdate(req.params.id, { services: services });
+        res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
 // ==========================
 // API: LAYANAN (SYNC & DATATABLES)
 // ==========================
