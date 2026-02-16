@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Admin - Kelola Brand Game</title>
+    <%- include('../partials/head') %>
+    <!-- Select2 untuk memilih banyak produk sekaligus -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--multiple { border-radius: 12px; padding: 5px; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <%- include('../partials/sidebar') %>
+
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b px-4 flex items-center justify-between sticky top-0 z-40">
+            <h1 class="font-bold text-slate-800 text-sm uppercase">Management Brand & Game</h1>
+            <button onclick="openBrandModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-blue-500/20">
+                <i class="fas fa-plus mr-1"></i> Tambah Brand
+            </button>
+        </header>
+
+        <main class="p-4 md:p-6">
+            <div id="brand-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Data Brand akan muncul di sini -->
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        async function loadBrands() {
+            const res = await fetch('/api/admin/brands');
+            const json = await res.json();
+            const grid = $('#brand-list').empty();
+
+            json.data.forEach(b => {
+                grid.append(`
+                    <div class="bg-white border rounded-[24px] p-4 shadow-sm flex flex-col items-center text-center">
+                        <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md">
+                        <h3 class="font-black text-slate-800 text-sm uppercase">${b.name}</h3>
+                        <p class="text-[10px] text-blue-500 font-bold mb-3">/id/${b.slug}</p>
+                        <div class="flex gap-2 w-full mt-auto">
+                            <button onclick="deleteBrand('${b._id}')" class="flex-1 bg-red-50 text-red-500 py-2 rounded-xl text-[10px] font-bold uppercase"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        async function openBrandModal() {
+            // Ambil list semua layanan dari database untuk dipilih
+            const sRes = await fetch('/api/admin/all-services');
+            const sJson = await sRes.json();
+            let options = '';
+            sJson.data.forEach(s => {
+                options += `<option value="${s.service_id}">${s.brand} - ${s.name}</option>`;
+            });
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Tambah Brand Baru',
+                width: '600px',
+                html: `
+                    <div class="text-left space-y-3 px-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Nama Brand</label>
+                        <input id="b-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('b-slug').value = this.value.toLowerCase().replace(/ /g, '-')">
+                        
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Slug Otomatis</label>
+                        <input id="b-slug" class="swal2-input !mt-0 !text-sm" readonly>
+
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">URL Icon</label>
+                        <input id="b-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://image-link.com">
+
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Kategori</label>
+                        <select id="b-cat" class="swal2-input !mt-0 !text-sm">
+                            <option value="Games">Games</option>
+                            <option value="Pulsa">Pulsa / Data</option>
+                            <option value="E-Wallet">E-Wallet</option>
+                        </select>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-800 uppercase mb-3"><i class="fas fa-file-alt mr-1"></i> Format Form (Sesuai Foto)</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input id="f-target-label" class="swal2-input !mt-0 !text-xs" placeholder="Label 1 (User ID)">
+                                <select id="f-target-type" class="swal2-input !mt-0 !text-xs">
+                                    <option value="text">Tipe: Text</option>
+                                    <option value="number">Tipe: Nomor</option>
+                                    <option value="email">Tipe: Email</option>
+                                </select>
+                            </div>
+                            <div class="mt-3 flex items-center gap-2">
+                                <input type="checkbox" id="f-has-server" onchange="document.getElementById('server-fields').classList.toggle('hidden')">
+                                <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase">Gunakan Input 2 (Server ID)</label>
+                            </div>
+                            <div id="server-fields" class="hidden grid grid-cols-2 gap-3 mt-2">
+                                <input id="f-server-label" class="swal2-input !mt-0 !text-xs" placeholder="Label 2 (Server)">
+                                <select id="f-server-type" class="swal2-input !mt-0 !text-xs">
+                                    <option value="text">Tipe: Text</option>
+                                    <option value="number">Tipe: Nomor</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Pilih Produk Layanan</label>
+                        <select id="b-services" class="swal2-input !mt-0 select2" multiple="multiple">
+                            ${options}
+                        </select>
+                    </div>
+                `,
+                didOpen: () => { $('.select2').select2({ dropdownParent: $('.swal2-container') }); },
+                preConfirm: () => {
+                    return {
+                        name: $('#b-name').val(),
+                        slug: $('#b-slug').val(),
+                        category: $('#b-cat').val(),
+                        icon_url: $('#b-icon').val(),
+                        form_config: {
+                            target_label: $('#f-target-label').val(),
+                            target_type: $('#f-target-type').val(),
+                            has_server: $('#f-has-server').is(':checked'),
+                            server_label: $('#f-server-label').val(),
+                            server_type: $('#f-server-type').val()
+                        },
+                        services: $('#b-services').val()
+                    }
+                }
+            });
+
+            if (formValues) {
+                await fetch('/api/admin/brands', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formValues) });
+                loadBrands();
+            }
+        }
+
+        async function deleteBrand(id) {
+            if(confirm("Hapus Brand?")) { await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' }); loadBrands(); }
+        }
+
+        $(document).ready(loadBrands);
+    </script>
+</body>
+</html>
