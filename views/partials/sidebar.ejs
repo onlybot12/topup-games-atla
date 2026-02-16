@@ -1,67 +1,40 @@
+
 <!-- Overlay -->
 <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] hidden opacity-0 transition-opacity" onclick="toggleSidebar()"></div>
 
 <!-- Sidebar -->
 <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-400 flex flex-col z-[1000] lg:translate-x-0 transition-transform duration-300">
-    <div class="p-6 border-b border-slate-800 flex items-center justify-between text-white font-black text-xl">
+    <div class="p-6 border-b border-slate-800 flex items-center gap-3 text-white font-black text-xl">
         <span><i class="fas fa-rocket text-blue-500 mr-2"></i>LANA ADMIN</span>
         <button onclick="toggleSidebar()" class="lg:hidden text-slate-500"><i class="fas fa-times"></i></button>
     </div>
     
-    <nav class="flex-1 p-4 space-y-2">
-        <!-- Menu Kelola Brand (Baru) -->
-        <a href="/admin/brand" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'brand' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
+    <nav class="flex-1 p-4 space-y-2 no-scrollbar overflow-y-auto">
+        <p class="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Data Produk</p>
+        <a href="/admin/brand" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'brand' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
             <i class="fas fa-tags"></i> <span>Kelola Brand</span>
         </a>
-
-        <!-- Menu Kelola Layanan -->
-        <a href="/admin/layanan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'layanan' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
+        <a href="/admin/layanan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'layanan' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
             <i class="fas fa-box"></i> <span>Kelola Layanan</span>
         </a>
 
-        <!-- Menu Voucher -->
-        <a href="/admin/voucher" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'voucher' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
-            <i class="fas fa-ticket-alt"></i> <span>Buat Voucher</span>
+        <p class="px-4 py-2 mt-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Marketing</p>
+        <a href="/admin/banner" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'banner' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+            <i class="fas fa-images"></i> <span>Kelola Banner</span>
+        </a>
+        <a href="/admin/flash-sale" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'flashsale' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+            <i class="fas fa-bolt"></i> <span>Flash Sale</span>
+        </a>
+        <a href="/admin/voucher" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'voucher' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+            <i class="fas fa-ticket-alt"></i> <span>Voucher Promo</span>
         </a>
 
-        <!-- Menu Pengaturan -->
-        <a href="/admin/pengaturan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'pengaturan' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-bold' : 'hover:bg-slate-800 hover:text-white font-semibold' %>">
-            <i class="fas fa-cog"></i> <span>Pengaturan QRIS</span>
+        <p class="px-4 py-2 mt-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sistem</p>
+        <a href="/admin/pengaturan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'pengaturan' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+            <i class="fas fa-cog"></i> <span>Pengaturan</span>
         </a>
-
-        <div class="my-4 border-t border-slate-800"></div>
-
-        <!-- Tombol Lihat Toko -->
-        <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-sm font-semibold">
-            <i class="fas fa-external-link-alt text-blue-400"></i> <span>Lihat Toko</span>
+        <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 mt-4 border-t border-slate-800 pt-6">
+            <i class="fas fa-external-link-alt"></i> <span>Lihat Toko</span>
         </a>
     </nav>
-
-    <!-- Admin Profile Mini -->
-    <div class="p-4 border-t border-slate-800">
-        <div class="flex items-center gap-3 p-2">
-            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">A</div>
-            <div class="flex flex-col">
-                <span class="text-xs font-bold text-white leading-none">Administrator</span>
-                <span class="text-[10px] text-green-500 font-bold uppercase mt-1">Online</span>
-            </div>
-        </div>
-    </div>
 </aside>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        
-        sidebar.classList.toggle('active');
-        // Logic untuk mobile overlay
-        if (sidebar.classList.contains('active')) {
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.add('opacity-100'), 10);
-        } else {
-            overlay.classList.remove('opacity-100');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
-        }
-    }
-</script>
