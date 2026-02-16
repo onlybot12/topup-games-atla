@@ -41,7 +41,7 @@
         </a>
         
         <div class="my-4 border-t border-slate-800"></div>
-        <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all">
+        <a href="/" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800">
             <i class="fas fa-external-link-alt text-blue-400"></i> <span>Lihat Toko</span>
         </a>
     </nav>
@@ -52,17 +52,20 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         
-        if (!sidebar || !overlay) return;
-
+        // Menggunakan logika pemeriksaan class yang lebih kuat
         const isHidden = sidebar.classList.contains('-translate-x-full');
         
         if (isHidden) {
+            // TAMPILKAN
             sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0'); // Paksa ke posisi 0
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.add('opacity-100'), 10);
             document.body.style.overflow = 'hidden'; 
         } else {
+            // SEMBUNYIKAN
             sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
             overlay.classList.remove('opacity-100');
             setTimeout(() => overlay.classList.add('hidden'), 300);
             document.body.style.overflow = 'auto'; 
