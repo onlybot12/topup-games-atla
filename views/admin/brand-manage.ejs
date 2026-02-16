@@ -1,27 +1,23 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Set Layanan - Brand</title>
+    <title>Admin - Kelola Brand & Game</title>
     <%- include('../partials/head') %>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        
-        /* Table Android Style */
-        .table-container { border-radius: 24px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
-        .table { font-size: 13px !important; }
-        .img-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; }
-        
-        /* Checkbox Big Size for Touch */
-        .form-check-input { width: 20px; height: 20px; cursor: pointer; border: 2px solid #cbd5e1; }
-        .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
-
-        /* Floating Save Button Mobile */
-        @media (max-width: 1023px) {
-            .mobile-save-box {
-                position: fixed; bottom: 20px; right: 20px; left: 20px; z-index: 50;
-            }
+        .brand-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .brand-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1);
+            transform: translateY(-5px);
+        }
+        .swal-input-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-top: 12px; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -29,185 +25,114 @@
     <%- include('../partials/sidebar') %>
 
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <!-- HEADER -->
         <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="/admin/brand" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="font-bold text-slate-800 text-xs md:text-sm uppercase leading-none"><%= brand.name %></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Pilih Produk Yang Dijual</p>
-                </div>
-            </div>
-            
-            <div class="hidden lg:block">
-                <button onclick="saveChecklist()" id="btnSave" class="bg-blue-600 text-white px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
-                    Simpan (<span id="check-count">0</span>)
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
+                    <i class="fas fa-bars-staggered"></i>
                 </button>
+                <h1 class="font-bold text-slate-800 text-sm md:text-base uppercase tracking-tight">Management Brand</h1>
             </div>
+            <button onclick="openBrandModal()" class="bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                <i class="fas fa-plus mr-1"></i> Tambah Brand
+            </button>
         </header>
 
-        <main class="p-4 md:p-6">
-            <!-- INFO BOX -->
-            <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6 flex gap-3 items-center">
-                <i class="fas fa-info-circle text-blue-500"></i>
-                <p class="text-[11px] text-blue-700 font-bold uppercase leading-tight">
-                    Cari layanan di kolom search, lalu centang produk yang ingin dimasukkan ke brand ini.
-                </p>
-            </div>
-
-            <!-- TABLE CARD -->
-            <div class="table-container shadow-sm overflow-hidden">
-                <div class="table-responsive">
-                    <table id="tableChecklist" class="table table-hover align-middle w-100">
-                        <thead>
-                            <tr class="text-[10px] font-black text-slate-400 uppercase">
-                                <th width="40" class="text-center">PILIH</th>
-                                <th>CODE</th>
-                                <th>NAMA LAYANAN</th>
-                                <th>KATEGORI</th>
-                                <th>HARGA JUAL</th>
-                                <th>API</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-slate-600 font-semibold">
-                            <!-- Render via DataTables Server-side -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Floating Save Button for Mobile -->
-            <div class="mobile-save-box lg:hidden">
-                <button onclick="saveChecklist()" id="btnSaveMob" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-2xl active:scale-95 transition-all">
-                    Simpan Perubahan (<span class="count-val">0</span>)
-                </button>
+        <main class="p-4 md:p-8">
+            <div id="brand-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Data Brand akan dimuat via AJAX -->
+                <div class="col-span-full py-20 text-center text-slate-400">Memuat Brand...</div>
             </div>
         </main>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        const brandId = "<%= brand._id %>";
-        
-        // 1. Variabel Global untuk menyimpan pilihan (Persistent)
-        // Kita ambil data awal dari database EJS
-        let selectedServices = <%- JSON.stringify(brand.services || []) %>;
+        async function loadBrands() {
+            try {
+                const res = await fetch('/api/admin/brands');
+                const json = await res.json();
+                const grid = $('#brand-grid').empty();
 
-        $(document).ready(function() {
-            updateCounter();
+                if(json.data.length === 0) {
+                    grid.html('<div class="col-span-full py-20 text-center text-slate-400 uppercase font-bold text-xs">Belum ada brand.</div>');
+                    return;
+                }
 
-            const table = $('#tableChecklist').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "/api/admin/services", // Menggunakan API yang sama dengan Kelola Layanan
-                    "type": "GET"
-                },
-                "pageLength": 20,
-                "lengthMenu": [[10, 20, 50, 100], [10, 20, 50, 100]],
-                "columns": [
-                    { 
-                        "data": null,
-                        "className": "text-center",
-                        "orderable": false,
-                        "render": function(data) {
-                            const isChecked = selectedServices.includes(data.service_id) ? 'checked' : '';
-                            return `<input type="checkbox" class="form-check-input service-checkbox" 
-                                        data-id="${data.service_id}" ${isChecked} 
-                                        onchange="toggleItem('${data.service_id}', this)">`;
-                        }
-                    },
-                    { "data": "service_id" },
-                    { 
-                        "data": null, 
-                        "render": d => `
-                            <div class="flex items-center gap-2">
-                                <img src="${d.img_url}" class="img-icon">
-                                <div class="flex flex-col">
-                                    <span class="text-slate-800 leading-tight">${d.name}</span>
-                                    <span class="text-[9px] text-slate-400 uppercase">${d.brand}</span>
-                                </div>
-                            </div>` 
-                    },
-                    { "data": "category" },
-                    { 
-                        "data": "price_sell", 
-                        "render": d => `<span class="text-blue-600 font-black">Rp ${parseInt(d).toLocaleString()}</span>` 
-                    },
-                    { 
-                        "data": "status_api", 
-                        "render": d => {
-                            let color = d === 'available' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600';
-                            return `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${color}">${d}</span>`;
-                        }
+                json.data.forEach(b => {
+                    grid.append(`
+                        <div class="brand-card p-5 flex flex-col items-center text-center">
+                            <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md border-2 border-white">
+                            <h3 class="font-black text-slate-800 text-xs uppercase mb-1">${b.name}</h3>
+                            <p class="text-[9px] text-blue-500 font-bold mb-4 tracking-tighter">/id/${b.slug}</p>
+                            
+                            <div class="flex flex-col gap-2 w-full">
+                                <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95">
+                                    <i class="fas fa-list mr-1"></i> Atur Layanan
+                                </a>
+                                <button onclick="deleteBrand('${b._id}')" class="w-full bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
+                                    Hapus
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function openBrandModal() {
+            const { value: f } = await Swal.fire({
+                title: '<span class="text-xs font-black uppercase tracking-widest">Tambah Game Baru</span>',
+                width: '500px',
+                confirmButtonText: 'SIMPAN',
+                html: `
+                    <div class="text-left px-2">
+                        <label class="swal-input-label">Nama Brand</label>
+                        <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
+                        <label class="swal-input-label">Slug URL</label>
+                        <input id="n-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" readonly>
+                        <label class="swal-input-label">URL Icon</label>
+                        <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link-gambar.com/icon.png">
+                        <label class="swal-input-label">Kategori</label>
+                        <select id="n-cat" class="swal2-input !mt-0 !text-sm">
+                            <option value="Games">Games</option>
+                            <option value="Pulsa">Pulsa</option>
+                            <option value="E-Wallet">E-Wallet</option>
+                        </select>
+                        <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                             <p class="text-[10px] font-black uppercase mb-3">Format Form</p>
+                             <input id="f-t-label" class="swal2-input !mt-0 !text-xs !h-10" value="User ID">
+                             <select id="f-t-type" class="swal2-input !mt-2 !text-xs !h-10">
+                                <option value="text">Tipe: Text</option>
+                                <option value="number">Tipe: Nomor</option>
+                             </select>
+                             <div class="mt-3 flex items-center gap-2">
+                                <input type="checkbox" id="f-has-server"> <label class="text-[10px] font-bold uppercase">Gunakan Input 2</label>
+                             </div>
+                        </div>
+                    </div>
+                `,
+                preConfirm: () => {
+                    return {
+                        name: $('#n-name').val(), slug: $('#n-slug').val(), icon_url: $('#n-icon').val(), category: $('#n-cat').val(),
+                        form_config: { target_label: $('#f-t-label').val(), target_type: $('#f-t-type').val(), has_server: $('#f-has-server').is(':checked') }
                     }
-                ],
-                "language": {
-                    "search": "",
-                    "searchPlaceholder": "Cari produk (Contoh: Mobile Legends)...",
-                    "processing": "<div class='spinner-border text-primary' role='status'></div>"
                 }
             });
-        });
-
-        // 2. Fungsi untuk menambah/menghapus ID dari list pilihan
-        function toggleItem(serviceId, checkbox) {
-            if (checkbox.checked) {
-                if (!selectedServices.includes(serviceId)) {
-                    selectedServices.push(serviceId);
-                }
-            } else {
-                selectedServices = selectedServices.filter(id => id !== serviceId);
-            }
-            updateCounter();
-        }
-
-        // 3. Update Angka di tombol simpan
-        function updateCounter() {
-            const count = selectedServices.length;
-            $('#check-count').text(count);
-            $('.count-val').text(count);
-        }
-
-        // 4. Kirim daftar ID yang dipilih ke Backend
-        async function saveChecklist() {
-            const btn = $('#btnSave, #btnSaveMob');
-            btn.attr('disabled', true).text('Processing...');
-
-            try {
-                const res = await fetch(`/api/admin/brands/${brandId}/services`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ services: selectedServices })
-                });
-                
-                const data = await res.json();
-                if(data.status) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil Disimpan',
-                        text: `Sebanyak ${selectedServices.length} layanan dikaitkan ke brand ini.`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }
-            } catch (e) {
-                Swal.fire('Error', 'Gagal menghubungi server', 'error');
-            } finally {
-                btn.attr('disabled', false);
-                updateCounter();
-                $('#btnSave').html(`Simpan (<span id="check-count">${selectedServices.length}</span>)`);
-                $('#btnSaveMob').html(`Simpan Perubahan (<span class="count-val">${selectedServices.length}</span>)`);
+            if (f) {
+                await fetch('/api/admin/brands', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
+                loadBrands();
             }
         }
+
+        async function deleteBrand(id) {
+            if(confirm("Hapus Brand?")) {
+                await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
+                loadBrands();
+            }
+        }
+
+        $(document).ready(loadBrands);
     </script>
-
 </body>
 </html>
