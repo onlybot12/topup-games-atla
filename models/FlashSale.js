@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const FlashSaleSchema = new mongoose.Schema({
     item_name: String,
     service_id: String,
