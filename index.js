@@ -44,8 +44,6 @@ const requestHeaders = {
 
 // User Pages
 app.get('/', (req, res) => res.render('user/index'));
-app.get('/search', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
-app.get('/faq', (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
 
 // Admin Pages (EJS with Sidebars)
 app.get('/admin/layanan', (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
