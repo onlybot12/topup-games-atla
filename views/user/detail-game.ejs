@@ -3,11 +3,18 @@
 <head>
     <title>Topup <%= brand.name %> - Lana Store</title>
     <%- include('../partials/user/heads') %>
+    <style>
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        .product-btn.active { border-color: #3b82f6; background: #1e293b; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+    </style>
 </head>
-<body class="bg-dark-900 text-white pb-20">
+<body class="bg-dark-900 text-white pb-32">
 
     <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-dark-800">
-        <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400"><i class="fas fa-arrow-left"></i></a>
+        <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400">
+            <i class="fas fa-arrow-left"></i>
+        </a>
         <div class="flex items-center gap-3">
             <img src="<%= brand.icon_url %>" class="w-8 h-8 rounded-lg object-cover shadow-lg">
             <h1 class="font-black text-sm uppercase tracking-tight"><%= brand.name %></h1>
@@ -16,10 +23,9 @@
 
     <main class="p-4 max-w-3xl mx-auto">
         
-        <!-- FORM DINAMIS SESUAI CONFIG ADMIN -->
+        <!-- FORM DATA TUJUAN -->
         <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl">
             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Lengkapi Data Tujuan</label>
-            
             <div class="grid grid-cols-1 gap-4">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1"><%= brand.form_config.target_label %></p>
@@ -35,72 +41,196 @@
                 </div>
                 <% } %>
             </div>
-            <p class="text-[9px] text-gray-500 mt-4 italic font-medium">*Harap teliti saat memasukkan data agar proses lancar.</p>
         </div>
 
-        <!-- LIST PRODUK DINAMIS -->
-        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Pilih Nominal Topup</h3>
+        <!-- PILIH PRODUK -->
+        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Pilih Nominal</h3>
         <div class="grid grid-cols-2 gap-3 mb-10">
             <% products.forEach(p => { %>
-                <button onclick="checkout('<%= p.service_id %>', '<%= p.name %>', <%= p.price_sell %>)" 
-                    class="bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 active:scale-95 transition-all flex flex-col justify-between">
+                <button onclick="selectProduct(this, '<%= p.service_id %>', '<%= p.name %>', <%= p.price_sell %>)" 
+                    class="product-btn bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 transition-all flex flex-col justify-between h-full">
                     <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight"><%= p.name %></p>
                     <p class="text-sm font-black text-blue-400 mt-2">Rp <%= p.price_sell.toLocaleString('id-ID') %></p>
                 </button>
             <% }) %>
         </div>
 
-        <!-- VOUCHER & KONTAK -->
-        <div id="checkoutBox" class="hidden animate-slide-up space-y-4">
-            <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6">
-                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Gunakan Promo</h3>
+        <!-- CHECKOUT BOX (VOUCHER & TOTAL) -->
+        <div id="checkoutBox" class="hidden space-y-4 animate-slide-up">
+            
+            <!-- VOUCHER -->
+            <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-xl">
+                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Gunakan Voucher Promo</h3>
                 <div class="flex gap-2">
                     <input type="text" id="vCode" placeholder="KODE VOUCHER" class="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 uppercase text-sm font-bold outline-none focus:border-blue-500">
-                    <button onclick="checkVoucher()" class="bg-slate-700 px-6 py-3 rounded-xl text-xs font-black uppercase">Cek</button>
+                    <button onclick="checkVoucher()" id="btnCheckVoucher" class="bg-blue-600 px-6 py-3 rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Cek</button>
                 </div>
+                <p id="voucherMsg" class="text-[10px] mt-2 font-bold"></p>
             </div>
 
+            <!-- TOTAL PEMBAYARAN -->
             <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <span class="text-xs font-bold text-white uppercase">Total Bayar</span>
-                    <span id="finalPrice" class="text-2xl font-black text-blue-500"></span>
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-400">Harga Produk</span>
+                        <span id="displayBasePrice" class="text-white font-bold">Rp 0</span>
+                    </div>
+                    <div id="displayDiscRow" class="hidden flex justify-between text-xs text-green-400 font-black">
+                        <span>Potongan Diskon</span>
+                        <span id="displayDiscPrice">- Rp 0</span>
+                    </div>
                 </div>
-                <input type="tel" id="wa" placeholder="WhatsApp (628xxx)" class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold mb-4 outline-none focus:border-blue-500">
-                <button onclick="processPayment()" id="btnPay" class="w-full bg-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-900/40 active:scale-95 transition-all">BAYAR SEKARANG</button>
+                
+                <div class="pt-4 border-t border-dark-700 flex justify-between items-center mb-6">
+                    <span class="text-xs font-black text-white uppercase tracking-widest">Total Bayar</span>
+                    <span id="displayFinalPrice" class="text-2xl font-black text-blue-500">Rp 0</span>
+                </div>
+
+                <div class="mb-6">
+                    <label class="text-[10px] font-black text-gray-500 uppercase mb-2 block ml-1">Nomor WhatsApp</label>
+                    <input type="tel" id="wa" placeholder="Contoh: 0812345678" 
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500">
+                </div>
+
+                <button onclick="processPayment()" id="btnPay" class="w-full bg-blue-600 py-5 rounded-[24px] font-black text-sm shadow-xl shadow-blue-900/40 active:scale-95 transition-all">
+                    BAYAR SEKARANG
+                </button>
             </div>
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        let selected = null;
-        let disc = 0;
+        let selectedProduct = null;
+        let appliedDiscount = 0;
+        let appliedVoucherCode = null;
 
-        function checkout(id, name, price) {
-            selected = { id, price };
+        // 1. Fungsi pilih produk
+        function selectProduct(element, id, name, price) {
+            // Reset active state
+            document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            selectedProduct = { id, name, price };
+            appliedDiscount = 0; // Reset diskon saat ganti produk
+            appliedVoucherCode = null;
+            document.getElementById('voucherMsg').innerText = "";
+            document.getElementById('vCode').value = "";
+
             document.getElementById('checkoutBox').classList.remove('hidden');
-            document.getElementById('finalPrice').innerText = "Rp " + price.toLocaleString('id-ID');
+            updatePriceUI();
+            
+            // Auto scroll ke bawah
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
+        // 2. Fungsi Cek Voucher (FETCH API)
+        async function checkVoucher() {
+            const code = document.getElementById('vCode').value.toUpperCase();
+            if(!code) return;
+
+            const btn = document.getElementById('btnCheckVoucher');
+            const msg = document.getElementById('voucherMsg');
+            
+            btn.disabled = true;
+            btn.innerText = "...";
+
+            try {
+                const response = await fetch('/api/vouchers/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, amount: selectedProduct.price })
+                });
+                
+                const result = await response.json();
+
+                if(result.status) {
+                    appliedDiscount = result.discount;
+                    appliedVoucherCode = result.code;
+                    msg.innerText = "✓ Voucher Berhasil Digunakan!";
+                    msg.className = "text-[10px] mt-2 font-bold text-green-400 uppercase";
+                } else {
+                    appliedDiscount = 0;
+                    appliedVoucherCode = null;
+                    msg.innerText = "✕ " + result.message;
+                    msg.className = "text-[10px] mt-2 font-bold text-red-500 uppercase";
+                }
+                updatePriceUI();
+            } catch (e) {
+                alert("Gagal menghubungi server");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "CEK";
+            }
+        }
+
+        // 3. Update Harga UI (Sesuai Logika MDR Admin)
+        async function updatePriceUI() {
+            const basePrice = selectedProduct.price;
+            
+            // Ambil biaya admin terbaru dari DB agar sinkron
+            try {
+                const confRes = await fetch('/api/admin/config');
+                const confJson = await confRes.json();
+                const config = confJson.data;
+
+                let priceAfterVoucher = basePrice - appliedDiscount;
+                
+                // Rumus Pajak QRIS (Sama dengan backend)
+                const multiplier = (100 - config.tax_percent) / 100;
+                const totalBayar = Math.ceil((priceAfterVoucher + config.admin_fee) / multiplier);
+
+                document.getElementById('displayBasePrice').innerText = "Rp " + basePrice.toLocaleString('id-ID');
+                document.getElementById('displayFinalPrice').innerText = "Rp " + totalBayar.toLocaleString('id-ID');
+                
+                const discRow = document.getElementById('displayDiscRow');
+                if(appliedDiscount > 0) {
+                    discRow.classList.remove('hidden');
+                    document.getElementById('displayDiscPrice').innerText = "- Rp " + appliedDiscount.toLocaleString('id-ID');
+                } else {
+                    discRow.classList.add('hidden');
+                }
+            } catch (e) { console.error("Config load error"); }
+        }
+
+        // 4. Proses Bayar (FETCH API)
         async function processPayment() {
             const t1 = document.getElementById('target1').value;
             const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
             const wa = document.getElementById('wa').value;
-            const v = document.getElementById('vCode').value;
 
-            if(!t1 || !wa) return alert("Lengkapi data!");
+            if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan WhatsApp!");
 
-            const target = t2 ? `${t1}(${t2})` : t1;
+            const fullTarget = t2 ? `${t1}(${t2})` : t1;
             const btn = document.getElementById('btnPay');
-            btn.disabled = true; btn.innerText = "Processing...";
+            
+            btn.disabled = true;
+            btn.innerText = "MENGALIHKAN...";
 
             try {
-                const res = await axios.post('/api/create-payment', { service_id: selected.id, target, whatsapp: wa, voucher_code: v });
-                if(res.data.status) window.location.href = res.data.redirect_url;
-                else alert(res.data.message);
-            } catch(e) { alert("Server Error"); }
-            btn.disabled = false; btn.innerText = "BAYAR SEKARANG";
+                const response = await fetch('/api/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        service_id: selectedProduct.id, 
+                        target: fullTarget, 
+                        whatsapp: wa, 
+                        voucher_code: appliedVoucherCode 
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.status) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert(result.message);
+                    btn.disabled = false;
+                    btn.innerText = "BAYAR SEKARANG";
+                }
+            } catch (e) {
+                alert("Server error, coba lagi nanti.");
+                btn.disabled = false;
+                btn.innerText = "BAYAR SEKARANG";
+            }
         }
     </script>
 </body>
