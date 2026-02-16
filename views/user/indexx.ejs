@@ -169,5 +169,38 @@
             });
         }
     </script>
+<script>
+    // Logika Countdown Timer
+    function startCountdown() {
+        const endDate = new Date("<%= (flashSales.length > 0) ? flashSales[0].end_date : '' %>").getTime();
+        
+        setInterval(function() {
+            const now = new Date().getTime();
+            const distance = endDate - now;
+
+            if (distance < 0) {
+                document.getElementById("countdown").innerHTML = "EXPIRED";
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("countdown").innerHTML = `
+                <div class="bg-red-600 text-white font-black px-2 py-1 rounded-md text-xs">${hours}</div>
+                <div class="text-red-600 font-bold">:</div>
+                <div class="bg-red-600 text-white font-black px-2 py-1 rounded-md text-xs">${minutes}</div>
+                <div class="text-red-600 font-bold">:</div>
+                <div class="bg-red-600 text-white font-black px-2 py-1 rounded-md text-xs">${seconds}</div>
+            `;
+        }, 1000);
+    }
+    
+    <% if (flashSales.length > 0) { %>
+    startCountdown();
+    <% } %>
+</script>
+
 </body>
 </html>
