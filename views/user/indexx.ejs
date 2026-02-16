@@ -1,40 +1,173 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Lana Store - Topup Game</title>
+    <title>Lana Store - Topup Game Murah & Cepat</title>
     <%- include('../partials/user/heads') %>
+    <!-- Swiper CSS untuk Slider -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
-        .brand-card { background: #1e293b; border: 1px solid #334155; border-radius: 24px; transition: all 0.2s; }
-        .brand-card:active { transform: scale(0.92); background: #334155; }
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .swiper-pagination-bullet { background: #3b82f6; }
+        .brand-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .brand-card:hover { transform: translateY(-5px); border-color: #3b82f6; box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5); }
+        .category-tabs::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-dark-900 text-white">
+<body class="pb-24">
 
     <%- include('../partials/sidebar-user') %>
 
-    <header class="h-16 px-4 flex items-center justify-between sticky top-0 z-40 bg-dark-900/80 backdrop-blur-md">
-        <button onclick="toggleSidebar()" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400"><i class="fas fa-bars-staggered"></i></button>
-        <span class="font-black text-blue-500 tracking-tighter">LANA STORE</span>
-        <div class="w-10"></div>
+    <!-- NAVBAR -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-800 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-white">
+                <i class="fas fa-bars-staggered"></i>
+            </button>
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+            <span class="font-black text-blue-500 text-xl tracking-tighter">LANA</span>
+        </div>
     </header>
 
-    <main class="p-4 max-w-7xl mx-auto">
-        <!-- Loop Kategori dari Brand -->
-        <% const cats = [...new Set(brands.map(b => b.category))]; %>
-        <% cats.forEach(cat => { %>
-            <div class="mb-10">
-                <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 ml-2"><i class="fas fa-tag mr-2"></i><%= cat %></h3>
-                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                    <% brands.filter(b => b.category === cat).forEach(brand => { %>
-                        <a href="/id/<%= brand.slug %>" class="brand-card p-2 flex flex-col items-center">
-                            <img src="<%= brand.icon_url %>" class="w-full aspect-square object-cover rounded-2xl mb-2">
-                            <p class="text-[10px] font-bold text-center truncate w-full px-1 uppercase tracking-tighter"><%= brand.name %></p>
-                        </a>
-                    <% }) %>
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-10">
+
+        <!-- 1. BANNER SLIDER (Conditional) -->
+        <% if (typeof banners !== 'undefined' && banners.length > 0) { %>
+        <div class="swiper mainSwiper rounded-3xl overflow-hidden shadow-2xl">
+            <div class="swiper-wrapper">
+                <% banners.forEach(b => { %>
+                <div class="swiper-slide">
+                    <a href="<%= b.target_link %>">
+                        <img src="<%= b.image_url %>" class="w-full aspect-[21/9] object-cover" alt="Promo">
+                    </a>
+                </div>
+                <% }) %>
+            </div>
+            <div class="swiper-pagination"></div>
+        </div>
+        <% } %>
+
+        <!-- 2. FLASH SALE / PASTI TERMURAH (Conditional) -->
+        <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
+        <section class="animate-fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-black text-white italic tracking-tighter text-lg uppercase flex items-center gap-2">
+                    <i class="fas fa-bolt text-yellow-400"></i> <%= config.title_flash_sale %>
+                </h3>
+                <div id="countdown" class="flex gap-1">
+                    <!-- Timer JS -->
                 </div>
             </div>
-        <% }) %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% flashSales.forEach(f => { %>
+                <div class="glass p-4 rounded-3xl flex items-center gap-4 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-red-600 text-[10px] font-black px-3 py-1 rounded-bl-xl">OFFER</div>
+                    <img src="/api/placeholder/80/80" class="w-16 h-16 rounded-2xl object-cover border border-slate-700">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-200"><%= f.item_name %></h4>
+                        <p class="text-xs text-slate-400 line-through">Rp <%= f.original_price.toLocaleString() %></p>
+                        <p class="text-blue-400 font-black text-lg">Rp <%= f.promo_price.toLocaleString() %></p>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- 3. POPULER SEKARANG (Conditional) -->
+        <% const popularBrands = brands.filter(b => b.is_popular); %>
+        <% if (popularBrands.length > 0) { %>
+        <section>
+            <h3 class="font-black text-slate-400 text-xs uppercase tracking-[0.3em] mb-5 ml-2"><%= config.title_popular %></h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <% popularBrands.forEach(brand => { %>
+                <a href="/id/<%= brand.slug %>" class="glass p-3 rounded-[28px] flex items-center gap-3 brand-card">
+                    <img src="<%= brand.icon_url %>" class="w-10 h-10 rounded-xl object-cover border border-slate-700">
+                    <div class="overflow-hidden">
+                        <p class="font-bold text-[11px] truncate uppercase"><%= brand.name %></p>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase truncate"><%= brand.category %></p>
+                    </div>
+                </a>
+                <% }) %>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- 4. DAFTAR GAME / LAYANAN (Main Grid) -->
+        <section>
+            <!-- Category Tabs -->
+            <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
+                <button onclick="filterCat('All')" class="cat-btn px-6 py-2.5 rounded-full bg-blue-600 text-white text-xs font-black uppercase">Semua</button>
+                <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
+                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-6 py-2.5 rounded-full bg-slate-800 text-slate-400 text-xs font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
+                <% }) %>
+            </div>
+
+            <div id="gameGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                <% brands.forEach(brand => { %>
+                <a href="/id/<%= brand.slug %>" data-category="<%= brand.category %>" class="brand-item flex flex-col items-center group">
+                    <div class="brand-card glass p-2 rounded-[32px] mb-2 w-full aspect-square flex items-center justify-center">
+                        <img src="<%= brand.icon_url %>" class="w-full h-full object-cover rounded-[24px] shadow-lg group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <p class="text-[10px] font-black text-center text-slate-300 uppercase tracking-tighter truncate w-full px-1"><%= brand.name %></p>
+                </a>
+                <% }) %>
+            </div>
+        </section>
+
     </main>
 
+    <!-- FOOTER -->
+    <footer class="mt-20 border-t border-slate-800 py-10 px-6 glass">
+        <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
+            <h2 class="text-3xl font-black text-blue-500 tracking-tighter mb-4">LANA STORE</h2>
+            <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-8">
+                Platform top-up game termurah, tercepat, dan terpercaya di Indonesia. Otomatis 24 jam nonstop dengan berbagai metode pembayaran.
+            </p>
+            <div class="flex gap-4 mb-10">
+                <% if(config.wa_link) { %><a href="<%= config.wa_link %>" class="w-10 h-10 glass rounded-full flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a><% } %>
+                <% if(config.ig_link) { %><a href="<%= config.ig_link %>" class="w-10 h-10 glass rounded-full flex items-center justify-center text-pink-500 hover:bg-pink-500 hover:text-white transition-all"><i class="fab fa-instagram"></i></a><% } %>
+                <% if(config.tiktok_link) { %><a href="<%= config.tiktok_link %>" class="w-10 h-10 glass rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a><% } %>
+            </div>
+            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">&copy; 2026 Lana Store • All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        // Init Swiper
+        const swiper = new Swiper(".mainSwiper", {
+            loop: true,
+            autoplay: { delay: 3000 },
+            pagination: { el: ".swiper-pagination", clickable: true },
+        });
+
+        // Filter Kategori
+        function filterCat(cat) {
+            $('.cat-btn').removeClass('bg-blue-600 text-white').addClass('bg-slate-800 text-slate-400');
+            $(event.target).addClass('bg-blue-600 text-white').removeClass('bg-slate-800 text-slate-400');
+
+            if(cat === 'All') {
+                $('.brand-item').fadeIn();
+            } else {
+                $('.brand-item').hide();
+                $(`.brand-item[data-category="${cat}"]`).fadeIn();
+            }
+        }
+
+        // Search Game
+        function searchGame() {
+            let val = $('#searchInput').val().toLowerCase();
+            $('.brand-item').each(function() {
+                let name = $(this).find('p').text().toLowerCase();
+                $(this).toggle(name.includes(val));
+            });
+        }
+    </script>
 </body>
 </html>
