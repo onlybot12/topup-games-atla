@@ -1,15 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <title>Lana Store - Topup Game Murah & Cepat</title>
     <%- include('../partials/user/heads') %>
-    <!-- Swiper CSS untuk Slider -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        /* Layout Fix: Agar Footer tetap di bawah */
         body { 
             background-color: #0f172a; 
             color: #f8fafc; 
@@ -22,21 +19,14 @@
         main { flex: 1; }
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
-        .swiper-pagination-bullet { background: #3b82f6; }
         
-        /* Card Game Styling */
+        /* Main Brand Card (3 Kolom) */
         .brand-card-main { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 20px; /* Sedikit lebih kecil agar pas 3 kolom */
+            transition: all 0.3s ease;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
         }
-        .brand-card-main:hover { 
-            transform: translateY(-5px); 
-            border-color: #3b82f6; 
-            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5); 
-        }
-        
         .brand-item img {
             width: 100%;
             aspect-ratio: 1/1;
@@ -44,14 +34,33 @@
             border-radius: 16px;
         }
 
+        /* Popular Section (Layout seperti gambar, Warna tetap Dark) */
+        .popular-container {
+            background-color: #1e293b; /* Warna gelap konsisten */
+            border-radius: 28px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+        .popular-card {
+            background-color: #0f172a; /* Card lebih gelap dari container */
+            border-radius: 18px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .popular-card:active { transform: scale(0.96); background-color: #1e293b; }
+        .popular-card img {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
         .category-tabs::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Flash Sale Styling */
-        .flash-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
     </style>
 </head>
 <body>
@@ -67,17 +76,17 @@
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                 <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game Favorit..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
             </div>
-            <span class="font-black text-blue-500 text-xl tracking-tighter italic">LANA</span>
+            <span class="font-bold text-blue-500 text-xl tracking-tighter">LANA</span>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-2 mt-6 w-full">
+    <main class="max-w-7xl mx-auto px-4 mt-6 w-full">
 
         <!-- 1. BANNER SLIDER -->
         <% if (typeof banners !== 'undefined' && banners.length > 0) { %>
-        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10 mx-2">
+        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10">
             <div class="swiper-wrapper">
                 <% banners.forEach(b => { %>
                 <div class="swiper-slide">
@@ -91,48 +100,23 @@
         </div>
         <% } %>
 
-        <!-- 2. FLASH SALE (Sistem Geser/Slider) -->
-        <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
-        <section class="mb-10 mx-2">
-            <div class="flex items-center justify-between mb-4 px-1">
-                <h3 class="font-black text-white italic tracking-tighter text-sm uppercase flex items-center gap-2">
-                    <i class="fas fa-bolt text-yellow-400"></i> <%= config.title_flash_sale %>
-                </h3>
-                <div id="countdown" class="flex gap-1 font-mono"></div>
-            </div>
-            
-            <div class="swiper flashSwiper">
-                <div class="swiper-wrapper">
-                    <% flashSales.forEach(f => { %>
-                    <div class="swiper-slide">
-                        <div class="flash-card p-4 rounded-[24px] flex items-center gap-4 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 bg-red-600 text-[8px] font-black px-3 py-1 rounded-bl-xl">OFFER</div>
-                            <img src="<%= f.image_url || '/api/placeholder/100/100' %>" class="w-16 h-16 rounded-xl object-cover border border-slate-700 shadow-lg">
-                            <div class="flex-1 overflow-hidden">
-                                <h4 class="font-black text-[13px] text-slate-100 leading-tight mb-1 uppercase truncate"><%= f.item_name %></h4>
-                                <p class="text-[9px] text-slate-400 line-through mb-1">Rp <%= f.original_price.toLocaleString() %></p>
-                                <p class="text-blue-400 font-black text-lg leading-none">Rp <%= f.promo_price.toLocaleString() %></p>
-                            </div>
-                        </div>
-                    </div>
-                    <% }) %>
-                </div>
-            </div>
-        </section>
-        <% } %>
-
-        <!-- 3. POPULER SEKARANG -->
+        <!-- 2. POPULER SEKARANG (STYLE LAYANAN SESUAI GAMBAR) -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
-        <section class="mb-10 mx-2">
-            <h3 class="font-black text-slate-500 text-[9px] uppercase tracking-[0.3em] mb-4 ml-1"><%= config.title_popular %></h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <section class="popular-container mb-10 shadow-lg">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-xl">⚠️</span>
+                <h3 class="font-bold text-white uppercase text-lg leading-none tracking-tight">Populer Sekarang!</h3>
+            </div>
+            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium">Beberapa produk yang paling populer saat ini.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <% popularBrands.forEach(brand => { %>
-                <a href="/id/<%= brand.slug %>" class="glass p-3 rounded-[20px] flex items-center gap-3 brand-card">
-                    <img src="<%= brand.icon_url %>" class="w-10 h-10 rounded-xl object-cover shadow-lg border border-slate-700">
+                <a href="/id/<%= brand.slug %>" class="popular-card">
+                    <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     <div class="overflow-hidden">
-                        <p class="font-black text-[10px] text-white truncate uppercase tracking-tight"><%= brand.name %></p>
-                        <p class="text-[8px] text-blue-500 font-bold uppercase truncate"><%= brand.category %></p>
+                        <p class="font-bold text-white text-sm uppercase truncate tracking-wide"><%= brand.name %></p>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase"><%= brand.category %></p>
                     </div>
                 </a>
                 <% }) %>
@@ -140,23 +124,22 @@
         </section>
         <% } %>
 
-        <!-- 4. DAFTAR GAME (3 Kolom per baris di HP) -->
-        <section class="mb-20 mx-2">
+        <!-- 3. DAFTAR GAME (3 Kolom per baris di HP) -->
+        <section class="mb-20">
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
-                <button onclick="filterCat('All')" class="cat-btn px-5 py-2 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase shadow-lg shadow-blue-500/20">Semua</button>
+                <button onclick="filterCat('All')" class="cat-btn px-5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold uppercase shadow-lg">Semua</button>
                 <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
-                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-5 py-2 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 text-[10px] font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
+                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-5 py-2 rounded-full bg-slate-800 text-slate-400 text-xs font-bold uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
                 <% }) %>
             </div>
 
-            <!-- grid-cols-3 untuk tampilan 3 kolom di HP -->
             <div id="gameGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-6">
                 <% brands.forEach(brand => { %>
-                <a href="/id/<%= brand.slug %>" data-category="<%= brand.category %>" class="brand-item flex flex-col group animate-fade-in">
-                    <div class="brand-card-main p-1.5 mb-2 shadow-xl">
-                        <img src="<%= brand.icon_url %>" alt="<%= brand.name %>" class="group-hover:scale-105 transition-transform duration-500 shadow-2xl">
+                <a href="/id/<%= brand.slug %>" data-category="<%= brand.category %>" class="brand-item flex flex-col group transition-all">
+                    <div class="brand-card-main p-1.5 mb-2 shadow-xl border border-slate-700">
+                        <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     </div>
-                    <p class="text-[9px] font-black text-center text-slate-200 uppercase tracking-tighter truncate w-full px-0.5"><%= brand.name %></p>
+                    <p class="text-[10px] font-bold text-center text-slate-200 uppercase truncate w-full px-0.5"><%= brand.name %></p>
                 </a>
                 <% }) %>
             </div>
@@ -164,20 +147,25 @@
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="border-t border-slate-800 py-12 px-6 glass w-full">
+    <!-- FOOTER (Clean & Standard) -->
+    <footer class="border-t border-slate-800 py-12 px-6 bg-[#0a0f1a]">
         <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
-            <h2 class="text-2xl font-black text-blue-500 tracking-tighter mb-4 italic">LANA STORE</h2>
-            <p class="text-[10px] text-slate-400 max-w-md leading-relaxed mb-8 font-medium">
+            <h2 class="text-2xl font-bold text-blue-500 mb-4 tracking-tight">LANA STORE</h2>
+            <p class="text-sm text-slate-400 max-w-md mb-8 leading-relaxed font-medium">
                 Platform top-up game termurah, tercepat, dan terpercaya di Indonesia. Otomatis 24 jam nonstop dengan berbagai metode pembayaran aman.
             </p>
-            <div class="flex gap-4 mb-10">
-                <% if(config.wa_link) { %><a href="<%= config.wa_link %>" class="w-10 h-10 glass rounded-2xl flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white transition-all shadow-lg"><i class="fab fa-whatsapp"></i></a><% } %>
-                <% if(config.ig_link) { %><a href="<%= config.ig_link %>" class="w-10 h-10 glass rounded-2xl flex items-center justify-center text-pink-500 hover:bg-pink-500 hover:text-white transition-all shadow-lg"><i class="fab fa-instagram"></i></a><% } %>
-                <% if(config.tiktok_link) { %><a href="<%= config.tiktok_link %>" class="w-10 h-10 glass rounded-2xl flex items-center justify-center text-white hover:bg-white hover:text-black transition-all shadow-lg"><i class="fab fa-tiktok"></i></a><% } %>
+            
+            <div class="flex gap-8 mb-10">
+                <% if(config.wa_link) { %><a href="<%= config.wa_link %>" class="text-slate-400 hover:text-green-500 transition-colors text-xl"><i class="fab fa-whatsapp"></i></a><% } %>
+                <% if(config.ig_link) { %><a href="<%= config.ig_link %>" class="text-slate-400 hover:text-pink-500 transition-colors text-xl"><i class="fab fa-instagram"></i></a><% } %>
+                <% if(config.tiktok_link) { %><a href="<%= config.tiktok_link %>" class="text-slate-400 hover:text-white transition-colors text-xl"><i class="fab fa-tiktok"></i></a><% } %>
             </div>
-            <div class="w-full max-w-xs h-px bg-slate-800 mb-8"></div>
-            <p class="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em]">&copy; 2026 LANA STORE • ALL RIGHTS RESERVED</p>
+            
+            <div class="w-full max-w-xs h-px bg-slate-800 mb-8 opacity-30"></div>
+            
+            <p class="text-xs text-slate-500 font-bold tracking-widest uppercase">
+                © 2026 LANA STORE • ALL RIGHTS RESERVED
+            </p>
         </div>
     </footer>
 
@@ -191,26 +179,11 @@
             pagination: { el: ".swiper-pagination", clickable: true },
         });
 
-        const flashSwiper = new Swiper(".flashSwiper", {
-            loop: true,
-            autoplay: { delay: 3000 },
-            slidesPerView: 1.2, // Memperlihatkan sedikit slide berikutnya agar user tahu bisa digeser
-            centeredSlides: false,
-            spaceBetween: 12,
-            breakpoints: {
-                640: { slidesPerView: 2.5 }
-            }
-        });
-
         function filterCat(cat) {
-            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-blue-500/20').addClass('bg-slate-800/50 text-slate-400');
-            $(event.target).addClass('bg-blue-600 text-white shadow-blue-500/20').removeClass('bg-slate-800/50 text-slate-400');
-            if(cat === 'All') {
-                $('.brand-item').show();
-            } else {
-                $('.brand-item').hide();
-                $(`.brand-item[data-category="${cat}"]`).fadeIn(400);
-            }
+            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
+            $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
+            if(cat === 'All') { $('.brand-item').show(); } 
+            else { $('.brand-item').hide(); $(`.brand-item[data-category="${cat}"]`).show(); }
         }
 
         function searchGame() {
@@ -220,35 +193,6 @@
                 $(this).toggle(name.includes(val));
             });
         }
-
-        function startCountdown() {
-            const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
-            if(!endDateStr) return;
-            const endDate = new Date(endDateStr).getTime();
-            const timer = setInterval(function() {
-                const now = new Date().getTime();
-                const distance = endDate - now;
-                if (distance < 0) {
-                    clearInterval(timer);
-                    document.getElementById("countdown").innerHTML = "EXPIRED";
-                    return;
-                }
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                document.getElementById("countdown").innerHTML = `
-                    <div class="bg-red-600 text-white font-black px-1.5 py-0.5 rounded-lg text-[10px]">${String(hours).padStart(2, '0')}</div>
-                    <div class="text-red-600 font-bold">:</div>
-                    <div class="bg-red-600 text-white font-black px-1.5 py-0.5 rounded-lg text-[10px]">${String(minutes).padStart(2, '0')}</div>
-                    <div class="text-red-600 font-bold">:</div>
-                    <div class="bg-red-600 text-white font-black px-1.5 py-0.5 rounded-lg text-[10px]">${String(seconds).padStart(2, '0')}</div>
-                `;
-            }, 1000);
-        }
-        
-        <% if (flashSales && flashSales.length > 0) { %>
-            startCountdown();
-        <% } %>
     </script>
 </body>
 </html>
