@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Topup <%= brand.name %> - Lana Store</title>
+    <%- include('../partials/user/heads') %>
+</head>
+<body class="bg-dark-900 text-white pb-20">
+
+    <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-dark-800">
+        <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400"><i class="fas fa-arrow-left"></i></a>
+        <div class="flex items-center gap-3">
+            <img src="<%= brand.icon_url %>" class="w-8 h-8 rounded-lg object-cover shadow-lg">
+            <h1 class="font-black text-sm uppercase tracking-tight"><%= brand.name %></h1>
+        </div>
+    </header>
+
+    <main class="p-4 max-w-3xl mx-auto">
+        
+        <!-- FORM DINAMIS SESUAI CONFIG ADMIN -->
+        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Lengkapi Data Tujuan</label>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1"><%= brand.form_config.target_label %></p>
+                    <input type="<%= brand.form_config.target_type %>" id="target1" placeholder="Masukkan <%= brand.form_config.target_label %>" 
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold focus:border-blue-500 outline-none">
+                </div>
+
+                <% if(brand.form_config.has_server) { %>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1"><%= brand.form_config.server_label %></p>
+                    <input type="<%= brand.form_config.server_type %>" id="target2" placeholder="Masukkan <%= brand.form_config.server_label %>" 
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold focus:border-blue-500 outline-none">
+                </div>
+                <% } %>
+            </div>
+            <p class="text-[9px] text-gray-500 mt-4 italic font-medium">*Harap teliti saat memasukkan data agar proses lancar.</p>
+        </div>
+
+        <!-- LIST PRODUK DINAMIS -->
+        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Pilih Nominal Topup</h3>
+        <div class="grid grid-cols-2 gap-3 mb-10">
+            <% products.forEach(p => { %>
+                <button onclick="checkout('<%= p.service_id %>', '<%= p.name %>', <%= p.price_sell %>)" 
+                    class="bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 active:scale-95 transition-all flex flex-col justify-between">
+                    <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight"><%= p.name %></p>
+                    <p class="text-sm font-black text-blue-400 mt-2">Rp <%= p.price_sell.toLocaleString('id-ID') %></p>
+                </button>
+            <% }) %>
+        </div>
+
+        <!-- VOUCHER & KONTAK -->
+        <div id="checkoutBox" class="hidden animate-slide-up space-y-4">
+            <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6">
+                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Gunakan Promo</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="vCode" placeholder="KODE VOUCHER" class="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 uppercase text-sm font-bold outline-none focus:border-blue-500">
+                    <button onclick="checkVoucher()" class="bg-slate-700 px-6 py-3 rounded-xl text-xs font-black uppercase">Cek</button>
+                </div>
+            </div>
+
+            <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-xs font-bold text-white uppercase">Total Bayar</span>
+                    <span id="finalPrice" class="text-2xl font-black text-blue-500"></span>
+                </div>
+                <input type="tel" id="wa" placeholder="WhatsApp (628xxx)" class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold mb-4 outline-none focus:border-blue-500">
+                <button onclick="processPayment()" id="btnPay" class="w-full bg-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-900/40 active:scale-95 transition-all">BAYAR SEKARANG</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        let selected = null;
+        let disc = 0;
+
+        function checkout(id, name, price) {
+            selected = { id, price };
+            document.getElementById('checkoutBox').classList.remove('hidden');
+            document.getElementById('finalPrice').innerText = "Rp " + price.toLocaleString('id-ID');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function processPayment() {
+            const t1 = document.getElementById('target1').value;
+            const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
+            const wa = document.getElementById('wa').value;
+            const v = document.getElementById('vCode').value;
+
+            if(!t1 || !wa) return alert("Lengkapi data!");
+
+            const target = t2 ? `${t1}(${t2})` : t1;
+            const btn = document.getElementById('btnPay');
+            btn.disabled = true; btn.innerText = "Processing...";
+
+            try {
+                const res = await axios.post('/api/create-payment', { service_id: selected.id, target, whatsapp: wa, voucher_code: v });
+                if(res.data.status) window.location.href = res.data.redirect_url;
+                else alert(res.data.message);
+            } catch(e) { alert("Server Error"); }
+            btn.disabled = false; btn.innerText = "BAYAR SEKARANG";
+        }
+    </script>
+</body>
+</html>
