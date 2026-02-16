@@ -138,12 +138,20 @@ app.put('/api/admin/config', async (req, res) => {
 
 
 // Halaman Checklist Layanan untuk Brand
+
 app.get('/admin/brand/services/:id', async (req, res) => {
     try {
-        const brand = await Brand.findById(req.params.id);
-        if (!brand) return res.status(404).send("Brand tidak ditemukan");
-        res.render('admin/brand-services', { currentPage: 'brand', brand });
-    } catch (e) { res.status(500).send("Error Server"); }
+        const brandData = await Brand.findById(req.params.id);
+        if (!brandData) return res.status(404).send("Brand tidak ditemukan");
+        
+        // Di sini kita WAJIB mengirim variabel 'brand' agar EJS tidak error
+        res.render('admin/brand-services', { 
+            currentPage: 'brand', 
+            brand: brandData 
+        });
+    } catch (e) {
+        res.status(500).send("Server Error");
+    }
 });
 
 // API untuk Update Daftar Layanan di dalam Brand
