@@ -1,77 +1,172 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Admin - Pengaturan</title>
+    <title>Admin - Pengaturan Sistem</title>
     <%- include('../partials/head') %>
+    <style>
+        .config-card { 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 32px; 
+            padding: 24px; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .input-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .custom-input {
+            width: 100%;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .custom-input:focus {
+            border-color: #3b82f6;
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+    </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 overflow-x-hidden">
+
     <%- include('../partials/sidebar') %>
+
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <header class="h-16 bg-white border-b px-6 flex items-center justify-between sticky top-0 z-40">
-            <h1 class="font-bold text-slate-800">Pengaturan Sistem</h1>
-            <button onclick="saveSettings()" id="btnSave" class="bg-blue-600 text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase">Simpan</button>
+        <!-- HEADER DENGAN HAMBURGER -->
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600 active:scale-95 transition-all">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Pengaturan</h1>
+            </div>
+            <button onclick="saveSettings()" id="btnSave" class="bg-blue-600 text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                Simpan
+            </button>
         </header>
 
-        <main class="p-6 max-w-4xl">
-            <div class="bg-white rounded-[32px] border p-8 shadow-sm space-y-8">
-                <!-- Bagian QRIS (Sudah ada sebelumnya) -->
-                <div class="grid grid-cols-2 gap-6">
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+            
+            <!-- SECTION 1: BIAYA & PAJAK -->
+            <div class="config-card">
+                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                    <i class="fas fa-wallet"></i> Biaya Transaksi QRIS
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Admin Fee (Rp)</label>
-                        <input type="number" id="admin_fee" class="w-full bg-slate-50 border rounded-xl p-3 mt-1 font-bold">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Pajak MDR (%)</label>
-                        <input type="number" id="tax_percent" step="0.1" class="w-full bg-slate-50 border rounded-xl p-3 mt-1 font-bold">
-                    </div>
-                </div>
-
-                <!-- Bagian Teks Halaman Depan (Baru) -->
-                <div class="border-t pt-8 space-y-4">
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Teks Halaman Utama</p>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase">Judul Flash Sale</label>
-                            <input type="text" id="title_flash_sale" class="w-full bg-slate-50 border rounded-xl p-3 mt-1 text-sm font-bold">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase">Judul Section Populer</label>
-                            <input type="text" id="title_popular" class="w-full bg-slate-50 border rounded-xl p-3 mt-1 text-sm font-bold">
+                        <label class="input-label">Admin Fee (Tetap Rp)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">Rp</span>
+                            <input type="number" id="admin_fee" class="custom-input !pl-12" placeholder="700">
                         </div>
                     </div>
-                </div>
-
-                <!-- Link Sosmed -->
-                <div class="border-t pt-8 space-y-4">
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Kontak & Sosial Media</p>
-                    <div class="grid grid-cols-2 gap-6">
-                        <input type="text" id="wa_link" class="bg-slate-50 border rounded-xl p-3 text-sm font-bold" placeholder="Link WhatsApp">
-                        <input type="text" id="ig_link" class="bg-slate-50 border rounded-xl p-3 text-sm font-bold" placeholder="Link Instagram">
-                        <input type="text" id="tiktok_link" class="bg-slate-50 border rounded-xl p-3 text-sm font-bold" placeholder="Link TikTok">
+                    <div>
+                        <label class="input-label">Pajak MDR Atlantic (%)</label>
+                        <div class="relative">
+                            <input type="number" id="tax_percent" step="0.1" class="custom-input !pr-10" placeholder="1.4">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">%</span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- SECTION 2: TEKS HALAMAN DEPAN -->
+            <div class="config-card">
+                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                    <i class="fas fa-font"></i> Teks Halaman Utama
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="input-label">Judul Flash Sale</label>
+                        <input type="text" id="title_flash_sale" class="custom-input" placeholder="PASTI TERMURAH">
+                    </div>
+                    <div>
+                        <label class="input-label">Judul Brand Populer</label>
+                        <input type="text" id="title_popular" class="custom-input" placeholder="POPULER SEKARANG">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: KONTAK & SOSIAL MEDIA -->
+            <div class="config-card">
+                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                    <i class="fas fa-share-alt"></i> Kontak & Sosial Media
+                </p>
+                <div class="space-y-6">
+                    <div>
+                        <label class="input-label">Link WhatsApp (Gunakan https://wa.me/...)</label>
+                        <input type="text" id="wa_link" class="custom-input" placeholder="https://wa.me/62812345678">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="input-label">Username Instagram</label>
+                            <input type="text" id="ig_link" class="custom-input" placeholder="@lanastore">
+                        </div>
+                        <div>
+                            <label class="input-label">Link TikTok</label>
+                            <input type="text" id="tiktok_link" class="custom-input" placeholder="https://tiktok.com/@...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hint Box -->
+            <div class="bg-slate-900 rounded-[32px] p-6 text-white shadow-xl mt-4">
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-info-circle text-blue-400 text-lg mt-1"></i>
+                    <div>
+                        <h4 class="font-bold text-sm mb-1">Penting</h4>
+                        <p class="text-slate-400 text-[11px] leading-relaxed">
+                            Semua perubahan di sini akan langsung berdampak pada kalkulasi harga pembayaran QRIS dan tampilan di halaman depan pengguna secara real-time.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Load data saat halaman dibuka
         async function loadConfig() {
-            const res = await fetch('/api/admin/config');
-            const json = await res.json();
-            if(json.status) {
-                $('#admin_fee').val(json.data.admin_fee);
-                $('#tax_percent').val(json.data.tax_percent);
-                $('#title_flash_sale').val(json.data.title_flash_sale);
-                $('#title_popular').val(json.data.title_popular);
-                $('#wa_link').val(json.data.wa_link);
-                $('#ig_link').val(json.data.ig_link);
-                $('#tiktok_link').val(json.data.tiktok_link);
+            try {
+                const res = await fetch('/api/admin/config');
+                const json = await res.json();
+                if(json.status && json.data) {
+                    $('#admin_fee').val(json.data.admin_fee);
+                    $('#tax_percent').val(json.data.tax_percent);
+                    $('#title_flash_sale').val(json.data.title_flash_sale);
+                    $('#title_popular').val(json.data.title_popular);
+                    $('#wa_link').val(json.data.wa_link);
+                    $('#ig_link').val(json.data.ig_link);
+                    $('#tiktok_link').val(json.data.tiktok_link);
+                }
+            } catch (e) {
+                console.error("Gagal memuat konfigurasi");
             }
         }
 
+        // Simpan data
         async function saveSettings() {
+            const btn = $('#btnSave');
+            btn.attr('disabled', true).text('...');
+
             const data = {
                 admin_fee: $('#admin_fee').val(),
                 tax_percent: $('#tax_percent').val(),
@@ -81,11 +176,32 @@
                 ig_link: $('#ig_link').val(),
                 tiktok_link: $('#tiktok_link').val()
             };
-            await fetch('/api/admin/config', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-            Swal.fire({ icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 1000 });
+
+            try {
+                const res = await fetch('/api/admin/config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if(result.status) {
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'Pengaturan Disimpan', 
+                        timer: 1500, 
+                        showConfirmButton: false 
+                    });
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Gagal menyimpan data', 'error');
+            } finally {
+                btn.attr('disabled', false).text('Simpan');
+            }
         }
 
-        $(document).ready(loadConfig);
+        $(document).ready(function() {
+            loadConfig();
+        });
     </script>
 </body>
 </html>
