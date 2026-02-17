@@ -61,7 +61,7 @@ app.get('/', async (req, res) => {
     try {
         const banners = await Banner.find().sort({ created_at: -1 });
         const flashSales = await FlashSale.find({ is_active: true, end_date: { $gt: new Date() } });
-        const brands = await Brand.find({ status: 'active' }).sort({ name: 1 });
+        const brands = await Brand.find({ status: 'active' }).sort({ index: 1 });
         
         // Ambil config, jika tidak ada buat default
         let config = await Config.findOne({ key: 'qris_settings' });
@@ -121,7 +121,7 @@ app.get('/admin/flash-sale', (req, res) => res.render('admin/flash-sale-manage',
 // API: BRAND MANAGEMENT
 // ==========================
 app.get('/api/admin/brands', async (req, res) => {
-    const brands = await Brand.find().sort({ name: 1 });
+    const brands = await Brand.find().sort({ index: 1 }) ;
     res.json({ status: true, data: brands });
 });
 
@@ -166,6 +166,21 @@ app.put('/api/admin/brands/:id/services', async (req, res) => {
         const { services } = req.body;
         await Brand.findByIdAndUpdate(req.params.id, { services: services });
         res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
+// API untuk simpan urutan baru hasil drag & drop
+app.put('/api/admin/brands/reorder', async (req, res) => {
+    try {
+        const { order } = req.body; // Isinya array ID: [id1, id2, id3...]
+        const ops = order.map((id, idx) => ({
+            updateOne: {
+                filter: { _id: id },
+                update: { $set: { index: idx } }
+            }
+        }));
+        await Brand.bulkWrite(ops);
+        res.json({ status: true, message: "Urutan berhasil disimpan" });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
