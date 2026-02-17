@@ -4,8 +4,27 @@
     <title>Admin - Kelola Brand</title>
     <%- include('../partials/head') %>
     <style>
-        .brand-card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; transition: all 0.3s; }
-        #sidebar { transition: transform 0.3s ease-in-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        
+        .brand-card { 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 28px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .brand-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
+        
+        .swal-input-label { 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: #94a3b8; 
+            text-transform: uppercase; 
+            margin-bottom: 4px; 
+            display: block; 
+            margin-top: 12px; 
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="bg-slate-50 overflow-x-hidden">
@@ -13,21 +32,25 @@
     <%- include('../partials/sidebar') %>
 
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <!-- HEADER DENGAN HAMBURGER -->
-        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 flex items-center justify-between">
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 border active:scale-95 transition-all">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
                     <i class="fas fa-bars-staggered"></i>
                 </button>
-                <h1 class="font-bold text-slate-800 text-sm uppercase">Management Brand</h1>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Management Brand</h1>
             </div>
-            <button onclick="openBrandModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95">
-                <i class="fas fa-plus mr-1"></i> Brand
+            <button onclick="openBrandModal()" class="bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                <i class="fas fa-plus mr-1"></i> Tambah Brand
             </button>
         </header>
 
+        <!-- MAIN CONTENT -->
         <main class="p-4 md:p-8">
-            <div id="brand-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            <div id="brand-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Data Brand akan dimuat via AJAX -->
+                <div class="col-span-full py-20 text-center text-slate-400">Memuat Brand...</div>
+            </div>
         </main>
     </div>
 
@@ -35,42 +58,162 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         async function loadBrands() {
-            const res = await fetch('/api/admin/brands');
-            const json = await res.json();
-            const grid = $('#brand-grid').empty();
-            json.data.forEach(b => {
-                grid.append(`
-                    <div class="brand-card p-6 flex flex-col items-center text-center shadow-sm">
-                        <img src="${b.icon_url}" class="w-20 h-20 rounded-[24px] object-cover mb-4 shadow-lg border">
-                        <h3 class="font-black text-slate-800 text-sm uppercase mb-1">${b.name}</h3>
+            try {
+                const res = await fetch('/api/admin/brands');
+                const json = await res.json();
+                const grid = $('#brand-grid').empty();
+
+                if(json.data.length === 0) {
+                    grid.html('<div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-xs">Belum ada brand.</div>');
+                    return;
+                }
+
+                json.data.forEach(b => {
+                    grid.append(`
+                        <div class="brand-card p-5 flex flex-col items-center text-center">
+                            <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md border-2 border-white">
+                            <h3 class="font-black text-slate-800 text-xs uppercase mb-1">${b.name}</h3>
+                            
+                            <div class="flex items-center gap-2 mb-4 bg-slate-50 p-2 rounded-xl border w-full justify-between mt-2">
+                                <span class="text-[9px] font-black text-slate-400 uppercase">Populer</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" onchange="togglePopular('${b._id}', this.checked)" ${b.is_popular ? 'checked' : ''}>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col gap-2 w-full mt-2">
+                                <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95">
+                                    <i class="fas fa-list mr-1"></i> Atur Layanan
+                                </a>
+                                <button onclick="deleteBrand('${b._id}')" class="w-full bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
+                                    Hapus
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function togglePopular(id, status) {
+            await fetch(`/api/admin/brands/popular/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_popular: status })
+            });
+        }
+
+        async function openBrandModal() {
+            const { value: f } = await Swal.fire({
+                title: '<span class="text-xs font-black uppercase tracking-widest">Tambah Game Baru</span>',
+                width: '550px',
+                confirmButtonText: 'SIMPAN BRAND',
+                confirmButtonColor: '#2563eb',
+                showCancelButton: true,
+                html: `
+                    <div class="text-left px-2">
+                        <label class="swal-input-label">Nama Brand</label>
+                        <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
                         
-                        <div class="flex items-center gap-2 mb-4 bg-slate-50 p-2 rounded-xl border w-full justify-between">
-                            <span class="text-[9px] font-black text-slate-500 uppercase">Populer</span>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" onchange="togglePopular('${b._id}', this.checked)" ${b.is_popular ? 'checked' : ''}>
+                        <label class="swal-input-label">Slug URL (Otomatis)</label>
+                        <input id="n-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" readonly>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="swal-input-label">Kategori</label>
+                                <select id="n-cat" class="swal2-input !mt-0 !text-sm">
+                                    <option value="Games">Games</option>
+                                    <option value="Pulsa">Pulsa</option>
+                                    <option value="E-Wallet">E-Wallet</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="swal-input-label">URL Icon</label>
+                                <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link-gambar.com/icon.png">
                             </div>
                         </div>
 
-                        <div class="flex gap-2 w-full">
-                            <a href="/admin/brand/services/${b._id}" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline text-center">Layanan</a>
-                            <button onclick="deleteBrand('${b._id}')" class="w-10 bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px]"><i class="fas fa-trash"></i></button>
+                        <!-- FORMAT FORM SESUAI FOTO -->
+                        <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                                <i class="fas fa-file-invoice text-blue-500"></i> Format Form (Sesuai Foto)
+                            </p>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label>
+                                    <input id="f-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="User ID">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label>
+                                    <select id="f-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                        <option value="text">Text</option>
+                                        <option value="number">Nomor</option>
+                                        <option value="email">Email</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 mb-4">
+                                <input type="checkbox" id="f-has-server" class="w-4 h-4" onchange="document.getElementById('server-config').classList.toggle('hidden')">
+                                <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2 (Server ID)</label>
+                            </div>
+
+                            <div id="server-config" class="hidden grid grid-cols-2 gap-3 animate-fade-in">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
+                                    <input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" placeholder="Contoh: Server ID">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label>
+                                    <select id="f-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                        <option value="text">Text</option>
+                                        <option value="number">Nomor</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                `);
+                `,
+                preConfirm: () => {
+                    const name = $('#n-name').val();
+                    const slug = $('#n-slug').val();
+                    const icon = $('#n-icon').val();
+                    if(!name || !slug || !icon) return Swal.showValidationMessage('Nama, Slug, dan Icon wajib diisi!');
+                    
+                    return {
+                        name: name,
+                        slug: slug,
+                        category: $('#n-cat').val(),
+                        icon_url: icon,
+                        form_config: {
+                            target_label: $('#f-t-label').val(),
+                            target_type: $('#f-t-type').val(),
+                            has_server: $('#f-has-server').is(':checked'),
+                            server_label: $('#f-s-label').val(),
+                            server_type: $('#f-s-type').val()
+                        }
+                    }
+                }
             });
+
+            if (f) {
+                const res = await fetch('/api/admin/brands', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(f)
+                });
+                loadBrands();
+            }
         }
-        async function togglePopular(id, status) {
-            await fetch(`/api/admin/brands/popular/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_popular: status }) });
+
+        async function deleteBrand(id) {
+            if(confirm("Hapus Brand?")) {
+                await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
+                loadBrands();
+            }
         }
-        async function openBrandModal() {
-            const { value: f } = await Swal.fire({
-                title: 'Tambah Brand',
-                html: `<input id="n-name" class="swal2-input" placeholder="Nama Game"><input id="n-icon" class="swal2-input" placeholder="URL Icon"><select id="n-cat" class="swal2-input"><option value="Games">Games</option><option value="Pulsa">Pulsa</option></select>`,
-                preConfirm: () => ({ name: $('#n-name').val(), slug: $('#n-name').val().toLowerCase().replace(/ /g, '-'), icon_url: $('#n-icon').val(), category: $('#n-cat').val() })
-            });
-            if(f) { await fetch('/api/admin/brands', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(f) }); loadBrands(); }
-        }
-        async function deleteBrand(id) { if(confirm("Hapus Brand?")) { await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' }); loadBrands(); } }
+
         $(document).ready(loadBrands);
     </script>
 </body>
