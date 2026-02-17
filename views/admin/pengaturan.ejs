@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -39,6 +38,7 @@
             background-color: white;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
+        textarea.custom-input { min-height: 80px; resize: none; }
     </style>
 </head>
 <body class="bg-slate-50 overflow-x-hidden">
@@ -61,7 +61,32 @@
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
             
-            <!-- SECTION 1: BIAYA & PAJAK -->
+            <!-- SECTION 1: SEO & BRANDING (NEW) -->
+            <div class="config-card">
+                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                    <i class="fas fa-search"></i> SEO & Branding (Google Search)
+                </p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="input-label">Nama Toko (Judul Web)</label>
+                        <input type="text" id="shop_name" class="custom-input" placeholder="Contoh: Lana Store">
+                    </div>
+                    <div>
+                        <label class="input-label">Meta Deskripsi (Ringkasan di Google)</label>
+                        <textarea id="meta_description" class="custom-input" placeholder="Topup Game Tercepat & Termurah di Indonesia..."></textarea>
+                    </div>
+                    <div>
+                        <label class="input-label">Keywords (Pisahkan dengan koma)</label>
+                        <input type="text" id="meta_keywords" class="custom-input" placeholder="topup ml, ff murah, diamond ml">
+                    </div>
+                    <div>
+                        <label class="input-label">URL Logo Toko (Icon Share)</label>
+                        <input type="text" id="logo_url" class="custom-input" placeholder="https://link-gambar-logo.png">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: BIAYA & PAJAK -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-wallet"></i> Biaya Transaksi QRIS
@@ -84,7 +109,7 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: TEKS HALAMAN DEPAN -->
+            <!-- SECTION 3: TEKS HALAMAN DEPAN -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-font"></i> Teks Halaman Utama
@@ -101,7 +126,7 @@
                 </div>
             </div>
 
-            <!-- SECTION 3: KONTAK & SOSIAL MEDIA -->
+            <!-- SECTION 4: KONTAK & SOSIAL MEDIA -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-share-alt"></i> Kontak & Sosial Media
@@ -113,7 +138,7 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="input-label">Username Instagram</label>
+                            <label class="input-label">Instagram Username</label>
                             <input type="text" id="ig_link" class="custom-input" placeholder="@lanastore">
                         </div>
                         <div>
@@ -131,7 +156,7 @@
                     <div>
                         <h4 class="font-bold text-sm mb-1">Penting</h4>
                         <p class="text-slate-400 text-[11px] leading-relaxed">
-                            Semua perubahan di sini akan langsung berdampak pada kalkulasi harga pembayaran QRIS dan tampilan di halaman depan pengguna secara real-time.
+                            Pastikan Nama Toko dan Meta Deskripsi diisi dengan kata-kata yang sering dicari (Misal: Topup ML Murah) agar Google lebih mudah menemukan website Anda.
                         </p>
                     </div>
                 </div>
@@ -143,12 +168,16 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Load data saat halaman dibuka
         async function loadConfig() {
             try {
                 const res = await fetch('/api/admin/config');
                 const json = await res.json();
                 if(json.status && json.data) {
+                    $('#shop_name').val(json.data.shop_name);
+                    $('#meta_description').val(json.data.meta_description);
+                    $('#meta_keywords').val(json.data.meta_keywords);
+                    $('#logo_url').val(json.data.logo_url);
+                    
                     $('#admin_fee').val(json.data.admin_fee);
                     $('#tax_percent').val(json.data.tax_percent);
                     $('#title_flash_sale').val(json.data.title_flash_sale);
@@ -157,17 +186,18 @@
                     $('#ig_link').val(json.data.ig_link);
                     $('#tiktok_link').val(json.data.tiktok_link);
                 }
-            } catch (e) {
-                console.error("Gagal memuat konfigurasi");
-            }
+            } catch (e) { console.error("Gagal muat data"); }
         }
 
-        // Simpan data
         async function saveSettings() {
             const btn = $('#btnSave');
             btn.attr('disabled', true).text('...');
 
             const data = {
+                shop_name: $('#shop_name').val(),
+                meta_description: $('#meta_description').val(),
+                meta_keywords: $('#meta_keywords').val(),
+                logo_url: $('#logo_url').val(),
                 admin_fee: $('#admin_fee').val(),
                 tax_percent: $('#tax_percent').val(),
                 title_flash_sale: $('#title_flash_sale').val(),
@@ -185,23 +215,13 @@
                 });
                 const result = await res.json();
                 if(result.status) {
-                    Swal.fire({ 
-                        icon: 'success', 
-                        title: 'Pengaturan Disimpan', 
-                        timer: 1500, 
-                        showConfirmButton: false 
-                    });
+                    Swal.fire({ icon: 'success', title: 'Berhasil Disimpan', timer: 1500, showConfirmButton: false });
                 }
-            } catch (e) {
-                Swal.fire('Error', 'Gagal menyimpan data', 'error');
-            } finally {
-                btn.attr('disabled', false).text('Simpan');
-            }
+            } catch (e) { Swal.fire('Error', 'Gagal simpan data', 'error'); } 
+            finally { btn.attr('disabled', false).text('Simpan'); }
         }
 
-        $(document).ready(function() {
-            loadConfig();
-        });
+        $(document).ready(loadConfig);
     </script>
 </body>
 </html>
