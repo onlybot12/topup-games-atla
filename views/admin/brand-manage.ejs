@@ -7,12 +7,19 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         
+        /* Gaya Kartu saat di-drag */
+        .sortable-ghost { opacity: 0.3; transform: scale(0.9); background: #ebf5ff !important; }
+        .sortable-chosen { border: 2px solid #3b82f6 !important; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2) !important; }
+        
         .brand-card { 
             background: white; 
             border: 1px solid #e2e8f0; 
             border-radius: 28px; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: grab; /* Menandakan bisa digeser */
+            user-select: none;
         }
+        .brand-card:active { cursor: grabbing; }
         .brand-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
         
         .swal-input-label { 
@@ -25,6 +32,9 @@
             margin-top: 12px; 
             letter-spacing: 0.05em;
         }
+
+        /* Mencegah gambar ikut ter-drag (fokus ke kartu) */
+        .brand-card img { pointer-events: none; }
     </style>
 </head>
 <body class="bg-slate-50 overflow-x-hidden">
@@ -47,6 +57,12 @@
 
         <!-- MAIN CONTENT -->
         <main class="p-4 md:p-8">
+            <!-- Hint untuk user -->
+            <div class="flex items-center gap-2 mb-6 px-2 text-slate-400">
+                <i class="fas fa-info-circle text-xs"></i>
+                <p class="text-[10px] font-bold uppercase tracking-wider m-0">Tekan dan geser kartu untuk merubah urutan tampilan di website.</p>
+            </div>
+
             <div id="brand-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Data Brand akan dimuat via AJAX -->
                 <div class="col-span-full py-20 text-center text-slate-400">Memuat Brand...</div>
@@ -56,7 +72,11 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Tambahkan Library SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <script>
+        // 1. Fungsi Load Data dari Database
         async function loadBrands() {
             try {
                 const res = await fetch('/api/admin/brands');
@@ -70,7 +90,7 @@
 
                 json.data.forEach(b => {
                     grid.append(`
-                        <div class="brand-card p-5 flex flex-col items-center text-center">
+                        <div class="brand-card p-5 flex flex-col items-center text-center shadow-sm" data-id="${b._id}">
                             <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md border-2 border-white">
                             <h3 class="font-black text-slate-800 text-xs uppercase mb-1">${b.name}</h3>
                             
@@ -82,7 +102,7 @@
                             </div>
                             
                             <div class="flex flex-col gap-2 w-full mt-2">
-                                <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95">
+                                <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95 text-center">
                                     <i class="fas fa-list mr-1"></i> Atur Layanan
                                 </a>
                                 <button onclick="deleteBrand('${b._id}')" class="w-full bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
@@ -92,9 +112,54 @@
                         </div>
                     `);
                 });
+
+                // Inisialisasi Fitur Drag & Drop setelah kartu muncul
+                initSortable();
+
             } catch (e) { console.error(e); }
         }
 
+        // 2. Inisialisasi SortableJS
+        function initSortable() {
+            const el = document.getElementById('brand-grid');
+            Sortable.create(el, {
+                animation: 200,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: async function () {
+                    // Ambil urutan ID baru dari DOM
+                    const order = [];
+                    $('.brand-card').each(function() {
+                        order.push($(this).data('id'));
+                    });
+
+                    // Kirim urutan baru ke Backend
+                    try {
+                        const response = await fetch('/api/admin/brands/reorder', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order })
+                        });
+                        const result = await response.json();
+                        
+                        if(result.status) {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true,
+                            });
+                            Toast.fire({ icon: 'success', title: 'Urutan Berhasil Disimpan' });
+                        }
+                    } catch (err) {
+                        console.error("Gagal simpan urutan", err);
+                    }
+                }
+            });
+        }
+
+        // 3. Fungsi Toggle Populer
         async function togglePopular(id, status) {
             await fetch(`/api/admin/brands/popular/${id}`, {
                 method: 'PUT',
@@ -103,6 +168,7 @@
             });
         }
 
+        // 4. Modal Tambah Brand
         async function openBrandModal() {
             const { value: f } = await Swal.fire({
                 title: '<span class="text-xs font-black uppercase tracking-widest">Tambah Game Baru</span>',
@@ -159,7 +225,7 @@
                                 <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2 (Server ID)</label>
                             </div>
 
-                            <div id="server-config" class="hidden grid grid-cols-2 gap-3 animate-fade-in">
+                            <div id="server-config" class="hidden grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
                                     <input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" placeholder="Contoh: Server ID">
@@ -198,7 +264,7 @@
             });
 
             if (f) {
-                const res = await fetch('/api/admin/brands', {
+                await fetch('/api/admin/brands', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(f)
@@ -207,6 +273,7 @@
             }
         }
 
+        // 5. Fungsi Hapus Brand
         async function deleteBrand(id) {
             if(confirm("Hapus Brand?")) {
                 await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
