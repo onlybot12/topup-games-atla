@@ -4,7 +4,6 @@
     <title>Lana Store - Topup Game & Digital</title>
     <%- include('../partials/user/heads') %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <!-- Menggunakan Font Inter agar terlihat bersih dan profesional (tidak alay) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -19,15 +18,36 @@
         }
         main { flex: 1; }
 
+        /* --- ANIMASI REVEAL SAAT SCROLL --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* Layout Card Utama (3 Kolom) */
+        /* --- EFEK CARD GAME (3 KOLOM) --- */
         .brand-card-main { 
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 20px;
+            cursor: pointer;
         }
+        
+        /* Efek Hover Desktop */
+        @media (min-width: 1024px) {
+            .brand-card-main:hover { 
+                transform: translateY(-8px) scale(1.02); 
+                border-color: #3b82f6; 
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            }
+        }
+
+        /* Efek Klik (Paling terasa di HP) */
+        .brand-card-main:active { 
+            transform: scale(0.92); 
+            background-color: #0f172a;
+        }
+
         .brand-item img {
             width: 100%;
             aspect-ratio: 1/1;
@@ -35,7 +55,7 @@
             border-radius: 16px;
         }
 
-        /* Popular Section Style (Ikon Kiri, Teks Kanan) */
+        /* --- POPULAR CARD ANIMATION --- */
         .popular-container {
             background-color: #1e293b; 
             border-radius: 24px;
@@ -50,18 +70,15 @@
             align-items: center;
             gap: 12px;
             border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
         }
-        .popular-card img {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
+        .popular-card:active { transform: scale(0.95); background: #1e293b; }
 
-        .category-tabs::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Timer Style */
+        /* --- TABS INTERACTIVE --- */
+        .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .cat-btn:active { transform: scale(0.9); }
+
+        /* --- TIMER PULSE ANIMATION --- */
         .timer-box {
             background: #ef4444;
             color: white;
@@ -69,7 +86,15 @@
             border-radius: 6px;
             font-weight: 800;
             font-size: 12px;
+            animation: pulse-red 2s infinite;
         }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .category-tabs::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -79,15 +104,15 @@
     <!-- NAVBAR -->
     <header class="sticky top-0 z-50 glass border-b border-slate-800 px-4 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-white active:scale-90 transition-all">
+            <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-white active:scale-75 transition-all">
                 <i class="fas fa-bars-staggered"></i>
             </button>
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                 <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-            <span class="font-bold text-blue-500 text-xl tracking-tighter">LANA</span>
+            <span class="font-bold text-blue-500 text-xl tracking-tighter italic animate-pulse">LANA</span>
         </div>
     </header>
 
@@ -95,7 +120,7 @@
 
         <!-- 1. BANNER SLIDER -->
         <% if (typeof banners !== 'undefined' && banners.length > 0) { %>
-        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10">
+        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10 mx-auto reveal active">
             <div class="swiper-wrapper">
                 <% banners.forEach(b => { %>
                 <div class="swiper-slide">
@@ -109,28 +134,26 @@
         </div>
         <% } %>
 
-        <!-- 2. FLASH SALE (Sistem Geser dengan Timer) -->
+        <!-- 2. FLASH SALE -->
         <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
-        <section class="mb-10">
+        <section class="mb-10 reveal">
             <div class="flex items-center justify-between mb-4 px-1">
                 <h3 class="font-bold text-white text-base uppercase flex items-center gap-2">
                     <i class="fas fa-bolt text-yellow-400"></i> <%= config.title_flash_sale %>
                 </h3>
-                <div id="countdown" class="flex items-center gap-1 font-mono">
-                    <!-- Timer JS insert here -->
-                </div>
+                <div id="countdown" class="flex items-center gap-1 font-mono"></div>
             </div>
             
             <div class="swiper flashSwiper">
                 <div class="swiper-wrapper">
                     <% flashSales.forEach(f => { %>
                     <div class="swiper-slide">
-                        <div class="glass p-4 rounded-[24px] flex items-center gap-4 border border-blue-500/20 relative overflow-hidden">
+                        <div class="glass p-4 rounded-[24px] flex items-center gap-4 border border-blue-500/20 active:scale-95 transition-all">
                             <img src="<%= f.image_url || '/api/placeholder/100/100' %>" class="w-16 h-16 rounded-xl object-cover">
                             <div class="flex-1 overflow-hidden">
                                 <h4 class="font-bold text-sm text-slate-100 truncate"><%= f.item_name %></h4>
                                 <p class="text-[10px] text-slate-400 line-through">Rp <%= f.original_price.toLocaleString() %></p>
-                                <p class="text-blue-400 font-bold text-lg leading-none">Rp <%= f.promo_price.toLocaleString() %></p>
+                                <p class="text-blue-400 font-bold text-lg">Rp <%= f.promo_price.toLocaleString() %></p>
                             </div>
                         </div>
                     </div>
@@ -140,19 +163,19 @@
         </section>
         <% } %>
 
-        <!-- 3. POPULER SEKARANG (Teks Lebih Besar & Bersih) -->
+        <!-- 3. POPULER SEKARANG -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
-        <section class="popular-container mb-10 shadow-lg">
+        <section class="popular-container mb-10 shadow-lg reveal">
             <div class="flex items-center gap-2 mb-1">
-                <span class="text-2xl">⚠️</span>
+                <span class="text-2xl animate-bounce">⚠️</span>
                 <h3 class="font-extrabold text-white uppercase text-xl tracking-tight"><%= config.title_popular %></h3>
             </div>
-            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium italic">Beberapa produk yang paling populer saat ini.</p>
+            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium italic">Klik untuk melihat detail layanan.</p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <% popularBrands.forEach(brand => { %>
-                <a href="/id/<%= brand.slug %>" class="popular-card hover:border-blue-500/50 transition-all">
+                <a href="/id/<%= brand.slug %>" class="popular-card">
                     <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     <div class="overflow-hidden">
                         <p class="font-bold text-white text-sm uppercase truncate"><%= brand.name %></p>
@@ -164,10 +187,10 @@
         </section>
         <% } %>
 
-        <!-- 4. DAFTAR GAME (3 Kolom per baris di HP) -->
-        <section class="mb-20">
+        <!-- 4. DAFTAR GAME (3 Kolom HP) -->
+        <section class="mb-20 reveal">
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
-                <button onclick="filterCat('All')" class="cat-btn px-5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold uppercase shadow-lg">Semua</button>
+                <button onclick="filterCat('All')" class="cat-btn px-5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold uppercase shadow-lg shadow-blue-500/20">Semua</button>
                 <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
                 <button onclick="filterCat('<%= cat %>')" class="cat-btn px-5 py-2 rounded-full bg-slate-800 text-slate-400 text-xs font-bold uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
                 <% }) %>
@@ -187,22 +210,13 @@
 
     </main>
 
-    <!-- FOOTER (Stay at bottom, Clean Font) -->
+    <!-- FOOTER -->
     <footer class="border-t border-slate-800 py-12 px-6 bg-[#0a0f1a] mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
             <h2 class="text-2xl font-extrabold text-blue-500 mb-4 tracking-tight">LANA STORE</h2>
             <p class="text-sm text-slate-400 max-w-md mb-8 leading-relaxed">
-                Platform top-up game termurah, tercepat, dan terpercaya di Indonesia. Otomatis 24 jam nonstop dengan berbagai metode pembayaran aman.
+                Platform top-up game otomatis 24 jam nonstop dengan verifikasi pembayaran real-time.
             </p>
-            
-            <div class="flex gap-8 mb-10">
-                <% if(config.wa_link) { %><a href="<%= config.wa_link %>" class="text-slate-400 hover:text-green-500 transition-colors text-xl"><i class="fab fa-whatsapp"></i></a><% } %>
-                <% if(config.ig_link) { %><a href="<%= config.ig_link %>" class="text-slate-400 hover:text-pink-500 transition-colors text-xl"><i class="fab fa-instagram"></i></a><% } %>
-                <% if(config.tiktok_link) { %><a href="<%= config.tiktok_link %>" class="text-slate-400 hover:text-white transition-colors text-xl"><i class="fab fa-tiktok"></i></a><% } %>
-            </div>
-            
-            <div class="w-full max-w-xs h-px bg-slate-800 mb-8 opacity-30"></div>
-            
             <p class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">
                 © 2026 LANA STORE • ALL RIGHTS RESERVED
             </p>
@@ -229,12 +243,32 @@
             breakpoints: { 640: { slidesPerView: 2.5 } }
         });
 
-        // Filter Kategori
+        // --- ANIMASI REVEAL SCROLL ---
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+
+        // Filter Kategori dengan Animasi
         function filterCat(cat) {
-            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
-            $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
-            if(cat === 'All') { $('.brand-item').show(); } 
-            else { $('.brand-item').hide(); $(`.brand-item[data-category="${cat}"]`).show(); }
+            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg shadow-blue-500/20').addClass('bg-slate-800 text-slate-400');
+            $(event.target).addClass('bg-blue-600 text-white shadow-lg shadow-blue-500/20').removeClass('bg-slate-800 text-slate-400');
+            
+            $('.brand-item').fadeOut(200, function() {
+                if(cat === 'All') { 
+                    $('.brand-item').fadeIn(300); 
+                } else { 
+                    $(`.brand-item[data-category="${cat}"]`).fadeIn(300); 
+                }
+            });
         }
 
         // Search Game
@@ -246,42 +280,28 @@
             });
         }
 
-        // --- LOGIKA COUNTDOWN TIMER ---
+        // Countdown Timer Logic
         function startCountdown() {
-            // Mengambil waktu berakhir dari data flash sale pertama (EJS)
             const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
             if(!endDateStr) return;
-
             const endDate = new Date(endDateStr).getTime();
-            
-            const x = setInterval(function() {
+            setInterval(function() {
                 const now = new Date().getTime();
                 const distance = endDate - now;
-
-                if (distance < 0) {
-                    clearInterval(x);
-                    document.getElementById("countdown").innerHTML = "<span class='timer-box'>PROMO BERAKHIR</span>";
-                    return;
-                }
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
+                if (distance < 0) { document.getElementById("countdown").innerHTML = "EXPIRED"; return; }
+                const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((distance % (1000 * 60)) / 1000);
                 document.getElementById("countdown").innerHTML = `
-                    <div class="timer-box">${String(hours).padStart(2, '0')}</div>
+                    <div class="timer-box">${String(h).padStart(2, '0')}</div>
                     <div class="text-red-500 font-bold">:</div>
-                    <div class="timer-box">${String(minutes).padStart(2, '0')}</div>
+                    <div class="timer-box">${String(m).padStart(2, '0')}</div>
                     <div class="text-red-500 font-bold">:</div>
-                    <div class="timer-box">${String(seconds).padStart(2, '0')}</div>
+                    <div class="timer-box">${String(s).padStart(2, '0')}</div>
                 `;
             }, 1000);
         }
-
-        // Jalankan timer jika ada data flash sale
-        <% if (flashSales && flashSales.length > 0) { %>
-            startCountdown();
-        <% } %>
+        <% if (flashSales && flashSales.length > 0) { %> startCountdown(); <% } %>
     </script>
 </body>
 </html>
