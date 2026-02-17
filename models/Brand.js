@@ -6,7 +6,11 @@ const BrandSchema = new mongoose.Schema({
     category: { type: String, required: true },
     icon_url: { type: String, required: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
-    is_popular: { type: Boolean, default: false }, // FIELD BARU
+    is_popular: { type: Boolean, default: false },
+    
+    // FIELD BARU: Untuk menyimpan urutan drag & drop
+    index: { type: Number, default: 0 }, 
+
     form_config: {
         target_label: { type: String, default: 'User ID' },
         target_type: { type: String, default: 'text' },
@@ -16,5 +20,9 @@ const BrandSchema = new mongoose.Schema({
     },
     services: [{ type: String }] 
 });
+
+// Menambahkan index agar pencarian berdasarkan slug dan urutan index lebih cepat
+BrandSchema.index({ slug: 1 });
+BrandSchema.index({ index: 1 });
 
 module.exports = mongoose.model('Brand', BrandSchema);
