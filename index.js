@@ -45,6 +45,7 @@ const requestHeaders = {
 // ==========================
 
 // Halaman Utama: Menampilkan Banner, Flash Sale, Brand Populer, dan Semua Brand
+/*
 app.get('/', async (req, res) => {
     try {
         const banners = await Banner.find().sort({ created_at: -1 });
@@ -55,6 +56,27 @@ app.get('/', async (req, res) => {
         res.render('user/indexx', { banners, flashSales, brands, config });
     } catch (e) { res.status(500).send("Database Error"); }
 });
+*/
+app.get('/', async (req, res) => {
+    try {
+        const banners = await Banner.find().sort({ created_at: -1 });
+        const flashSales = await FlashSale.find({ is_active: true, end_date: { $gt: new Date() } });
+        const brands = await Brand.find({ status: 'active' }).sort({ name: 1 });
+        
+        // Ambil config, jika tidak ada buat default
+        let config = await Config.findOne({ key: 'qris_settings' });
+        if (!config) {
+            config = await Config.create({ 
+                key: 'qris_settings', 
+                shop_name: "Lana Store", 
+                meta_description: "Topup Murah 24 Jam" 
+            });
+        }
+
+        res.render('user/indexx', { banners, flashSales, brands, config });
+    } catch (e) { res.status(500).send("Database Error"); }
+});
+
 
 // Halaman Detail Game Dinamis
 app.get('/id/:slug', async (req, res) => {
