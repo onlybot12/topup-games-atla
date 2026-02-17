@@ -1,99 +1,129 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Topup <%= brand.name %> - Lana Store</title>
+    <title>Topup <%= brand.name %> - <%= config.shop_name %></title>
     <%- include('../partials/user/heads') %>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
-        .product-btn.active { border-color: #3b82f6; background: #1e293b; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+        
+        /* Efek Active pada Pilihan Nominal */
+        .product-btn.active { 
+            border-color: #3b82f6 !important; 
+            background: rgba(59, 130, 246, 0.1); 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            transform: scale(0.98);
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-dark-900 text-white pb-32">
+<body class="pb-40 overflow-x-hidden">
 
+    <!-- Header -->
     <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-dark-800">
-        <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400">
+        <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400 active:scale-90 transition-all">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div class="flex items-center gap-3">
-            <img src="<%= brand.icon_url %>" class="w-8 h-8 rounded-lg object-cover shadow-lg">
-            <h1 class="font-black text-sm uppercase tracking-tight"><%= brand.name %></h1>
+            <img src="<%= brand.icon_url %>" class="w-9 h-9 rounded-xl object-cover shadow-lg border border-dark-700">
+            <h1 class="font-black text-sm uppercase tracking-tight text-white"><%= brand.name %></h1>
         </div>
     </header>
 
     <main class="p-4 max-w-3xl mx-auto">
         
-        <!-- FORM DATA TUJUAN -->
-        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Lengkapi Data Tujuan</label>
-            <div class="grid grid-cols-1 gap-4">
+        <!-- STEP 1: FORM DATA TUJUAN -->
+        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl reveal">
+            <div class="flex items-center gap-2 mb-5">
+                <span class="w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">1</span>
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lengkapi Data Akun</label>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-5">
                 <div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1"><%= brand.form_config.target_label %></p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1"><%= brand.form_config.target_label %></p>
                     <input type="<%= brand.form_config.target_type %>" id="target1" placeholder="Masukkan <%= brand.form_config.target_label %>" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold focus:border-blue-500 outline-none">
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
                 </div>
 
                 <% if(brand.form_config.has_server) { %>
                 <div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1"><%= brand.form_config.server_label %></p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1"><%= brand.form_config.server_label %></p>
                     <input type="<%= brand.form_config.server_type %>" id="target2" placeholder="Masukkan <%= brand.form_config.server_label %>" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold focus:border-blue-500 outline-none">
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
                 </div>
                 <% } %>
             </div>
         </div>
 
-        <!-- PILIH PRODUK -->
-        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 ml-2">Pilih Nominal</h3>
-        <div class="grid grid-cols-2 gap-3 mb-10">
-            <% products.forEach(p => { %>
-                <button onclick="selectProduct(this, '<%= p.service_id %>', '<%= p.name %>', <%= p.price_sell %>)" 
-                    class="product-btn bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 transition-all flex flex-col justify-between h-full">
-                    <p class="text-[10px] text-gray-400 font-bold mb-1 leading-tight"><%= p.name %></p>
-                    <p class="text-sm font-black text-blue-400 mt-2">Rp <%= p.price_sell.toLocaleString('id-ID') %></p>
-                </button>
-            <% }) %>
+        <!-- STEP 2: PILIH PRODUK -->
+        <div class="flex items-center gap-2 mb-4 ml-2">
+            <span class="w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">2</span>
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pilih Nominal Topup</h3>
         </div>
 
-        <!-- CHECKOUT BOX (VOUCHER & TOTAL) -->
+        <div class="grid grid-cols-2 gap-3 mb-10">
+            <% if (products.length > 0) { %>
+                <% products.forEach(p => { %>
+                    <button onclick="selectProduct(this, '<%= p.service_id %>', '<%= p.name %>', <%= p.price_sell %>)" 
+                        class="product-btn bg-dark-800 border border-dark-700 p-4 rounded-2xl text-left hover:border-blue-500 transition-all flex flex-col justify-between h-full active:scale-95">
+                        <p class="text-[10px] text-gray-400 font-bold mb-2 leading-tight uppercase"><%= p.name %></p>
+                        <p class="text-sm font-black text-blue-400 mt-auto">Rp <%= p.price_sell.toLocaleString('id-ID') %></p>
+                    </button>
+                <% }) %>
+            <% } else { %>
+                <div class="col-span-2 py-20 text-center bg-dark-800 border border-dashed border-dark-700 rounded-3xl">
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Layanan belum tersedia</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- STEP 3: CHECKOUT BOX (VOUCHER & TOTAL) -->
         <div id="checkoutBox" class="hidden space-y-4 animate-slide-up">
             
-            <!-- VOUCHER -->
+            <!-- VOUCHER PROMO -->
             <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-xl">
-                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Gunakan Voucher Promo</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="vCode" placeholder="KODE VOUCHER" class="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 uppercase text-sm font-bold outline-none focus:border-blue-500">
-                    <button onclick="checkVoucher()" id="btnCheckVoucher" class="bg-blue-600 px-6 py-3 rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Cek</button>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">3</span>
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kode Voucher (Opsional)</h3>
                 </div>
-                <p id="voucherMsg" class="text-[10px] mt-2 font-bold"></p>
+                <div class="flex gap-2">
+                    <input type="text" id="vCode" placeholder="DISKON79" class="flex-1 bg-dark-900 border border-dark-700 rounded-2xl px-4 py-3 uppercase text-sm font-bold text-white outline-none focus:border-blue-500">
+                    <button onclick="checkVoucher()" id="btnCheckVoucher" class="bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase active:scale-90 transition-all">Cek</button>
+                </div>
+                <p id="voucherMsg" class="text-[10px] mt-2 font-bold uppercase"></p>
             </div>
 
-            <!-- TOTAL PEMBAYARAN -->
+            <!-- RINGKASAN PEMBAYARAN -->
             <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-2xl">
-                <div class="space-y-3 mb-6">
+                <div class="space-y-3 mb-6 border-b border-dark-700 pb-6">
                     <div class="flex justify-between text-xs">
-                        <span class="text-gray-400">Harga Produk</span>
-                        <span id="displayBasePrice" class="text-white font-bold">Rp 0</span>
+                        <span class="text-gray-500 font-bold uppercase">Harga Item</span>
+                        <span id="displayBasePrice" class="text-white font-black">Rp 0</span>
                     </div>
                     <div id="displayDiscRow" class="hidden flex justify-between text-xs text-green-400 font-black">
-                        <span>Potongan Diskon</span>
+                        <span>Potongan Promo</span>
                         <span id="displayDiscPrice">- Rp 0</span>
                     </div>
                 </div>
                 
-                <div class="pt-4 border-t border-dark-700 flex justify-between items-center mb-6">
-                    <span class="text-xs font-black text-white uppercase tracking-widest">Total Bayar</span>
+                <div class="flex justify-between items-center mb-8">
+                    <span class="text-xs font-black text-white uppercase tracking-widest">Total Tagihan</span>
                     <span id="displayFinalPrice" class="text-2xl font-black text-blue-500">Rp 0</span>
                 </div>
 
                 <div class="mb-6">
-                    <label class="text-[10px] font-black text-gray-500 uppercase mb-2 block ml-1">Nomor WhatsApp</label>
+                    <label class="text-[10px] font-black text-gray-500 uppercase mb-2 block ml-1 tracking-widest">Nomor WhatsApp</label>
                     <input type="tel" id="wa" placeholder="Contoh: 0812345678" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500">
+                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-blue-500 transition-all">
                 </div>
 
-                <button onclick="processPayment()" id="btnPay" class="w-full bg-blue-600 py-5 rounded-[24px] font-black text-sm shadow-xl shadow-blue-900/40 active:scale-95 transition-all">
-                    BAYAR SEKARANG
+                <button onclick="processPayment()" id="btnPay" class="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black text-sm shadow-xl shadow-blue-900/40 active:scale-95 transition-all uppercase tracking-widest">
+                    <i class="fas fa-credit-card mr-2"></i> Bayar Sekarang
                 </button>
             </div>
         </div>
@@ -104,26 +134,29 @@
         let appliedDiscount = 0;
         let appliedVoucherCode = null;
 
-        // 1. Fungsi pilih produk
+        // 1. Fungsi Pilih Produk
         function selectProduct(element, id, name, price) {
-            // Reset active state
+            // Berikan efek highlight pada tombol yang dipilih
             document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
 
             selectedProduct = { id, name, price };
-            appliedDiscount = 0; // Reset diskon saat ganti produk
+            appliedDiscount = 0; 
             appliedVoucherCode = null;
             document.getElementById('voucherMsg').innerText = "";
             document.getElementById('vCode').value = "";
 
+            // Tampilkan Checkout Box
             document.getElementById('checkoutBox').classList.remove('hidden');
             updatePriceUI();
             
-            // Auto scroll ke bawah
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            // Scroll otomatis ke bawah agar user melihat checkout box
+            setTimeout(() => {
+                document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
 
-        // 2. Fungsi Cek Voucher (FETCH API)
+        // 2. Fungsi Cek Voucher (MENGGUNAKAN FETCH API)
         async function checkVoucher() {
             const code = document.getElementById('vCode').value.toUpperCase();
             if(!code) return;
@@ -163,19 +196,19 @@
             }
         }
 
-        // 3. Update Harga UI (Sesuai Logika MDR Admin)
+        // 3. Update Harga UI (Sesuai Logika MDR/Pajak Admin)
         async function updatePriceUI() {
             const basePrice = selectedProduct.price;
             
-            // Ambil biaya admin terbaru dari DB agar sinkron
             try {
+                // Ambil biaya admin terbaru dari DB secara real-time
                 const confRes = await fetch('/api/admin/config');
                 const confJson = await confRes.json();
                 const config = confJson.data;
 
                 let priceAfterVoucher = basePrice - appliedDiscount;
                 
-                // Rumus Pajak QRIS (Sama dengan backend)
+                // Rumus Pajak QRIS (Konsisten dengan backend index.js)
                 const multiplier = (100 - config.tax_percent) / 100;
                 const totalBayar = Math.ceil((priceAfterVoucher + config.admin_fee) / multiplier);
 
@@ -192,19 +225,19 @@
             } catch (e) { console.error("Config load error"); }
         }
 
-        // 4. Proses Bayar (FETCH API)
+        // 4. Eksekusi Pembayaran (MENGGUNAKAN FETCH API)
         async function processPayment() {
             const t1 = document.getElementById('target1').value;
             const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
             const wa = document.getElementById('wa').value;
 
-            if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan WhatsApp!");
+            if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan nomor WhatsApp!");
 
             const fullTarget = t2 ? `${t1}(${t2})` : t1;
             const btn = document.getElementById('btnPay');
             
             btn.disabled = true;
-            btn.innerText = "MENGALIHKAN...";
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> MENGALIHKAN...`;
 
             try {
                 const response = await fetch('/api/create-payment', {
@@ -220,16 +253,17 @@
                 
                 const result = await response.json();
                 if(result.status) {
+                    // Redirect otomatis ke halaman QRIS
                     window.location.href = result.redirect_url;
                 } else {
                     alert(result.message);
                     btn.disabled = false;
-                    btn.innerText = "BAYAR SEKARANG";
+                    btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
                 }
             } catch (e) {
                 alert("Server error, coba lagi nanti.");
                 btn.disabled = false;
-                btn.innerText = "BAYAR SEKARANG";
+                btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
             }
         }
     </script>
