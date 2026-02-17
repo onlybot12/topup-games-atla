@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Lana Store - Topup Game Murah & Cepat</title>
+    <title>Lana Store - Topup Game & Digital</title>
     <%- include('../partials/user/heads') %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <!-- Menggunakan Font Inter agar terlihat bersih dan profesional (tidak alay) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
         body { 
             background-color: #0f172a; 
             color: #f8fafc; 
             overflow-x: hidden; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -20,7 +21,7 @@
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* Main Brand Card (3 Kolom) */
+        /* Layout Card Utama (3 Kolom) */
         .brand-card-main { 
             transition: all 0.3s ease;
             background: #1e293b;
@@ -34,33 +35,41 @@
             border-radius: 16px;
         }
 
-        /* Popular Section (Layout seperti gambar, Warna tetap Dark) */
+        /* Popular Section Style (Ikon Kiri, Teks Kanan) */
         .popular-container {
-            background-color: #1e293b; /* Warna gelap konsisten */
-            border-radius: 28px;
-            padding: 24px;
+            background-color: #1e293b; 
+            border-radius: 24px;
+            padding: 20px;
             border: 1px solid #334155;
         }
         .popular-card {
-            background-color: #0f172a; /* Card lebih gelap dari container */
-            border-radius: 18px;
-            padding: 12px;
+            background-color: #0f172a;
+            border-radius: 16px;
+            padding: 10px;
             display: flex;
             align-items: center;
-            gap: 14px;
-            transition: all 0.2s;
+            gap: 12px;
             border: 1px solid rgba(255,255,255,0.05);
         }
-        .popular-card:active { transform: scale(0.96); background-color: #1e293b; }
         .popular-card img {
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
             object-fit: cover;
         }
 
         .category-tabs::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Timer Style */
+        .timer-box {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -75,8 +84,8 @@
             </button>
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game Favorit..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <span class="font-bold text-blue-500 text-xl tracking-tighter">LANA</span>
         </div>
@@ -100,22 +109,53 @@
         </div>
         <% } %>
 
-        <!-- 2. POPULER SEKARANG (STYLE LAYANAN SESUAI GAMBAR) -->
+        <!-- 2. FLASH SALE (Sistem Geser dengan Timer) -->
+        <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
+        <section class="mb-10">
+            <div class="flex items-center justify-between mb-4 px-1">
+                <h3 class="font-bold text-white text-base uppercase flex items-center gap-2">
+                    <i class="fas fa-bolt text-yellow-400"></i> <%= config.title_flash_sale %>
+                </h3>
+                <div id="countdown" class="flex items-center gap-1 font-mono">
+                    <!-- Timer JS insert here -->
+                </div>
+            </div>
+            
+            <div class="swiper flashSwiper">
+                <div class="swiper-wrapper">
+                    <% flashSales.forEach(f => { %>
+                    <div class="swiper-slide">
+                        <div class="glass p-4 rounded-[24px] flex items-center gap-4 border border-blue-500/20 relative overflow-hidden">
+                            <img src="<%= f.image_url || '/api/placeholder/100/100' %>" class="w-16 h-16 rounded-xl object-cover">
+                            <div class="flex-1 overflow-hidden">
+                                <h4 class="font-bold text-sm text-slate-100 truncate"><%= f.item_name %></h4>
+                                <p class="text-[10px] text-slate-400 line-through">Rp <%= f.original_price.toLocaleString() %></p>
+                                <p class="text-blue-400 font-bold text-lg leading-none">Rp <%= f.promo_price.toLocaleString() %></p>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- 3. POPULER SEKARANG (Teks Lebih Besar & Bersih) -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
         <section class="popular-container mb-10 shadow-lg">
             <div class="flex items-center gap-2 mb-1">
-                <span class="text-xl">⚠️</span>
-                <h3 class="font-bold text-white uppercase text-lg leading-none tracking-tight">Populer Sekarang!</h3>
+                <span class="text-2xl">⚠️</span>
+                <h3 class="font-extrabold text-white uppercase text-xl tracking-tight"><%= config.title_popular %></h3>
             </div>
-            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium">Beberapa produk yang paling populer saat ini.</p>
+            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium italic">Beberapa produk yang paling populer saat ini.</p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <% popularBrands.forEach(brand => { %>
-                <a href="/id/<%= brand.slug %>" class="popular-card">
+                <a href="/id/<%= brand.slug %>" class="popular-card hover:border-blue-500/50 transition-all">
                     <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     <div class="overflow-hidden">
-                        <p class="font-bold text-white text-sm uppercase truncate tracking-wide"><%= brand.name %></p>
+                        <p class="font-bold text-white text-sm uppercase truncate"><%= brand.name %></p>
                         <p class="text-slate-500 text-[10px] font-bold uppercase"><%= brand.category %></p>
                     </div>
                 </a>
@@ -124,7 +164,7 @@
         </section>
         <% } %>
 
-        <!-- 3. DAFTAR GAME (3 Kolom per baris di HP) -->
+        <!-- 4. DAFTAR GAME (3 Kolom per baris di HP) -->
         <section class="mb-20">
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
                 <button onclick="filterCat('All')" class="cat-btn px-5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold uppercase shadow-lg">Semua</button>
@@ -147,11 +187,11 @@
 
     </main>
 
-    <!-- FOOTER (Clean & Standard) -->
-    <footer class="border-t border-slate-800 py-12 px-6 bg-[#0a0f1a]">
+    <!-- FOOTER (Stay at bottom, Clean Font) -->
+    <footer class="border-t border-slate-800 py-12 px-6 bg-[#0a0f1a] mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
-            <h2 class="text-2xl font-bold text-blue-500 mb-4 tracking-tight">LANA STORE</h2>
-            <p class="text-sm text-slate-400 max-w-md mb-8 leading-relaxed font-medium">
+            <h2 class="text-2xl font-extrabold text-blue-500 mb-4 tracking-tight">LANA STORE</h2>
+            <p class="text-sm text-slate-400 max-w-md mb-8 leading-relaxed">
                 Platform top-up game termurah, tercepat, dan terpercaya di Indonesia. Otomatis 24 jam nonstop dengan berbagai metode pembayaran aman.
             </p>
             
@@ -163,7 +203,7 @@
             
             <div class="w-full max-w-xs h-px bg-slate-800 mb-8 opacity-30"></div>
             
-            <p class="text-xs text-slate-500 font-bold tracking-widest uppercase">
+            <p class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">
                 © 2026 LANA STORE • ALL RIGHTS RESERVED
             </p>
         </div>
@@ -173,12 +213,23 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
     <script>
-        const swiper = new Swiper(".mainSwiper", {
+        // Init Main Slider
+        new Swiper(".mainSwiper", {
             loop: true,
             autoplay: { delay: 4000 },
             pagination: { el: ".swiper-pagination", clickable: true },
         });
 
+        // Init Flash Sale Slider
+        new Swiper(".flashSwiper", {
+            loop: true,
+            autoplay: { delay: 3000 },
+            slidesPerView: 1.2,
+            spaceBetween: 12,
+            breakpoints: { 640: { slidesPerView: 2.5 } }
+        });
+
+        // Filter Kategori
         function filterCat(cat) {
             $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
             $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
@@ -186,6 +237,7 @@
             else { $('.brand-item').hide(); $(`.brand-item[data-category="${cat}"]`).show(); }
         }
 
+        // Search Game
         function searchGame() {
             let val = $('#searchInput').val().toLowerCase();
             $('.brand-item').each(function() {
@@ -193,6 +245,43 @@
                 $(this).toggle(name.includes(val));
             });
         }
+
+        // --- LOGIKA COUNTDOWN TIMER ---
+        function startCountdown() {
+            // Mengambil waktu berakhir dari data flash sale pertama (EJS)
+            const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
+            if(!endDateStr) return;
+
+            const endDate = new Date(endDateStr).getTime();
+            
+            const x = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = endDate - now;
+
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.getElementById("countdown").innerHTML = "<span class='timer-box'>PROMO BERAKHIR</span>";
+                    return;
+                }
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById("countdown").innerHTML = `
+                    <div class="timer-box">${String(hours).padStart(2, '0')}</div>
+                    <div class="text-red-500 font-bold">:</div>
+                    <div class="timer-box">${String(minutes).padStart(2, '0')}</div>
+                    <div class="text-red-500 font-bold">:</div>
+                    <div class="timer-box">${String(seconds).padStart(2, '0')}</div>
+                `;
+            }, 1000);
+        }
+
+        // Jalankan timer jika ada data flash sale
+        <% if (flashSales && flashSales.length > 0) { %>
+            startCountdown();
+        <% } %>
     </script>
 </body>
 </html>
