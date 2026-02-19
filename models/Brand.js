@@ -8,15 +8,23 @@ const BrandSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     is_popular: { type: Boolean, default: false },
     index: { type: Number, default: 0 },
-    // --- TAMBAHAN CONFIG VALIDASI ---
+    // Konfigurasi Form Input User
+    form_config: {
+        target_label: { type: String, default: 'User ID' },
+        target_type: { type: String, default: 'text' },
+        has_server: { type: Boolean, default: false },
+        server_label: { type: String, default: 'Server ID' },
+        server_type: { type: String, default: 'text' }
+    },
+    // Konfigurasi Cek Nickname
     validation_config: {
         active: { type: Boolean, default: false },
-        code: { type: String, default: '' }, // Kode game untuk API isan
+        code: { type: String, default: '' },
         fields: [{
-            name: String,        // id, server
-            label: String,       // User ID, Zone ID
-            placeholder: String, // 12345678
-            type: String         // text, number
+            name: String,
+            label: String,
+            placeholder: String,
+            type: String
         }]
     },
     services: [{ type: String }] 
