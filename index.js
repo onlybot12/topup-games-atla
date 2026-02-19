@@ -151,14 +151,14 @@ app.post('/api/admin/brands', async (req, res) => {
     try {
         const { name, slug, category, icon_url, status, form_config, validation_config } = req.body;
 
-        // Cek apakah slug sudah ada
         const existing = await Brand.findOne({ slug });
-        if (existing) {
-            return res.status(400).json({ status: false, message: "Slug URL sudah digunakan game lain!" });
-        }
+        if (existing) return res.status(400).json({ status: false, message: "Slug sudah ada!" });
 
         const count = await Brand.countDocuments();
         
+        // Pastikan validation_config.fields adalah Array
+        const cleanFields = Array.isArray(validation_config.fields) ? validation_config.fields : [];
+
         const newBrand = new Brand({
             name,
             slug,
@@ -166,22 +166,27 @@ app.post('/api/admin/brands', async (req, res) => {
             icon_url,
             status: status || 'active',
             index: count,
-            form_config,
+            form_config: {
+                target_label: form_config.target_label || 'User ID',
+                target_type: form_config.target_type || 'text',
+                has_server: form_config.has_server || false,
+                server_label: form_config.server_label || 'Server ID',
+                server_type: form_config.server_type || 'text'
+            },
             validation_config: {
                 active: validation_config.active || false,
                 code: validation_config.code || '',
-                fields: validation_config.fields || []
+                fields: cleanFields // Gunakan array yang sudah dibersihkan
             }
         });
 
         await newBrand.save();
-        res.json({ status: true, message: "Brand Berhasil Ditambahkan" });
+        res.json({ status: true, message: "Brand Berhasil Disimpan" });
     } catch (e) {
-        console.error("Error Add Brand:", e);
+        console.error("Error Database:", e.message);
         res.status(500).json({ status: false, message: "Terjadi kesalahan pada database: " + e.message });
     }
 });
-
 
 app.put('/api/admin/brands/reorder', async (req, res) => {
     try {
