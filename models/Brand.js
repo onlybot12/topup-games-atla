@@ -7,22 +7,19 @@ const BrandSchema = new mongoose.Schema({
     icon_url: { type: String, required: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     is_popular: { type: Boolean, default: false },
-    
-    // FIELD BARU: Untuk menyimpan urutan drag & drop
-    index: { type: Number, default: 0 }, 
-
-    form_config: {
-        target_label: { type: String, default: 'User ID' },
-        target_type: { type: String, default: 'text' },
-        has_server: { type: Boolean, default: false },
-        server_label: { type: String, default: 'Server ID' },
-        server_type: { type: String, default: 'text' }
+    index: { type: Number, default: 0 },
+    // --- TAMBAHAN CONFIG VALIDASI ---
+    validation_config: {
+        active: { type: Boolean, default: false },
+        code: { type: String, default: '' }, // Kode game untuk API isan
+        fields: [{
+            name: String,        // id, server
+            label: String,       // User ID, Zone ID
+            placeholder: String, // 12345678
+            type: String         // text, number
+        }]
     },
     services: [{ type: String }] 
 });
-
-// Menambahkan index agar pencarian berdasarkan slug dan urutan index lebih cepat
-BrandSchema.index({ slug: 1 });
-BrandSchema.index({ index: 1 });
 
 module.exports = mongoose.model('Brand', BrandSchema);
