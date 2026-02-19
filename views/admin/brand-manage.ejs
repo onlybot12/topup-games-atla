@@ -278,40 +278,53 @@
                         </div>
                     </div>
                 `,
-                preConfirm: () => {
-                    const name = document.getElementById('n-name').value;
-                    const slug = document.getElementById('n-slug').value;
-                    const icon = document.getElementById('n-icon').value;
-                    
-                    if(!name || !slug || !icon) return Swal.showValidationMessage('Lengkapi Nama, Slug, dan Icon!');
+                //
+preConfirm: () => {
+    const name = document.getElementById('n-name').value;
+    const slug = document.getElementById('n-slug').value;
+    const icon = document.getElementById('n-icon').value;
+    
+    if(!name || !slug || !icon) return Swal.showValidationMessage('Lengkapi Nama, Slug, dan Icon!');
 
-                    const val_fields = [];
-                    $('.v-row-data').each(function() {
-                        val_fields.push({
-                            name: $(this).find('.v-name').val(),
-                            label: $(this).find('.v-label').val(),
-                            placeholder: $(this).find('.v-place').val(),
-                            type: $(this).find('.v-type').val()
-                        });
-                    });
+    // PENGAMBILAN DATA FIELD VALIDASI YANG LEBIH AKURAT
+    const val_fields = [];
+    const rows = document.querySelectorAll('.v-row-data');
+    
+    rows.forEach(row => {
+        const nameVal = row.querySelector('.v-name').value;
+        const labelVal = row.querySelector('.v-label').value;
+        const placeVal = row.querySelector('.v-place').value;
+        const typeVal = row.querySelector('.v-type').value;
 
-                    return {
-                        name, slug, category: document.getElementById('n-cat').value, icon_url: icon,
-                        form_config: {
-                            target_label: document.getElementById('f-t-label').value,
-                            target_type: document.getElementById('f-t-type').value,
-                            has_server: document.getElementById('f-has-server').checked,
-                            server_label: document.getElementById('f-s-label').value,
-                            server_type: document.getElementById('f-s-type').value
-                        },
-                        validation_config: {
-                            active: document.getElementById('v-active').checked,
-                            code: document.getElementById('v-code').value,
-                            fields: val_fields
-                        }
-                    }
-                }
+        if (nameVal) {
+            val_fields.push({
+                name: nameVal,
+                label: labelVal,
+                placeholder: placeVal,
+                type: typeVal
             });
+        }
+    });
+
+    return {
+        name: name,
+        slug: slug,
+        category: document.getElementById('n-cat').value,
+        icon_url: icon,
+        form_config: {
+            target_label: document.getElementById('f-t-label').value,
+            target_type: document.getElementById('f-t-type').value,
+            has_server: document.getElementById('f-has-server').checked,
+            server_label: document.getElementById('f-s-label').value,
+            server_type: document.getElementById('f-s-type').value
+        },
+        validation_config: {
+            active: document.getElementById('v-active').checked,
+            code: document.getElementById('v-code').value,
+            fields: val_fields // Mengirim array of objects asli
+        }
+    }
+}
 
             if (f) {
                 const res = await fetch('/api/admin/brands', {
