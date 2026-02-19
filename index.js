@@ -149,12 +149,39 @@ app.get('/api/admin/brands', async (req, res) => {
 
 app.post('/api/admin/brands', async (req, res) => {
     try {
+        const { name, slug, category, icon_url, status, form_config, validation_config } = req.body;
+
+        // Cek apakah slug sudah ada
+        const existing = await Brand.findOne({ slug });
+        if (existing) {
+            return res.status(400).json({ status: false, message: "Slug URL sudah digunakan game lain!" });
+        }
+
         const count = await Brand.countDocuments();
-        const newBrand = new Brand({ ...req.body, index: count });
+        
+        const newBrand = new Brand({
+            name,
+            slug,
+            category,
+            icon_url,
+            status: status || 'active',
+            index: count,
+            form_config,
+            validation_config: {
+                active: validation_config.active || false,
+                code: validation_config.code || '',
+                fields: validation_config.fields || []
+            }
+        });
+
         await newBrand.save();
         res.json({ status: true, message: "Brand Berhasil Ditambahkan" });
-    } catch (e) { res.status(400).json({ status: false, message: "Slug atau Nama Duplikat!" }); }
+    } catch (e) {
+        console.error("Error Add Brand:", e);
+        res.status(500).json({ status: false, message: "Terjadi kesalahan pada database: " + e.message });
+    }
 });
+
 
 app.put('/api/admin/brands/reorder', async (req, res) => {
     try {
