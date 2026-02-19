@@ -10,7 +10,6 @@
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         
-        /* Efek Active pada Pilihan Nominal */
         .product-btn.active { 
             border-color: #3b82f6 !important; 
             background: rgba(59, 130, 246, 0.1); 
@@ -24,7 +23,7 @@
 <body class="pb-40 overflow-x-hidden">
 
     <!-- Header -->
-    <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-dark-800">
+    <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-lg border-b border-dark-800">
         <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400 active:scale-90 transition-all">
             <i class="fas fa-arrow-left"></i>
         </a>
@@ -36,7 +35,7 @@
 
     <main class="p-4 max-w-3xl mx-auto">
         
-        <!-- STEP 1: FORM DATA TUJUAN -->
+        <!-- STEP 1: FORM DATA TUJUAN (DINAMIS DARI ADMIN) -->
         <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl reveal">
             <div class="flex items-center gap-2 mb-5">
                 <span class="w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">1</span>
@@ -44,23 +43,30 @@
             </div>
             
             <div class="grid grid-cols-1 gap-5">
+                <% brand.validation_config.fields.forEach((field) => { %>
                 <div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1"><%= brand.form_config.target_label %></p>
-                    <input type="<%= brand.form_config.target_type %>" id="target1" placeholder="Masukkan <%= brand.form_config.target_label %>" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1"><%= field.label %></p>
+                    <input type="<%= field.type %>" id="target_input_<%= field.name %>" placeholder="<%= field.placeholder %>" 
+                        class="target-field w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
                 </div>
-
-                <% if(brand.form_config.has_server) { %>
-                <div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1"><%= brand.form_config.server_label %></p>
-                    <input type="<%= brand.form_config.server_type %>" id="target2" placeholder="Masukkan <%= brand.form_config.server_label %>" 
-                        class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
-                </div>
-                <% } %>
+                <% }) %>
             </div>
+
+            <!-- TOMBOL CEK NICKNAME (Hanya Muncul Jika Aktif di Admin) -->
+            <% if(brand.validation_config.active) { %>
+            <div class="mt-4">
+                <button onclick="cekNickname()" id="btnCek" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase transition-all active:scale-95">
+                    <i class="fas fa-search mr-1"></i> Periksa Nickname
+                </button>
+                <div id="nickDisplay" class="hidden mt-4 p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl text-center">
+                    <p class="text-[9px] text-slate-500 font-black uppercase">Nickname Ditemukan:</p>
+                    <p id="nickValue" class="text-lg font-black text-blue-400"></p>
+                </div>
+            </div>
+            <% } %>
         </div>
 
-        <!-- STEP 2: PILIH PRODUK -->
+        <!-- STEP 2: PILIH NOMINAL -->
         <div class="flex items-center gap-2 mb-4 ml-2">
             <span class="w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">2</span>
             <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pilih Nominal Topup</h3>
@@ -100,13 +106,13 @@
 
             <!-- RINGKASAN PEMBAYARAN -->
             <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 shadow-2xl">
-                <div class="space-y-3 mb-6 border-b border-dark-700 pb-6">
-                    <div class="flex justify-between text-xs">
+                <div class="space-y-3 mb-6 border-b border-dark-700 pb-6 text-sm">
+                    <div class="flex justify-between">
                         <span class="text-gray-500 font-bold uppercase">Harga Item</span>
                         <span id="displayBasePrice" class="text-white font-black">Rp 0</span>
                     </div>
-                    <div id="displayDiscRow" class="hidden flex justify-between text-xs text-green-400 font-black">
-                        <span>Potongan Promo</span>
+                    <div id="displayDiscRow" class="hidden flex justify-between text-green-400 font-black">
+                        <span>Potongan Diskon</span>
                         <span id="displayDiscPrice">- Rp 0</span>
                     </div>
                 </div>
@@ -118,7 +124,7 @@
 
                 <div class="mb-6">
                     <label class="text-[10px] font-black text-gray-500 uppercase mb-2 block ml-1 tracking-widest">Nomor WhatsApp</label>
-                    <input type="tel" id="wa" placeholder="Contoh: 0812345678" 
+                    <input type="tel" id="wa" placeholder="62812345678" 
                         class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-blue-500 transition-all">
                 </div>
 
@@ -134,9 +140,43 @@
         let appliedDiscount = 0;
         let appliedVoucherCode = null;
 
-        // 1. Fungsi Pilih Produk
+        // 1. Fungsi Cek Nickname (Proxy API)
+        async function cekNickname() {
+            const btn = document.getElementById('btnCek');
+            const display = document.getElementById('nickDisplay');
+            const value = document.getElementById('nickValue');
+            const gameCode = "<%= brand.validation_config.code %>";
+
+            // Ambil ID dan Server dari input dinamis
+            const idInput = document.getElementById('target_input_id')?.value;
+            const serverInput = document.getElementById('target_input_server')?.value;
+
+            if(!idInput) return alert("Masukkan ID Game!");
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
+            display.classList.add('hidden');
+
+            try {
+                const response = await fetch(`/api/validasi/${gameCode}?id=${idInput}${serverInput ? `&server=${serverInput}` : ''}`);
+                const data = await response.json();
+
+                if(data.success) {
+                    display.classList.remove('hidden');
+                    value.innerText = data.nickname;
+                } else {
+                    alert(data.message || "ID tidak ditemukan.");
+                }
+            } catch (e) {
+                alert("Gagal terhubung ke API validasi.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-search mr-1"></i> Periksa Nickname';
+            }
+        }
+
+        // 2. Fungsi Pilih Produk
         function selectProduct(element, id, name, price) {
-            // Berikan efek highlight pada tombol yang dipilih
             document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
 
@@ -146,26 +186,22 @@
             document.getElementById('voucherMsg').innerText = "";
             document.getElementById('vCode').value = "";
 
-            // Tampilkan Checkout Box
             document.getElementById('checkoutBox').classList.remove('hidden');
             updatePriceUI();
             
-            // Scroll otomatis ke bawah agar user melihat checkout box
             setTimeout(() => {
                 document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
 
-        // 2. Fungsi Cek Voucher (MENGGUNAKAN FETCH API)
+        // 3. Fungsi Cek Voucher
         async function checkVoucher() {
             const code = document.getElementById('vCode').value.toUpperCase();
             if(!code) return;
 
             const btn = document.getElementById('btnCheckVoucher');
             const msg = document.getElementById('voucherMsg');
-            
-            btn.disabled = true;
-            btn.innerText = "...";
+            btn.disabled = true; btn.innerText = "...";
 
             try {
                 const response = await fetch('/api/vouchers/verify', {
@@ -173,42 +209,32 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code, amount: selectedProduct.price })
                 });
-                
                 const result = await response.json();
 
                 if(result.status) {
                     appliedDiscount = result.discount;
                     appliedVoucherCode = result.code;
-                    msg.innerText = "✓ Voucher Berhasil Digunakan!";
+                    msg.innerText = "✓ Voucher Terpasang";
                     msg.className = "text-[10px] mt-2 font-bold text-green-400 uppercase";
                 } else {
-                    appliedDiscount = 0;
-                    appliedVoucherCode = null;
+                    appliedDiscount = 0; appliedVoucherCode = null;
                     msg.innerText = "✕ " + result.message;
                     msg.className = "text-[10px] mt-2 font-bold text-red-500 uppercase";
                 }
                 updatePriceUI();
-            } catch (e) {
-                alert("Gagal menghubungi server");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "CEK";
-            }
+            } catch (e) { alert("Server error"); }
+            finally { btn.disabled = false; btn.innerText = "CEK"; }
         }
 
-        // 3. Update Harga UI (Sesuai Logika MDR/Pajak Admin)
+        // 4. Update Harga UI (Admin Fee & MDR)
         async function updatePriceUI() {
             const basePrice = selectedProduct.price;
-            
             try {
-                // Ambil biaya admin terbaru dari DB secara real-time
                 const confRes = await fetch('/api/admin/config');
                 const confJson = await confRes.json();
                 const config = confJson.data;
 
                 let priceAfterVoucher = basePrice - appliedDiscount;
-                
-                // Rumus Pajak QRIS (Konsisten dengan backend index.js)
                 const multiplier = (100 - config.tax_percent) / 100;
                 const totalBayar = Math.ceil((priceAfterVoucher + config.admin_fee) / multiplier);
 
@@ -222,18 +248,18 @@
                 } else {
                     discRow.classList.add('hidden');
                 }
-            } catch (e) { console.error("Config load error"); }
+            } catch (e) { console.error("Config error"); }
         }
 
-        // 4. Eksekusi Pembayaran (MENGGUNAKAN FETCH API)
+        // 5. Eksekusi Pembayaran
         async function processPayment() {
-            const t1 = document.getElementById('target1').value;
-            const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
+            const idInput = document.getElementById('target_input_id')?.value;
+            const serverInput = document.getElementById('target_input_server')?.value;
             const wa = document.getElementById('wa').value;
 
-            if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan nomor WhatsApp!");
+            if(!idInput || !wa) return alert("Harap lengkapi data tujuan dan WhatsApp!");
 
-            const fullTarget = t2 ? `${t1}(${t2})` : t1;
+            const fullTarget = serverInput ? `${idInput}(${serverInput})` : idInput;
             const btn = document.getElementById('btnPay');
             
             btn.disabled = true;
@@ -253,7 +279,6 @@
                 
                 const result = await response.json();
                 if(result.status) {
-                    // Redirect otomatis ke halaman QRIS
                     window.location.href = result.redirect_url;
                 } else {
                     alert(result.message);
@@ -261,7 +286,7 @@
                     btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
                 }
             } catch (e) {
-                alert("Server error, coba lagi nanti.");
+                alert("Server error");
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
             }
