@@ -16,7 +16,7 @@
             border: 1px solid #e2e8f0; 
             border-radius: 28px; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            cursor: grab; /* Menandakan bisa digeser */
+            cursor: grab;
             user-select: none;
         }
         .brand-card:active { cursor: grabbing; }
@@ -32,8 +32,6 @@
             margin-top: 12px; 
             letter-spacing: 0.05em;
         }
-
-        /* Mencegah gambar ikut ter-drag (fokus ke kartu) */
         .brand-card img { pointer-events: none; }
     </style>
 </head>
@@ -57,14 +55,12 @@
 
         <!-- MAIN CONTENT -->
         <main class="p-4 md:p-8">
-            <!-- Hint untuk user -->
             <div class="flex items-center gap-2 mb-6 px-2 text-slate-400">
                 <i class="fas fa-info-circle text-xs"></i>
                 <p class="text-[10px] font-bold uppercase tracking-wider m-0">Tekan dan geser kartu untuk merubah urutan tampilan di website.</p>
             </div>
 
             <div id="brand-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Data Brand akan dimuat via AJAX -->
                 <div class="col-span-full py-20 text-center text-slate-400">Memuat Brand...</div>
             </div>
         </main>
@@ -72,11 +68,10 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Tambahkan Library SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
-        // 1. Fungsi Load Data dari Database
+        // 1. Fungsi Load Data & Init Sortable
         async function loadBrands() {
             try {
                 const res = await fetch('/api/admin/brands');
@@ -113,53 +108,27 @@
                     `);
                 });
 
-                // Inisialisasi Fitur Drag & Drop setelah kartu muncul
                 initSortable();
-
             } catch (e) { console.error(e); }
         }
 
-        // 2. Inisialisasi SortableJS
         function initSortable() {
             const el = document.getElementById('brand-grid');
             Sortable.create(el, {
                 animation: 200,
                 ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
                 onEnd: async function () {
-                    // Ambil urutan ID baru dari DOM
                     const order = [];
-                    $('.brand-card').each(function() {
-                        order.push($(this).data('id'));
+                    $('.brand-card').each(function() { order.push($(this).data('id')); });
+                    await fetch('/api/admin/brands/reorder', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order })
                     });
-
-                    // Kirim urutan baru ke Backend
-                    try {
-                        const response = await fetch('/api/admin/brands/reorder', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ order })
-                        });
-                        const result = await response.json();
-                        
-                        if(result.status) {
-                            const Toast = Swal.mixin({
-                                toast: true,
-                                position: 'top-end',
-                                showConfirmButton: false,
-                                timer: 1500,
-                                timerProgressBar: true,
-                            });
-                            Toast.fire({ icon: 'success', title: 'Urutan Berhasil Disimpan' });
-                        }
-                    } catch (err) {
-                        console.error("Gagal simpan urutan", err);
-                    }
                 }
             });
         }
 
-        // 3. Fungsi Toggle Populer
         async function togglePopular(id, status) {
             await fetch(`/api/admin/brands/popular/${id}`, {
                 method: 'PUT',
@@ -168,20 +137,20 @@
             });
         }
 
-        // 4. Modal Tambah Brand
+        // 2. Modal Konfigurasi Brand Lengkap (Form Config + Validation API)
         async function openBrandModal() {
             const { value: f } = await Swal.fire({
-                title: '<span class="text-xs font-black uppercase tracking-widest">Tambah Game Baru</span>',
-                width: '550px',
+                title: '<span class="text-xs font-black uppercase tracking-widest">Konfigurasi Brand Baru</span>',
+                width: '600px',
                 confirmButtonText: 'SIMPAN BRAND',
                 confirmButtonColor: '#2563eb',
                 showCancelButton: true,
                 html: `
-                    <div class="text-left px-2">
+                    <div class="text-left px-2" style="max-height: 500px; overflow-y: auto;">
                         <label class="swal-input-label">Nama Brand</label>
-                        <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
+                        <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Free Fire" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
                         
-                        <label class="swal-input-label">Slug URL (Otomatis)</label>
+                        <label class="swal-input-label">Slug URL</label>
                         <input id="n-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" readonly>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -195,69 +164,76 @@
                             </div>
                             <div>
                                 <label class="swal-input-label">URL Icon</label>
-                                <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link-gambar.com/icon.png">
+                                <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link.com/img.png">
                             </div>
                         </div>
 
-                        <!-- FORMAT FORM SESUAI FOTO -->
+                        <!-- FORMAT FORM (INPUT USER) -->
                         <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
-                                <i class="fas fa-file-invoice text-blue-500"></i> Format Form (Sesuai Foto)
-                            </p>
-                            
+                            <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2"><i class="fas fa-file-invoice text-blue-500"></i> Format Form (Tampilan User)</p>
                             <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label>
-                                    <input id="f-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="User ID">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label>
-                                    <select id="f-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                        <option value="text">Text</option>
-                                        <option value="number">Nomor</option>
-                                        <option value="email">Email</option>
-                                    </select>
-                                </div>
+                                <div><label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label><input id="f-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="User ID"></div>
+                                <div><label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label><select id="f-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full"><option value="text">Text</option><option value="number">Nomor</option></select></div>
                             </div>
-
                             <div class="flex items-center gap-2 mb-4">
-                                <input type="checkbox" id="f-has-server" class="w-4 h-4" onchange="document.getElementById('server-config').classList.toggle('hidden')">
+                                <input type="checkbox" id="f-has-server" onchange="$('#server-config').toggleClass('hidden')">
                                 <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2 (Server ID)</label>
                             </div>
-
                             <div id="server-config" class="hidden grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
-                                    <input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" placeholder="Contoh: Server ID">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label>
-                                    <select id="f-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                        <option value="text">Text</option>
-                                        <option value="number">Nomor</option>
-                                    </select>
+                                <div><label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label><input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="Server ID"></div>
+                                <div><label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label><select id="f-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full"><option value="text">Text</option><option value="number">Nomor</option></select></div>
+                            </div>
+                        </div>
+
+                        <!-- VALIDASI ID GAME (SESUAI FOTO) -->
+                        <div class="mt-4 p-5 bg-slate-900 rounded-[24px] border border-slate-700 text-white">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">● Konfigurasi Validasi ID Game</label>
+                                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="v-active" onchange="$('#v-detail').toggleClass('hidden')"></div>
+                            </div>
+                            <p class="text-[9px] text-slate-500 mb-4 tracking-tighter">Aktifkan untuk fitur cek nickname otomatis via API isan.eu.org</p>
+                            <div id="v-detail" class="hidden space-y-4">
+                                <div><label class="text-[9px] font-bold text-slate-400 uppercase">Kode Game API *</label><input id="v-code" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-xs mt-1 outline-none text-blue-400 font-bold" placeholder="ff / mobilelegends"></div>
+                                <div class="p-4 bg-slate-800 rounded-2xl border border-slate-600">
+                                     <p class="text-[9px] font-black uppercase mb-3 text-slate-400 italic">Form Fields Untuk Validasi</p>
+                                     <div id="v-fields-container" class="space-y-2">
+                                        <div class="grid grid-cols-12 gap-1 items-center field-row bg-slate-900 p-2 rounded-lg">
+                                            <input class="col-span-3 bg-transparent border-none text-[9px] v-f-name" value="id">
+                                            <input class="col-span-4 bg-transparent border-none text-[9px] v-f-label" value="User ID">
+                                            <input class="col-span-3 bg-transparent border-none text-[9px] v-f-place" value="12345678">
+                                            <select class="col-span-2 bg-transparent border-none text-[9px] v-f-type"><option value="text">Txt</option><option value="number">Num</option></select>
+                                        </div>
+                                     </div>
+                                     <button type="button" onclick="addVField()" class="text-[9px] font-black text-blue-400 mt-3 uppercase tracking-tighter">+ Tambah Field Validasi</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `,
                 preConfirm: () => {
-                    const name = $('#n-name').val();
-                    const slug = $('#n-slug').val();
-                    const icon = $('#n-icon').val();
-                    if(!name || !slug || !icon) return Swal.showValidationMessage('Nama, Slug, dan Icon wajib diisi!');
-                    
+                    const validation_fields = [];
+                    $('.field-row').each(function() {
+                        validation_fields.push({
+                            name: $(this).find('.v-f-name').val(),
+                            label: $(this).find('.v-f-label').val(),
+                            placeholder: $(this).find('.v-f-place').val(),
+                            type: $(this).find('.v-f-type').val()
+                        });
+                    });
                     return {
-                        name: name,
-                        slug: slug,
+                        name: $('#n-name').val(),
+                        slug: $('#n-slug').val(),
                         category: $('#n-cat').val(),
-                        icon_url: icon,
+                        icon_url: $('#n-icon').val(),
                         form_config: {
-                            target_label: $('#f-t-label').val(),
-                            target_type: $('#f-t-type').val(),
+                            target_label: $('#f-t-label').val(), target_type: $('#f-t-type').val(),
                             has_server: $('#f-has-server').is(':checked'),
-                            server_label: $('#f-s-label').val(),
-                            server_type: $('#f-s-type').val()
+                            server_label: $('#f-s-label').val(), server_type: $('#f-s-type').val()
+                        },
+                        validation_config: {
+                            active: $('#v-active').is(':checked'),
+                            code: $('#v-code').val(),
+                            fields: validation_fields
                         }
                     }
                 }
@@ -273,7 +249,18 @@
             }
         }
 
-        // 5. Fungsi Hapus Brand
+        function addVField() {
+            $('#v-fields-container').append(`
+                <div class="grid grid-cols-12 gap-1 items-center field-row bg-slate-900 p-2 rounded-lg mt-1">
+                    <input class="col-span-3 bg-transparent border-none text-[9px] v-f-name" value="server">
+                    <input class="col-span-4 bg-transparent border-none text-[9px] v-f-label" value="Server ID">
+                    <input class="col-span-3 bg-transparent border-none text-[9px] v-f-place" value="1234">
+                    <select class="col-span-1 bg-transparent border-none text-[9px] v-f-type"><option value="text">T</option><option value="number">N</option></select>
+                    <button onclick="$(this).parent().remove()" class="col-span-1 text-red-500 text-[10px]"><i class="fas fa-trash"></i></button>
+                </div>
+            `);
+        }
+
         async function deleteBrand(id) {
             if(confirm("Hapus Brand?")) {
                 await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
