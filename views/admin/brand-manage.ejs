@@ -92,7 +92,7 @@
                     grid.append(`
                         <div class="brand-card p-5 flex flex-col items-center text-center shadow-sm" data-id="${b._id}">
                             <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md border-2 border-white">
-                            <h3 class="font-black text-slate-800 text-xs uppercase mb-1">${b.name}</h3>
+                            <h3 class="font-black text-slate-800 text-xs uppercase mb-1 text-center truncate w-full">${b.name}</h3>
                             
                             <div class="flex items-center gap-2 mb-4 bg-slate-50 p-2 rounded-xl border w-full justify-between mt-2">
                                 <span class="text-[9px] font-black text-slate-400 uppercase">Populer</span>
@@ -127,13 +127,11 @@
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 onEnd: async function () {
-                    // Ambil urutan ID baru dari DOM
                     const order = [];
                     $('.brand-card').each(function() {
                         order.push($(this).data('id'));
                     });
 
-                    // Kirim urutan baru ke Backend
                     try {
                         const response = await fetch('/api/admin/brands/reorder', {
                             method: 'PUT',
@@ -168,16 +166,16 @@
             });
         }
 
-        // 4. Modal Tambah Brand
+        // 4. Modal Tambah Brand (UPDATE: Ditambahkan Kode Validasi)
         async function openBrandModal() {
             const { value: f } = await Swal.fire({
-                title: '<span class="text-xs font-black uppercase tracking-widest">Tambah Game Baru</span>',
+                title: '<span class="text-xs font-black uppercase tracking-widest text-slate-800">Tambah Game Baru</span>',
                 width: '550px',
                 confirmButtonText: 'SIMPAN BRAND',
                 confirmButtonColor: '#2563eb',
                 showCancelButton: true,
                 html: `
-                    <div class="text-left px-2">
+                    <div class="text-left px-2 no-scrollbar" style="max-height: 70vh; overflow-y: auto;">
                         <label class="swal-input-label">Nama Brand</label>
                         <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
                         
@@ -198,6 +196,11 @@
                                 <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link-gambar.com/icon.png">
                             </div>
                         </div>
+
+                        <!-- VALIDATION CODE SETTING -->
+                        <label class="swal-input-label text-blue-600">Kode Validasi Nickname (Optional)</label>
+                        <input id="n-val-code" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: freefire atau mobilelegends">
+                        <p class="text-[9px] text-slate-400 mt-1">*Input kode validasi (ff, ml, pubg, dll) jika ingin cek nickname.</p>
 
                         <!-- FORMAT FORM SESUAI FOTO -->
                         <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
@@ -250,6 +253,7 @@
                     return {
                         name: name,
                         slug: slug,
+                        validation_code: $('#n-val-code').val(), // Data Baru
                         category: $('#n-cat').val(),
                         icon_url: icon,
                         form_config: {
@@ -273,7 +277,6 @@
             }
         }
 
-        // 5. Fungsi Hapus Brand
         async function deleteBrand(id) {
             if(confirm("Hapus Brand?")) {
                 await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
