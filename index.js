@@ -79,6 +79,7 @@ app.get('/', async (req, res) => {
     } catch (e) { res.status(500).send("Database Error"); }
 });
 
+/*
 
 // Halaman Detail Game Dinamis
 app.get('/id/:slug', async (req, res) => {
@@ -96,6 +97,38 @@ app.get('/id/:slug', async (req, res) => {
     } catch (e) { res.status(500).send("Server Error"); }
 });
 
+*/
+
+// Halaman Detail Game Dinamis: /id/free-fire
+app.get('/id/:slug', async (req, res) => {
+    try {
+        const brand = await Brand.findOne({ slug: req.params.slug, status: 'active' });
+        if (!brand) return res.status(404).send("Layanan tidak ditemukan");
+
+        // Ambil produk yang dikaitkan dengan brand ini
+        const products = await Service.find({ 
+            service_id: { $in: brand.services },
+            is_active: true,
+            status_api: { $ne: 'empty' }
+        }).sort({ price_sell: 1 });
+
+        // --- TAMBAHKAN BARIS INI ---
+        let config = await Config.findOne({ key: 'qris_settings' });
+        if (!config) {
+            config = { 
+                shop_name: "Lana Store", 
+                meta_description: "Topup Murah 24 Jam" 
+            };
+        }
+        // ---------------------------
+
+        // Kirim 'config' ke dalam render
+        res.render('user/detail-game', { brand, products, config }); 
+    } catch (e) { 
+        console.error(e);
+        res.status(500).send("Server Error"); 
+    }
+});
 // Halaman Pembayaran (QRIS)
 app.get('/transaction/:deposit_id', async (req, res) => {
     const depositId = req.params.deposit_id;
