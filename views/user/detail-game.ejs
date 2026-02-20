@@ -24,7 +24,7 @@
 <body class="pb-40 overflow-x-hidden">
 
     <!-- Header -->
-    <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-dark-800">
+    <header class="h-16 px-4 flex items-center gap-4 sticky top-0 z-40 bg-dark-900/90 backdrop-blur-lg border-b border-dark-800">
         <a href="/" class="w-10 h-10 bg-dark-800 rounded-xl flex items-center justify-center text-gray-400 active:scale-90 transition-all">
             <i class="fas fa-arrow-left"></i>
         </a>
@@ -35,6 +35,20 @@
     </header>
 
     <main class="p-4 max-w-3xl mx-auto">
+
+        <!-- ==========================================
+             TAMBAHAN: BAGIAN DETAIL / DESKRIPSI GAME 
+             ========================================== -->
+        <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl reveal">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="fas fa-info-circle text-blue-500 text-sm"></i>
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informasi & Cara Topup</h3>
+            </div>
+            <div class="text-[11px] text-gray-300 leading-relaxed space-y-2 font-medium">
+                <!-- Deskripsi dinamis dari database -->
+                <%- brand.description || 'Topup ' + brand.name + ' Otomatis 24 Jam. Masukkan data akun Anda dengan benar, pilih nominal, dan selesaikan pembayaran. Pesanan akan diproses secara instan setelah pembayaran terverifikasi.' %>
+            </div>
+        </div>
         
         <!-- STEP 1: FORM DATA TUJUAN -->
         <div class="bg-dark-800 border border-dark-700 rounded-[32px] p-6 mb-6 shadow-xl reveal">
@@ -57,6 +71,12 @@
                         class="w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-sm font-bold text-white focus:border-blue-500 outline-none transition-all">
                 </div>
                 <% } %>
+
+                <!-- DISPLAY NICKNAME (VALIDASI ID) -->
+                <div id="nickname-display" class="hidden animate-pulse p-3 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
+                    <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest leading-none">Nickname Akun:</p>
+                    <p id="player-name" class="text-sm font-black text-white mt-1 uppercase"></p>
+                </div>
             </div>
         </div>
 
@@ -106,7 +126,7 @@
                         <span id="displayBasePrice" class="text-white font-black">Rp 0</span>
                     </div>
                     <div id="displayDiscRow" class="hidden flex justify-between text-xs text-green-400 font-black">
-                        <span>Potongan Promo</span>
+                        <span>Potongan Diskon</span>
                         <span id="displayDiscPrice">- Rp 0</span>
                     </div>
                 </div>
@@ -134,9 +154,11 @@
         let appliedDiscount = 0;
         let appliedVoucherCode = null;
 
-        // 1. Fungsi Pilih Produk
+        // DATA DARI BACKEND UNTUK SCRIPT
+        const valCode = "<%= brand.validation_code %>";
+
+        // 1. Pilih Produk
         function selectProduct(element, id, name, price) {
-            // Berikan efek highlight pada tombol yang dipilih
             document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
 
@@ -146,75 +168,56 @@
             document.getElementById('voucherMsg').innerText = "";
             document.getElementById('vCode').value = "";
 
-            // Tampilkan Checkout Box
             document.getElementById('checkoutBox').classList.remove('hidden');
             updatePriceUI();
             
-            // Scroll otomatis ke bawah agar user melihat checkout box
             setTimeout(() => {
                 document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
 
-        // 2. Fungsi Cek Voucher (MENGGUNAKAN FETCH API)
+        // 2. Fungsi Cek Voucher
         async function checkVoucher() {
             const code = document.getElementById('vCode').value.toUpperCase();
             if(!code) return;
-
             const btn = document.getElementById('btnCheckVoucher');
             const msg = document.getElementById('voucherMsg');
-            
-            btn.disabled = true;
-            btn.innerText = "...";
-
+            btn.disabled = true; btn.innerText = "...";
             try {
                 const response = await fetch('/api/vouchers/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code, amount: selectedProduct.price })
                 });
-                
                 const result = await response.json();
-
                 if(result.status) {
                     appliedDiscount = result.discount;
                     appliedVoucherCode = result.code;
-                    msg.innerText = "✓ Voucher Berhasil Digunakan!";
+                    msg.innerText = "✓ Voucher Terpasang";
                     msg.className = "text-[10px] mt-2 font-bold text-green-400 uppercase";
                 } else {
-                    appliedDiscount = 0;
-                    appliedVoucherCode = null;
+                    appliedDiscount = 0; appliedVoucherCode = null;
                     msg.innerText = "✕ " + result.message;
                     msg.className = "text-[10px] mt-2 font-bold text-red-500 uppercase";
                 }
                 updatePriceUI();
-            } catch (e) {
-                alert("Gagal menghubungi server");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "CEK";
-            }
+            } catch (e) { alert("Server error"); }
+            finally { btn.disabled = false; btn.innerText = "CEK"; }
         }
 
-        // 3. Update Harga UI (Sesuai Logika MDR/Pajak Admin)
+        // 3. Update Harga UI
         async function updatePriceUI() {
             const basePrice = selectedProduct.price;
-            
             try {
-                // Ambil biaya admin terbaru dari DB secara real-time
                 const confRes = await fetch('/api/admin/config');
                 const confJson = await confRes.json();
                 const config = confJson.data;
-
                 let priceAfterVoucher = basePrice - appliedDiscount;
-                
-                // Rumus Pajak QRIS (Konsisten dengan backend index.js)
                 const multiplier = (100 - config.tax_percent) / 100;
                 const totalBayar = Math.ceil((priceAfterVoucher + config.admin_fee) / multiplier);
 
                 document.getElementById('displayBasePrice').innerText = "Rp " + basePrice.toLocaleString('id-ID');
                 document.getElementById('displayFinalPrice').innerText = "Rp " + totalBayar.toLocaleString('id-ID');
-                
                 const discRow = document.getElementById('displayDiscRow');
                 if(appliedDiscount > 0) {
                     discRow.classList.remove('hidden');
@@ -222,49 +225,63 @@
                 } else {
                     discRow.classList.add('hidden');
                 }
-            } catch (e) { console.error("Config load error"); }
+            } catch (e) { console.error("Config error"); }
         }
 
-        // 4. Eksekusi Pembayaran (MENGGUNAKAN FETCH API)
+        // 4. Validasi ID Game (Nickname)
+        async function validatePlayer() {
+            if (!valCode) return;
+            const id = document.getElementById('target1').value;
+            const server = document.getElementById('target2') ? document.getElementById('target2').value : '';
+            const display = document.getElementById('nickname-display');
+            const nameTxt = document.getElementById('player-name');
+
+            if (id.length < 4) { display.classList.add('hidden'); return; }
+
+            nameTxt.innerText = "Mengecek ID...";
+            display.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/api/validasi/${valCode}?id=${id}&server=${server}`);
+                const result = await res.json();
+                if (result.success) {
+                    nameTxt.innerText = result.nickname;
+                    nameTxt.classList.replace('text-red-400', 'text-white');
+                } else {
+                    nameTxt.innerText = "ID Tidak Ditemukan";
+                    nameTxt.classList.replace('text-white', 'text-red-400');
+                }
+            } catch (e) { display.classList.add('hidden'); }
+        }
+
+        // Event Listener untuk Auto Check ID
+        let valTimeout = null;
+        document.querySelectorAll('#target1, #target2').forEach(el => {
+            el.addEventListener('keyup', () => {
+                clearTimeout(valTimeout);
+                valTimeout = setTimeout(validatePlayer, 1200);
+            });
+        });
+
+        // 5. Eksekusi Pembayaran
         async function processPayment() {
             const t1 = document.getElementById('target1').value;
             const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
             const wa = document.getElementById('wa').value;
-
-            if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan nomor WhatsApp!");
-
+            if(!t1 || !wa) return alert("Lengkapi data tujuan dan WhatsApp!");
             const fullTarget = t2 ? `${t1}(${t2})` : t1;
             const btn = document.getElementById('btnPay');
-            
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> MENGALIHKAN...`;
-
+            btn.disabled = true; btn.innerText = "MOHON TUNGGU...";
             try {
                 const response = await fetch('/api/create-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        service_id: selectedProduct.id, 
-                        target: fullTarget, 
-                        whatsapp: wa, 
-                        voucher_code: appliedVoucherCode 
-                    })
+                    body: JSON.stringify({ service_id: selectedProduct.id, target: fullTarget, whatsapp: wa, voucher_code: appliedVoucherCode })
                 });
-                
                 const result = await response.json();
-                if(result.status) {
-                    // Redirect otomatis ke halaman QRIS
-                    window.location.href = result.redirect_url;
-                } else {
-                    alert(result.message);
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
-                }
-            } catch (e) {
-                alert("Server error, coba lagi nanti.");
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fas fa-credit-card mr-2"></i> BAYAR SEKARANG`;
-            }
+                if(result.status) window.location.href = result.redirect_url;
+                else { alert(result.message); btn.disabled = false; btn.innerText = "BAYAR SEKARANG"; }
+            } catch (e) { alert("Server error"); btn.disabled = false; }
         }
     </script>
 </body>
