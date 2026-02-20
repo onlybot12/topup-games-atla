@@ -153,6 +153,55 @@ app.get('/admin/pengaturan', (req, res) => res.render('admin/pengaturan', { curr
 app.get('/admin/brand', (req, res) => res.render('admin/brand-manage', { currentPage: 'brand' }));
 app.get('/admin/banner', (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
 app.get('/admin/flash-sale', (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
+app.get('/admin/dashboard', async (req, res) => {
+    try {
+        const now = new Date();
+        const startOfToday = new Date(now.setHours(0,0,0,0));
+        const startOfYesterday = new Date(new Date().setDate(new Date().getDate() - 1));
+        startOfYesterday.setHours(0,0,0,0);
+        const endOfYesterday = new Date(startOfToday);
+        
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        // Fungsi pembantu untuk hitung Statistik
+        const getStats = async (startDate, endDate = new Date()) => {
+            const result = await Transaction.aggregate([
+                { $match: { status: 'success', created_at: { $gte: startDate, $lt: endDate } } },
+                { $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    omset: { $sum: "$amount" },
+                    profit: { $sum: { $subtract: ["$amount", "$base_price"] } }
+                }}
+            ]);
+            return result[0] || { count: 0, omset: 0, profit: 0 };
+        };
+
+        // Jalankan semua perhitungan
+        const today = await getStats(startOfToday);
+        const yesterday = await getStats(startOfYesterday, endOfYesterday);
+        const thisMonth = await getStats(startOfThisMonth);
+        const lastMonth = await getStats(startOfLastMonth, endOfLastMonth);
+
+        // Ambil 10 Produk Terlaris
+        const topProducts = await Transaction.aggregate([
+            { $match: { status: 'success' } },
+            { $group: { _id: "$item_name", total: { $sum: 1 } } },
+            { $sort: { total: -1 } },
+            { $limit: 10 }
+        ]);
+
+        res.render('admin/dashboard', { 
+            currentPage: 'dashboard',
+            stats: { today, yesterday, thisMonth, lastMonth },
+            topProducts
+        });
+    } catch (e) {
+        res.status(500).send("Error loading dashboard: " + e.message);
+    }
+});
 
 // Halaman Checklist Layanan untuk Brand
 app.get('/admin/brand/services/:id', async (req, res) => {
