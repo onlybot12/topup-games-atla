@@ -105,9 +105,14 @@
                                 <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95 text-center">
                                     <i class="fas fa-list mr-1"></i> Atur Layanan
                                 </a>
-                                <button onclick="deleteBrand('${b._id}')" class="w-full bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
-                                    Hapus
-                                </button>
+                                <div class="flex gap-2">
+                                    <button onclick="editBrand('${b._id}')" class="flex-1 bg-yellow-50 text-yellow-600 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
+                                        Edit
+                                    </button>
+                                    <button onclick="deleteBrand('${b._id}')" class="w-12 bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `);
@@ -166,7 +171,7 @@
             });
         }
 
-        // 4. Modal Tambah Brand (UPDATE: Ditambahkan Kode Validasi)
+        // 4. Modal Tambah Brand
         async function openBrandModal() {
             const { value: f } = await Swal.fire({
                 title: '<span class="text-xs font-black uppercase tracking-widest text-slate-800">Tambah Game Baru</span>',
@@ -253,7 +258,7 @@
                     return {
                         name: name,
                         slug: slug,
-                        validation_code: $('#n-val-code').val(), // Data Baru
+                        validation_code: $('#n-val-code').val(),
                         category: $('#n-cat').val(),
                         icon_url: icon,
                         form_config: {
@@ -277,6 +282,118 @@
             }
         }
 
+        // 5. FUNGSI BARU: Edit Brand
+        async function editBrand(id) {
+            try {
+                // Ambil data brand dari database
+                const res = await fetch(`/api/admin/brands/${id}`);
+                const result = await res.json();
+                const b = result.data;
+
+                const { value: f } = await Swal.fire({
+                    title: '<span class="text-xs font-black uppercase tracking-widest text-slate-800">Edit Brand</span>',
+                    width: '550px',
+                    confirmButtonText: 'UPDATE BRAND',
+                    confirmButtonColor: '#2563eb',
+                    showCancelButton: true,
+                    html: `
+                        <div class="text-left px-2 no-scrollbar" style="max-height: 70vh; overflow-y: auto;">
+                            <label class="swal-input-label">Nama Brand</label>
+                            <input id="e-name" class="swal2-input !mt-0 !text-sm" value="${b.name}" onkeyup="document.getElementById('e-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
+                            
+                            <label class="swal-input-label">Slug URL</label>
+                            <input id="e-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" value="${b.slug}" readonly>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="swal-input-label">Kategori</label>
+                                    <select id="e-cat" class="swal2-input !mt-0 !text-sm">
+                                        <option value="Games" ${b.category === 'Games' ? 'selected' : ''}>Games</option>
+                                        <option value="Pulsa" ${b.category === 'Pulsa' ? 'selected' : ''}>Pulsa</option>
+                                        <option value="E-Wallet" ${b.category === 'E-Wallet' ? 'selected' : ''}>E-Wallet</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="swal-input-label">URL Icon</label>
+                                    <input id="e-icon" class="swal2-input !mt-0 !text-sm" value="${b.icon_url}">
+                                </div>
+                            </div>
+
+                            <label class="swal-input-label text-blue-600">Kode Validasi Nickname</label>
+                            <input id="e-val-code" class="swal2-input !mt-0 !text-sm" value="${b.validation_code || ''}" placeholder="Contoh: freefire">
+
+                            <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
+                                <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                                    <i class="fas fa-file-invoice text-blue-500"></i> Format Form Input
+                                </p>
+                                
+                                <div class="grid grid-cols-2 gap-3 mb-4">
+                                    <div>
+                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label>
+                                        <input id="ef-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="${b.form_config.target_label}">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label>
+                                        <select id="ef-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                            <option value="text" ${b.form_config.target_type === 'text' ? 'selected' : ''}>Text</option>
+                                            <option value="number" ${b.form_config.target_type === 'number' ? 'selected' : ''}>Nomor</option>
+                                            <option value="email" ${b.form_config.target_type === 'email' ? 'selected' : ''}>Email</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 mb-4">
+                                    <input type="checkbox" id="ef-has-server" class="w-4 h-4" ${b.form_config.has_server ? 'checked' : ''} onchange="document.getElementById('edit-server-config').classList.toggle('hidden')">
+                                    <label for="ef-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2</label>
+                                </div>
+
+                                <div id="edit-server-config" class="${b.form_config.has_server ? '' : 'hidden'} grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
+                                        <input id="ef-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="${b.form_config.server_label}">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label>
+                                        <select id="ef-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                            <option value="text" ${b.form_config.server_type === 'text' ? 'selected' : ''}>Text</option>
+                                            <option value="number" ${b.form_config.server_type === 'number' ? 'selected' : ''}>Nomor</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    preConfirm: () => {
+                        return {
+                            name: $('#e-name').val(),
+                            slug: $('#e-slug').val(),
+                            validation_code: $('#e-val-code').val(),
+                            category: $('#e-cat').val(),
+                            icon_url: $('#e-icon').val(),
+                            form_config: {
+                                target_label: $('#ef-t-label').val(),
+                                target_type: $('#ef-t-type').val(),
+                                has_server: $('#ef-has-server').is(':checked'),
+                                server_label: $('#ef-s-label').val(),
+                                server_type: $('#ef-s-type').val()
+                            }
+                        }
+                    }
+                });
+
+                if (f) {
+                    await fetch(`/api/admin/brands/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(f)
+                    });
+                    Swal.fire('Berhasil', 'Brand diperbarui', 'success');
+                    loadBrands();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // 6. Fungsi Hapus Brand
         async function deleteBrand(id) {
             if(confirm("Hapus Brand?")) {
                 await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
