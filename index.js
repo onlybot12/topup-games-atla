@@ -116,6 +116,35 @@ app.get('/admin/brand/services/:id', async (req, res) => {
     } catch (e) { res.status(500).send("Server Error"); }
 });
 
+
+
+// ─── Route: Validasi ID Game (Proxy) ──────────────────────────────
+app.get('/api/validasi/:code', async (req, res) => {
+    const { code } = req.params;
+    const { id, server } = req.query;
+
+    if (!id) return res.status(400).json({ success: false, message: 'ID game wajib diisi' });
+
+    try {
+        // Menggunakan axios agar seragam dengan request lainnya
+        const url = `https://api.isan.eu.org/nickname/${code}?id=${id}${server ? `&server=${server}` : ''}`;
+        const response = await axios.get(url);
+        const data = response.data;
+
+        // Logika pengecekan nickname (berdasarkan struktur response api.isan.eu.org)
+        if (data.success !== false && (data.name || data.nickname)) {
+            res.json({ 
+                success: true, 
+                nickname: data.name || data.nickname 
+            });
+        } else {
+            res.json({ success: false, message: 'ID tidak ditemukan' });
+        }
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Gagal validasi: ' + e.message });
+    }
+});
+
 // ==========================
 // API: BRAND & REORDER
 // ==========================
