@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -13,8 +12,8 @@ const Service = require('./models/Service');
 const Voucher = require('./models/Voucher');
 const Config = require('./models/Config');
 const Brand = require('./models/Brand');
-const Banner = require('./models/Banner');
-const FlashSale = require('./models/FlashSale');
+const Banner = require('./models/Banner'); // Tambahan Model
+const FlashSale = require('./models/FlashSale'); // Tambahan Model
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +24,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Set EJS View Engine
 app.set('view engine', 'ejs');
@@ -47,12 +45,25 @@ const requestHeaders = {
 // ==========================
 
 // Halaman Utama: Menampilkan Banner, Flash Sale, Populer, dan Semua Brand
+/*
 app.get('/', async (req, res) => {
     try {
         const banners = await Banner.find().sort({ created_at: -1 });
         const flashSales = await FlashSale.find({ is_active: true, end_date: { $gt: new Date() } });
-        const brands = await Brand.find({ status: 'active' }).sort({ index: 1 }); // Urutkan berdasarkan Drag & Drop
+        const brands = await Brand.find({ status: 'active' }).sort({ name: 1 });
+        const config = await Config.findOne({ key: 'qris_settings' }) || {};
+
+        res.render('user/indexx', { banners, flashSales, brands, config });
+    } catch (e) { res.status(500).send("Database Error"); }
+});
+*/
+app.get('/', async (req, res) => {
+    try {
+        const banners = await Banner.find().sort({ created_at: -1 });
+        const flashSales = await FlashSale.find({ is_active: true, end_date: { $gt: new Date() } });
+        const brands = await Brand.find({ status: 'active' }).sort({ index: 1 });
         
+        // Ambil config, jika tidak ada buat default
         let config = await Config.findOne({ key: 'qris_settings' });
         if (!config) {
             config = await Config.create({ 
@@ -63,33 +74,36 @@ app.get('/', async (req, res) => {
                 title_flash_sale: "PASTI TER-MURAAHH"
             });
         }
+
         res.render('user/indexx', { banners, flashSales, brands, config });
     } catch (e) { res.status(500).send("Database Error"); }
 });
 
-// Halaman Detail Game Dinamis: /id/free-fire
+
+// Halaman Detail Game Dinamis
 app.get('/id/:slug', async (req, res) => {
     try {
         const brand = await Brand.findOne({ slug: req.params.slug, status: 'active' });
         if (!brand) return res.status(404).send("Layanan tidak ditemukan");
 
-        // Cari produk berdasarkan array ID yang sudah dipilih admin di dashboard
         const products = await Service.find({ 
             service_id: { $in: brand.services },
             is_active: true,
-            status_api: { $ne: 'empty' }
+            status_api: 'available'
         }).sort({ price_sell: 1 });
 
-        const config = await Config.findOne({ key: 'qris_settings' }) || {};
-        res.render('user/detail-game', { brand, products, config });
+        res.render('user/detail-game', { brand, products });
     } catch (e) { res.status(500).send("Server Error"); }
 });
 
 // Halaman Pembayaran (QRIS)
 app.get('/transaction/:deposit_id', async (req, res) => {
+    const depositId = req.params.deposit_id;
     try {
-        const tr = await Transaction.findOne({ deposit_id: req.params.deposit_id });
+        const tr = await Transaction.findOne({ deposit_id: depositId });
         if (!tr) return res.status(404).send("Transaksi tidak ditemukan");
+        
+        // Render EJS Payment dan kirim data transaksi
         res.render('user/payment', { tr: tr });
     } catch (error) { res.status(500).send('Server Error'); }
 });
@@ -112,8 +126,15 @@ app.get('/admin/brand/services/:id', async (req, res) => {
     try {
         const brandData = await Brand.findById(req.params.id);
         if (!brandData) return res.status(404).send("Brand tidak ditemukan");
-        res.render('admin/brand-services', { currentPage: 'brand', brand: brandData });
-    } catch (e) { res.status(500).send("Server Error"); }
+        
+        // Di sini kita WAJIB mengirim variabel 'brand' agar EJS tidak error
+        res.render('admin/brand-services', { 
+            currentPage: 'brand', 
+            brand: brandData 
+        });
+    } catch (e) {
+        res.status(500).send("Server Error");
+    }
 });
 
 
@@ -183,10 +204,26 @@ app.delete('/api/admin/brands/:id', async (req, res) => {
     res.json({ status: true });
 });
 
+// --- RUTE TAMBAHAN UNTUK EDIT BRAND ---
+app.get('/api/admin/brands/:id', async (req, res) => {
+    try {
+        const brand = await Brand.findById(req.params.id);
+        res.json({ status: true, data: brand });
+    } catch (e) { res.status(404).json({ status: false }); }
+});
+
+app.put('/api/admin/brands/:id', async (req, res) => {
+    try {
+        await Brand.findByIdAndUpdate(req.params.id, req.body);
+        res.json({ status: true, message: "Brand berhasil diperbarui" });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+// --------------------------------------
+
 app.put('/api/admin/brands/:id/services', async (req, res) => {
     try {
         await Brand.findByIdAndUpdate(req.params.id, { services: req.body.services });
-        res.json({ status: true, message: "Daftar layanan diperbarui" });
+        res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
@@ -226,7 +263,7 @@ app.delete('/api/admin/flash-sales/:id', async (req, res) => {
 });
 
 // ==========================
-// API: CONFIGURATION (QRIS FEE)
+// API: PENGATURAN BIAYA (QRIS)
 // ==========================
 app.get('/api/admin/config', async (req, res) => {
     try {
@@ -274,7 +311,7 @@ app.post('/api/admin/sync-services', async (req, res) => {
                 };
             });
             await Service.bulkWrite(operations);
-            res.json({ status: true, message: `Sync Selesai!` });
+            res.json({ status: true, message: `Sync ${services.length} data berhasil!` });
         }
     } catch (e) { res.status(500).json({ status: false, message: e.message }); }
 });
@@ -285,23 +322,30 @@ app.get('/api/admin/services', async (req, res) => {
         let query = search && search.value ? {
             $or: [ { name: { $regex: search.value, $options: 'i' } }, { service_id: { $regex: search.value, $options: 'i' } } ]
         } : {};
+
         const total = await Service.countDocuments();
         const filtered = await Service.countDocuments(query);
         let mongoQuery = Service.find(query).sort({ category: 1, name: 1 }).skip(parseInt(start));
         if (parseInt(length) !== -1) mongoQuery = mongoQuery.limit(parseInt(length));
+        
         const data = await mongoQuery;
         res.json({ draw: parseInt(draw), recordsTotal: total, recordsFiltered: filtered, data });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.put('/api/admin/services/:id', async (req, res) => {
-    await Service.findByIdAndUpdate(req.params.id, { price_sell: req.body.price_sell, is_active: req.body.is_active });
-    res.json({ status: true });
+    try {
+        const { price_sell, is_active } = req.body;
+        await Service.findByIdAndUpdate(req.params.id, { price_sell, is_active });
+        res.json({ status: true });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.delete('/api/admin/delete-services', async (req, res) => {
-    await Service.deleteMany({});
-    res.json({ status: true });
+    try {
+        await Service.deleteMany({});
+        res.json({ status: true });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.get('/api/admin/all-services', async (req, res) => {
@@ -345,12 +389,14 @@ app.post('/api/vouchers/verify', async (req, res) => {
 });
 
 app.get('/api/services', async (req, res) => {
-    const data = await Service.find({ is_active: true, status_api: { $ne: 'empty' } }).sort({ category: 1, name: 1 });
-    res.json({ status: true, data });
+    try {
+        const data = await Service.find({ is_active: true, status_api: { $ne: 'empty' } }).sort({ category: 1, name: 1 });
+        res.json({ status: true, data });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.post('/api/create-payment', async (req, res) => {
-    const { service_id, target, whatsapp, voucher_code } = req.body;
+    const { service_id, target, whatsapp, voucher_code, email } = req.body;
     try {
         const service = await Service.findOne({ service_id, is_active: true });
         if (!service) return res.json({ status: false, message: "Layanan Offline" });
@@ -385,12 +431,13 @@ app.post('/api/create-payment', async (req, res) => {
                 base_price: service.price_original,
                 item_name: service.name,
                 target, whatsapp, status: 'pending',
+                email: email || 'customer@lanastore.com',
                 meta: { code: service.service_id, target, applied_voucher: usedVoucher }
             });
             await tr.save();
             res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else { res.json({ status: false, message: depoRes.data.message }); }
-    } catch (e) { res.status(500).json({ status: false }); }
+    } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 
 app.post('/api/check-status', async (req, res) => {
@@ -406,6 +453,8 @@ app.post('/api/check-status', async (req, res) => {
 
         if (status === 'success') {
             const currentTr = await Transaction.findOne({ deposit_id });
+            
+            // Kurangi Kuota Voucher jika ada
             if (currentTr.meta && currentTr.meta.applied_voucher) {
                 await Voucher.updateOne({ code: currentTr.meta.applied_voucher }, { $inc: { used_count: 1 } });
                 await Transaction.updateOne({ deposit_id }, { $set: { "meta.applied_voucher": null } });
@@ -446,4 +495,4 @@ app.get('/api/transactions/recent', async (req, res) => {
     } catch (error) { res.status(500).json({ status: false }); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Lana Store Server Berjalan di Port ${PORT}`));
