@@ -8,8 +8,11 @@ const BrandSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     is_popular: { type: Boolean, default: false },
     
-    // FIELD BARU: Untuk menyimpan urutan drag & drop
+    // FIELD: Untuk menyimpan urutan drag & drop
     index: { type: Number, default: 0 }, 
+
+    // FIELD BARU: Untuk kode validasi nickname (Contoh: 'freefire', 'mobilelegends')
+    validation_code: { type: String, default: '' },
 
     form_config: {
         target_label: { type: String, default: 'User ID' },
