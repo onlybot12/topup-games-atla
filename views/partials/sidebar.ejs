@@ -10,7 +10,11 @@
     
     <nav class="flex-1 p-4 space-y-1.5 no-scrollbar overflow-y-auto">
         <p class="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Produk & Brand</p>
-        
+
+        <a href="/admin/dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'dashboard' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+           <i class="fas fa-th-large"></i> <span>Dashboard</span>
+       </a>
+
         <a href="/admin/brand" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'brand' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
             <i class="fas fa-tags text-sm"></i> <span>Kelola Brand</span>
         </a>
