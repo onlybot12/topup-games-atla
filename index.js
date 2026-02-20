@@ -1,3 +1,11 @@
+', async (req, res) => {
+    try {
+        const data = await Transaction.find().sort({ created_at: -1 }).limit(10).select('order_id whatsapp amount status item_name target created_at');
+        res.json({ status: true, data });
+    } catch (error) { res.status(500).json({ status: false }); }
+});
+
+app.listen(PORT, () => console.log(`🚀 Lana Store Berjalan di Port ${PORT}`));
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -52,7 +60,6 @@ app.get('/', async (req, res) => {
         const flashSales = await FlashSale.find({ is_active: true, end_date: { $gt: new Date() } });
         const brands = await Brand.find({ status: 'active' }).sort({ index: 1 }); // Urutkan berdasarkan Drag & Drop
         
-        // Ambil config, jika tidak ada buat default
         let config = await Config.findOne({ key: 'qris_settings' });
         if (!config) {
             config = await Config.create({ 
@@ -87,9 +94,8 @@ app.get('/id/:slug', async (req, res) => {
 
 // Halaman Pembayaran (QRIS)
 app.get('/transaction/:deposit_id', async (req, res) => {
-    const depositId = req.params.deposit_id;
     try {
-        const tr = await Transaction.findOne({ deposit_id: depositId });
+        const tr = await Transaction.findOne({ deposit_id: req.params.deposit_id });
         if (!tr) return res.status(404).send("Transaksi tidak ditemukan");
         res.render('user/payment', { tr: tr });
     } catch (error) { res.status(500).send('Server Error'); }
@@ -97,28 +103,6 @@ app.get('/transaction/:deposit_id', async (req, res) => {
 
 app.get('/search', (req, res) => res.render('user/search'));
 app.get('/faq', (req, res) => res.render('user/faq'));
-
-// ─── Route: Proxy Validasi ID Game (Nickname) ──────────────────────────────
-app.get('/api/validasi/:code', async (req, res) => {
-    const { code } = req.params;
-    const { id, server } = req.query;
-  
-    if (!id) return res.status(400).json({ success: false, message: 'ID game wajib diisi' });
-  
-    try {
-        const url = `https://api.isan.eu.org/nickname/${code}?id=${id}${server ? `&server=${server}` : ''}`;
-        const response = await axios.get(url); 
-        const data = response.data;
-  
-        if (data.name || data.nickname) {
-            res.json({ success: true, nickname: data.name || data.nickname, data });
-        } else {
-            res.json({ success: false, message: 'ID tidak ditemukan', data });
-        }
-    } catch (e) {
-        res.status(500).json({ success: false, message: 'Gagal validasi: ' + e.message });
-    }
-});
 
 // ==========================
 // ROUTE VIEW (ADMIN SIDE)
@@ -149,43 +133,11 @@ app.get('/api/admin/brands', async (req, res) => {
 
 app.post('/api/admin/brands', async (req, res) => {
     try {
-        const { name, slug, category, icon_url, status, form_config, validation_config } = req.body;
-
-        const existing = await Brand.findOne({ slug });
-        if (existing) return res.status(400).json({ status: false, message: "Slug sudah ada!" });
-
         const count = await Brand.countDocuments();
-        
-        // Pastikan validation_config.fields adalah Array
-        const cleanFields = Array.isArray(validation_config.fields) ? validation_config.fields : [];
-
-        const newBrand = new Brand({
-            name,
-            slug,
-            category,
-            icon_url,
-            status: status || 'active',
-            index: count,
-            form_config: {
-                target_label: form_config.target_label || 'User ID',
-                target_type: form_config.target_type || 'text',
-                has_server: form_config.has_server || false,
-                server_label: form_config.server_label || 'Server ID',
-                server_type: form_config.server_type || 'text'
-            },
-            validation_config: {
-                active: validation_config.active || false,
-                code: validation_config.code || '',
-                fields: cleanFields // Gunakan array yang sudah dibersihkan
-            }
-        });
-
+        const newBrand = new Brand({ ...req.body, index: count });
         await newBrand.save();
-        res.json({ status: true, message: "Brand Berhasil Disimpan" });
-    } catch (e) {
-        console.error("Error Database:", e.message);
-        res.status(500).json({ status: false, message: "Terjadi kesalahan pada database: " + e.message });
-    }
+        res.json({ status: true, message: "Brand Berhasil Ditambahkan" });
+    } catch (e) { res.status(400).json({ status: false, message: "Gagal: Slug duplikat" }); }
 });
 
 app.put('/api/admin/brands/reorder', async (req, res) => {
@@ -209,15 +161,10 @@ app.delete('/api/admin/brands/:id', async (req, res) => {
     res.json({ status: true });
 });
 
-app.get('/api/admin/all-services', async (req, res) => {
-    const services = await Service.find({}, 'service_id name brand category price_sell');
-    res.json({ status: true, data: services });
-});
-
 app.put('/api/admin/brands/:id/services', async (req, res) => {
     try {
         await Brand.findByIdAndUpdate(req.params.id, { services: req.body.services });
-        res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
+        res.json({ status: true, message: "Daftar layanan diperbarui" });
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
@@ -257,7 +204,7 @@ app.delete('/api/admin/flash-sales/:id', async (req, res) => {
 });
 
 // ==========================
-// API: PENGATURAN BIAYA (QRIS)
+// API: CONFIGURATION (QRIS FEE)
 // ==========================
 app.get('/api/admin/config', async (req, res) => {
     try {
@@ -335,6 +282,11 @@ app.delete('/api/admin/delete-services', async (req, res) => {
     res.json({ status: true });
 });
 
+app.get('/api/admin/all-services', async (req, res) => {
+    const services = await Service.find({}, 'service_id name brand category price_sell');
+    res.json({ status: true, data: services });
+});
+
 // ==========================
 // API: VOUCHER (MANAGEMENT)
 // ==========================
@@ -376,7 +328,7 @@ app.get('/api/services', async (req, res) => {
 });
 
 app.post('/api/create-payment', async (req, res) => {
-    const { service_id, target, whatsapp, voucher_code, email } = req.body;
+    const { service_id, target, whatsapp, voucher_code } = req.body;
     try {
         const service = await Service.findOne({ service_id, is_active: true });
         if (!service) return res.json({ status: false, message: "Layanan Offline" });
@@ -411,13 +363,12 @@ app.post('/api/create-payment', async (req, res) => {
                 base_price: service.price_original,
                 item_name: service.name,
                 target, whatsapp, status: 'pending',
-                email: email || 'customer@lanastore.com',
                 meta: { code: service.service_id, target, applied_voucher: usedVoucher }
             });
             await tr.save();
             res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else { res.json({ status: false, message: depoRes.data.message }); }
-    } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 app.post('/api/check-status', async (req, res) => {
@@ -473,4 +424,4 @@ app.get('/api/transactions/recent', async (req, res) => {
     } catch (error) { res.status(500).json({ status: false }); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Lana Store Berjalan di Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
