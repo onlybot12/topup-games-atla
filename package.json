@@ -1,7 +1,7 @@
 {
-  "name": "Topup Game",
-  "version": "1.0.0",
-  "description": "Top Up & Digital Products Platform",
+  "name": "Topup-Game-LanaStore",
+  "version": "1.1.0",
+  "description": "Top Up & Digital Products Platform - Lana Store v5.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -25,7 +25,9 @@
     "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
     "querystring": "^0.2.1",
-    "mongoose": "^8.0.3"
+    "mongoose": "^8.0.3",
+    "express-session": "^1.17.3",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
