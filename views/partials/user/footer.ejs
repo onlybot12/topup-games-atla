@@ -1,0 +1,81 @@
+<!-- FOOTER (Style Profesional & Bersih) -->
+<footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
+            
+            <!-- Kolom 1: Branding & Info Instansi -->
+            <div class="lg:col-span-2">
+                <div class="flex items-center gap-3 mb-6">
+                    <!-- Kata pertama dari nama toko jadi Logo -->
+                    <span class="text-2xl font-black text-blue-500 tracking-tighter uppercase italic">
+                        <%= config.shop_name ? config.shop_name.split(' ')[0] : 'LANA' %>
+                    </span>
+                    <span class="text-2xl font-black text-white tracking-tighter uppercase">
+                        <%= config.shop_name ? config.shop_name.split(' ').slice(1).join(' ') : 'STORE' %>
+                    </span>
+                </div>
+                <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">
+                    <%= config.footer_description || 'No #1 supplier top up game & voucher terlaris, murah, aman legal 100% buka 24 Jam dengan payment terlengkap Indonesia' %>
+                </p>
+                <div class="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl inline-block">
+                    <p class="text-white font-bold text-xs leading-tight">
+                        <%= config.footer_trade_info || 'Direktorat Jenderal Perlindungan Konsumen dan Tertib Niaga Kementerian Perdagangan RI 0853-1111-1010' %>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Kolom 2 & 3: Link Navigasi (Grid 2 kolom di mobile) -->
+            <div class="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2">
+                <div>
+                    <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Peta Situs</h4>
+                    <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                        <li><a href="/" class="hover:text-white transition-colors no-underline">Beranda</a></li>
+                        <li><a href="/search" class="hover:text-white transition-colors no-underline">Masuk</a></li>
+                        <li><a href="/faq" class="hover:text-white transition-colors no-underline">Ulasan</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors no-underline opacity-50">API Docs</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Dukungan</h4>
+                    <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                        <li><a href="<%= config.wa_link || '#' %>" class="hover:text-white transition-colors no-underline">WhatsApp</a></li>
+                        <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white transition-colors no-underline">WhatsApp CS</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Legalitas</h4>
+                    <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                        <li><a href="/faq" class="hover:text-white transition-colors no-underline">Kebijakan Privasi</a></li>
+                        <li><a href="/faq" class="hover:text-white transition-colors no-underline">Syarat & Ketentuan</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Partnership</h4>
+                    <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                        <li><a href="#" class="hover:text-white transition-colors no-underline">Reseller</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors no-underline">Jasa Web Topup</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Baris Paling Bawah: Copyright (Teks Biasa & Tegak) -->
+        <div class="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[11px] text-gray-500 font-medium tracking-wide m-0">
+                © 2026 <%= config.shop_name %> - Top up Game dan Beli Voucher Game termurah dan terpercaya di Indonesia. All rights reserved.
+            </p>
+            <div class="flex gap-4">
+                <% if(config.wa_link) { %><a href="<%= config.wa_link %>" class="text-gray-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a><% } %>
+                <% if(config.ig_link) { %><a href="<%= config.ig_link %>" class="text-gray-500 hover:text-white transition-all"><i class="fab fa-instagram"></i></a><% } %>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Tombol Support Melayang (Android Style) -->
+<a href="https://wa.me/<%= config.wa_cs %>" class="fixed bottom-6 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl z-[100] active:scale-75 transition-all">
+    <i class="fas fa-headset text-xl"></i>
+</a>
