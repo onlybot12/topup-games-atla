@@ -256,22 +256,6 @@ app.post('/admin/login', async (req, res) => {
     }
 });
 
-// --- FITUR BUAT AKUN PERTAMA KALI ---
-// Buka: http://localhost:3000/make-admin
-app.get('/make-admin', async (req, res) => {
-    try {
-        const hashed = await bcrypt.hash('admim-lana14', 10);
-        // Simpan ke koleksi AdminLog
-        await AdminLog.create({ 
-            username: 'lanasad14', 
-            password: hashed 
-        });
-        res.send("Admin Created in AdminLog collection! Username: admin, Pass: admin123");
-    } catch (e) {
-        res.send("Gagal membuat admin (mungkin sudah ada)");
-    }
-});
-
 
 // Halaman Checklist Layanan untuk Brand
 app.get('/admin/brand/services/:id', async (req, res) => {
