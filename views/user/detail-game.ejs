@@ -264,25 +264,46 @@
         });
 
         // 5. Eksekusi Pembayaran
-        async function processPayment() {
-            const t1 = document.getElementById('target1').value;
-            const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
-            const wa = document.getElementById('wa').value;
-            if(!t1 || !wa) return alert("Lengkapi data tujuan dan WhatsApp!");
-            const fullTarget = t2 ? `${t1}(${t2})` : t1;
-            const btn = document.getElementById('btnPay');
-            btn.disabled = true; btn.innerText = "MOHON TUNGGU...";
-            try {
-                const response = await fetch('/api/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ service_id: selectedProduct.id, target: fullTarget, whatsapp: wa, voucher_code: appliedVoucherCode })
-                });
-                const result = await response.json();
-                if(result.status) window.location.href = result.redirect_url;
-                else { alert(result.message); btn.disabled = false; btn.innerText = "BAYAR SEKARANG"; }
-            } catch (e) { alert("Server error"); btn.disabled = false; }
+    async function processPayment() {
+    const t1 = document.getElementById('target1').value;
+    const t2 = document.getElementById('target2') ? document.getElementById('target2').value : '';
+    const wa = document.getElementById('wa').value;
+    const v = document.getElementById('vCode').value;
+
+    if(!t1 || !wa) return alert("Harap lengkapi data tujuan dan WhatsApp!");
+
+    const btn = document.getElementById('btnPay');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> MENGALIHKAN...`;
+
+    try {
+        const response = await fetch('/api/create-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                service_id: selectedProduct.id, 
+                target1: t1,      // Kirim ID Mentah
+                target2: t2,      // Kirim Server Mentah
+                whatsapp: wa, 
+                voucher_code: v 
+            })
+        });
+        
+        const result = await response.json();
+        if(result.status) {
+            window.location.href = result.redirect_url;
+        } else {
+            alert(result.message);
+            btn.disabled = false;
+            btn.innerHTML = `BAYAR SEKARANG`;
         }
-    </script>
+    } catch (e) {
+        alert("Server error");
+        btn.disabled = false;
+    }
+}
+
+
+</script>
 </body>
 </html>
