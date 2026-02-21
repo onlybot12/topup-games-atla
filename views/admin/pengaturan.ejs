@@ -61,7 +61,7 @@
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
             
-            <!-- SECTION 1: SEO & BRANDING (NEW) -->
+            <!-- SECTION 1: SEO & BRANDING -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-search"></i> SEO & Branding (Google Search)
@@ -109,7 +109,24 @@
                 </div>
             </div>
 
-            <!-- SECTION 3: TEKS HALAMAN DEPAN -->
+            <!-- SECTION 3: FOOTER BRANDING (NEW) -->
+            <div class="config-card">
+                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                    <i class="fas fa-shoe-prints"></i> Footer Branding & Legalitas
+                </p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="input-label">Tagline Footer (Deskripsi singkat di bawah logo)</label>
+                        <textarea id="footer_description" class="custom-input" placeholder="No #1 supplier top up game & voucher terlaris..."></textarea>
+                    </div>
+                    <div>
+                        <label class="input-label">Info Kementerian (Perlindungan Konsumen)</label>
+                        <input type="text" id="footer_trade_info" class="custom-input" placeholder="Direktorat Jenderal Perlindungan Konsumen...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: TEKS HALAMAN DEPAN -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-font"></i> Teks Halaman Utama
@@ -126,15 +143,19 @@
                 </div>
             </div>
 
-            <!-- SECTION 4: KONTAK & SOSIAL MEDIA -->
+            <!-- SECTION 5: KONTAK & SOSIAL MEDIA -->
             <div class="config-card">
                 <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
                     <i class="fas fa-share-alt"></i> Kontak & Sosial Media
                 </p>
                 <div class="space-y-6">
                     <div>
-                        <label class="input-label">Link WhatsApp (Gunakan https://wa.me/...)</label>
-                        <input type="text" id="wa_link" class="custom-input" placeholder="https://wa.me/62812345678">
+                        <label class="input-label">WhatsApp Utama (Untuk Link di Footer)</label>
+                        <input type="text" id="wa_link" class="custom-input" placeholder="Gunakan format: https://wa.me/628123...">
+                    </div>
+                    <div>
+                        <label class="input-label">WhatsApp CS (Untuk Tombol Melayang / Floating)</label>
+                        <input type="text" id="wa_cs" class="custom-input" placeholder="Contoh: 62812345678">
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -150,13 +171,13 @@
             </div>
 
             <!-- Hint Box -->
-            <div class="bg-slate-900 rounded-[32px] p-6 text-white shadow-xl mt-4">
+            <div class="bg-slate-900 rounded-[32px] p-6 text-white shadow-xl mt-4 mb-10">
                 <div class="flex items-start gap-4">
                     <i class="fas fa-info-circle text-blue-400 text-lg mt-1"></i>
                     <div>
                         <h4 class="font-bold text-sm mb-1">Penting</h4>
                         <p class="text-slate-400 text-[11px] leading-relaxed">
-                            Pastikan Nama Toko dan Meta Deskripsi diisi dengan kata-kata yang sering dicari (Misal: Topup ML Murah) agar Google lebih mudah menemukan website Anda.
+                            Pastikan Nama Toko dan Meta Deskripsi diisi dengan kata-kata yang sering dicari (Misal: Topup ML Murah) agar Google lebih mudah menemukan website Anda. Perubahan biaya admin akan langsung berpengaruh pada nominal bayar QRIS pelanggan.
                         </p>
                     </div>
                 </div>
@@ -173,18 +194,25 @@
                 const res = await fetch('/api/admin/config');
                 const json = await res.json();
                 if(json.status && json.data) {
-                    $('#shop_name').val(json.data.shop_name);
-                    $('#meta_description').val(json.data.meta_description);
-                    $('#meta_keywords').val(json.data.meta_keywords);
-                    $('#logo_url').val(json.data.logo_url);
+                    const d = json.data;
+                    $('#shop_name').val(d.shop_name);
+                    $('#meta_description').val(d.meta_description);
+                    $('#meta_keywords').val(d.meta_keywords);
+                    $('#logo_url').val(d.logo_url);
                     
-                    $('#admin_fee').val(json.data.admin_fee);
-                    $('#tax_percent').val(json.data.tax_percent);
-                    $('#title_flash_sale').val(json.data.title_flash_sale);
-                    $('#title_popular').val(json.data.title_popular);
-                    $('#wa_link').val(json.data.wa_link);
-                    $('#ig_link').val(json.data.ig_link);
-                    $('#tiktok_link').val(json.data.tiktok_link);
+                    $('#admin_fee').val(d.admin_fee);
+                    $('#tax_percent').val(d.tax_percent);
+
+                    $('#footer_description').val(d.footer_description);
+                    $('#footer_trade_info').val(d.footer_trade_info);
+                    
+                    $('#title_flash_sale').val(d.title_flash_sale);
+                    $('#title_popular').val(d.title_popular);
+                    
+                    $('#wa_link').val(d.wa_link);
+                    $('#wa_cs').val(d.wa_cs);
+                    $('#ig_link').val(d.ig_link);
+                    $('#tiktok_link').val(d.tiktok_link);
                 }
             } catch (e) { console.error("Gagal muat data"); }
         }
@@ -200,9 +228,12 @@
                 logo_url: $('#logo_url').val(),
                 admin_fee: $('#admin_fee').val(),
                 tax_percent: $('#tax_percent').val(),
+                footer_description: $('#footer_description').val(),
+                footer_trade_info: $('#footer_trade_info').val(),
                 title_flash_sale: $('#title_flash_sale').val(),
                 title_popular: $('#title_popular').val(),
                 wa_link: $('#wa_link').val(),
+                wa_cs: $('#wa_cs').val(),
                 ig_link: $('#ig_link').val(),
                 tiktok_link: $('#tiktok_link').val()
             };
