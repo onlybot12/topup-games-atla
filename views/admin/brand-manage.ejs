@@ -8,20 +8,48 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         
         /* Gaya Kartu saat di-drag */
-        .sortable-ghost { opacity: 0.3; transform: scale(0.9); background: #ebf5ff !important; }
-        .sortable-chosen { border: 2px solid #3b82f6 !important; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2) !important; }
+        .sortable-ghost { opacity: 0.1; background: #3b82f6 !important; }
+        .sortable-chosen { background: #f1f5f9 !important; border: 1px dashed #3b82f6 !important; }
         
-        .brand-card { 
+        .brand-list-item { 
             background: white; 
             border: 1px solid #e2e8f0; 
-            border-radius: 28px; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            cursor: grab; /* Menandakan bisa digeser */
+            border-radius: 20px; 
+            transition: all 0.3s ease; 
+            cursor: grab;
             user-select: none;
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            gap: 15px;
         }
-        .brand-card:active { cursor: grabbing; }
-        .brand-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
+        .brand-list-item:active { cursor: grabbing; }
+        .brand-list-item:hover { border-color: #3b82f6; }
         
+        .number-badge {
+            width: 30px;
+            height: 30px;
+            background: #f1f5f9;
+            color: #64748b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .img-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
         .swal-input-label { 
             font-size: 10px; 
             font-weight: 800; 
@@ -33,8 +61,23 @@
             letter-spacing: 0.05em;
         }
 
-        /* Mencegah gambar ikut ter-drag (fokus ke kartu) */
         .brand-card img { pointer-events: none; }
+        
+        /* Tablet & Desktop Layout Buttons */
+        @media (min-width: 768px) {
+            .action-area {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+        /* Mobile Layout Buttons */
+        @media (max-width: 767px) {
+            .brand-list-item { flex-wrap: wrap; }
+            .action-area { width: 100%; display: flex; gap: 8px; margin-top: 5px; }
+            .populer-toggle { margin-left: auto; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 overflow-x-hidden">
@@ -57,22 +100,21 @@
 
         <!-- MAIN CONTENT -->
         <main class="p-4 md:p-8">
-            <!-- Hint untuk user -->
             <div class="flex items-center gap-2 mb-6 px-2 text-slate-400">
                 <i class="fas fa-info-circle text-xs"></i>
-                <p class="text-[10px] font-bold uppercase tracking-wider m-0">Tekan dan geser kartu untuk merubah urutan tampilan di website.</p>
+                <p class="text-[10px] font-bold uppercase tracking-wider m-0">Tekan dan tahan pada baris untuk merubah urutan tampilan.</p>
             </div>
 
-            <div id="brand-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- GRID DIUBAH JADI 1 KOLOM KE BAWAH -->
+            <div id="brand-grid" class="grid grid-cols-1 gap-3">
                 <!-- Data Brand akan dimuat via AJAX -->
-                <div class="col-span-full py-20 text-center text-slate-400">Memuat Brand...</div>
+                <div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-[10px]">Memuat Database...</div>
             </div>
         </main>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Tambahkan Library SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
@@ -88,37 +130,39 @@
                     return;
                 }
 
-                json.data.forEach(b => {
+                json.data.forEach((b, index) => {
                     grid.append(`
-                        <div class="brand-card p-5 flex flex-col items-center text-center shadow-sm" data-id="${b._id}">
-                            <img src="${b.icon_url}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow-md border-2 border-white">
-                            <h3 class="font-black text-slate-800 text-xs uppercase mb-1 text-center truncate w-full">${b.name}</h3>
+                        <div class="brand-list-item shadow-sm" data-id="${b._id}">
+                            <div class="number-badge">${index + 1}</div>
+                            <img src="${b.icon_url}" class="img-preview">
                             
-                            <div class="flex items-center gap-2 mb-4 bg-slate-50 p-2 rounded-xl border w-full justify-between mt-2">
-                                <span class="text-[9px] font-black text-slate-400 uppercase">Populer</span>
-                                <div class="form-check form-switch">
+                            <div class="flex-grow min-w-0">
+                                <h3 class="font-black text-slate-800 text-xs uppercase mb-0 truncate">${b.name}</h3>
+                                <p class="text-[9px] text-blue-500 font-bold tracking-tight">/id/${b.slug}</p>
+                            </div>
+
+                            <div class="populer-toggle flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                                <span class="text-[8px] font-black text-slate-400 uppercase">Populer</span>
+                                <div class="form-check form-switch m-0">
                                     <input class="form-check-input" type="checkbox" onchange="togglePopular('${b._id}', this.checked)" ${b.is_popular ? 'checked' : ''}>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-col gap-2 w-full mt-2">
-                                <a href="/admin/brand/services/${b._id}" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-black uppercase no-underline transition-all active:scale-95 text-center">
-                                    <i class="fas fa-list mr-1"></i> Atur Layanan
+                            <div class="action-area">
+                                <a href="/admin/brand/services/${b._id}" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase no-underline shadow-md shadow-blue-500/10">
+                                    Layanan
                                 </a>
-                                <div class="flex gap-2">
-                                    <button onclick="editBrand('${b._id}')" class="flex-1 bg-yellow-50 text-yellow-600 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
-                                        Edit
-                                    </button>
-                                    <button onclick="deleteBrand('${b._id}')" class="w-12 bg-red-50 text-red-500 py-2.5 rounded-xl text-[10px] font-bold active:scale-95">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
+                                <button onclick="editBrand('${b._id}')" class="bg-yellow-500 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase shadow-md shadow-yellow-500/10">
+                                    Edit
+                                </button>
+                                <button onclick="deleteBrand('${b._id}')" class="bg-red-50 text-red-500 w-9 h-9 rounded-xl flex items-center justify-center active:scale-95">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
                             </div>
                         </div>
                     `);
                 });
 
-                // Inisialisasi Fitur Drag & Drop setelah kartu muncul
                 initSortable();
 
             } catch (e) { console.error(e); }
@@ -128,36 +172,31 @@
         function initSortable() {
             const el = document.getElementById('brand-grid');
             Sortable.create(el, {
-                animation: 200,
+                animation: 250,
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 onEnd: async function () {
                     const order = [];
-                    $('.brand-card').each(function() {
+                    // Ambil urutan ID terbaru
+                    $('.brand-list-item').each(function() {
                         order.push($(this).data('id'));
                     });
 
+                    // Update UI nomor urut di layar secara instan
+                    $('.number-badge').each(function(i) {
+                        $(this).text(i + 1);
+                    });
+
                     try {
-                        const response = await fetch('/api/admin/brands/reorder', {
+                        await fetch('/api/admin/brands/reorder', {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ order })
                         });
-                        const result = await response.json();
                         
-                        if(result.status) {
-                            const Toast = Swal.mixin({
-                                toast: true,
-                                position: 'top-end',
-                                showConfirmButton: false,
-                                timer: 1500,
-                                timerProgressBar: true,
-                            });
-                            Toast.fire({ icon: 'success', title: 'Urutan Berhasil Disimpan' });
-                        }
-                    } catch (err) {
-                        console.error("Gagal simpan urutan", err);
-                    }
+                        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000 });
+                        Toast.fire({ icon: 'success', title: 'Urutan diperbarui' });
+                    } catch (err) { console.error(err); }
                 }
             });
         }
@@ -183,10 +222,8 @@
                     <div class="text-left px-2 no-scrollbar" style="max-height: 70vh; overflow-y: auto;">
                         <label class="swal-input-label">Nama Brand</label>
                         <input id="n-name" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: Mobile Legends" onkeyup="document.getElementById('n-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
-                        
-                        <label class="swal-input-label">Slug URL (Otomatis)</label>
+                        <label class="swal-input-label">Slug URL</label>
                         <input id="n-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" readonly>
-
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="swal-input-label">Kategori</label>
@@ -201,50 +238,28 @@
                                 <input id="n-icon" class="swal2-input !mt-0 !text-sm" placeholder="https://link-gambar.com/icon.png">
                             </div>
                         </div>
-
-                        <!-- VALIDATION CODE SETTING -->
-                        <label class="swal-input-label text-blue-600">Kode Validasi Nickname (Optional)</label>
-                        <input id="n-val-code" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: freefire atau mobilelegends">
-                        <p class="text-[9px] text-slate-400 mt-1">*Input kode validasi (ff, ml, pubg, dll) jika ingin cek nickname.</p>
-
-                        <!-- FORMAT FORM SESUAI FOTO -->
+                        <label class="swal-input-label text-blue-600">Kode Validasi Nickname</label>
+                        <input id="n-val-code" class="swal2-input !mt-0 !text-sm" placeholder="Contoh: freefire">
                         <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
-                                <i class="fas fa-file-invoice text-blue-500"></i> Format Form (Sesuai Foto)
-                            </p>
-                            
+                            <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">Format Form Input</p>
                             <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label>
-                                    <input id="f-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="User ID">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label>
-                                    <select id="f-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                        <option value="text">Text</option>
-                                        <option value="number">Nomor</option>
-                                        <option value="email">Email</option>
-                                    </select>
-                                </div>
+                                <input id="f-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="User ID">
+                                <select id="f-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                    <option value="text">Text</option>
+                                    <option value="number">Nomor</option>
+                                    <option value="email">Email</option>
+                                </select>
                             </div>
-
                             <div class="flex items-center gap-2 mb-4">
                                 <input type="checkbox" id="f-has-server" class="w-4 h-4" onchange="document.getElementById('server-config').classList.toggle('hidden')">
-                                <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2 (Server ID)</label>
+                                <label for="f-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2</label>
                             </div>
-
                             <div id="server-config" class="hidden grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
-                                    <input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" placeholder="Contoh: Server ID">
-                                </div>
-                                <div>
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label>
-                                    <select id="f-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                        <option value="text">Text</option>
-                                        <option value="number">Nomor</option>
-                                    </select>
-                                </div>
+                                <input id="f-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" placeholder="Server ID">
+                                <select id="f-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
+                                    <option value="text">Text</option>
+                                    <option value="number">Nomor</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -253,39 +268,22 @@
                     const name = $('#n-name').val();
                     const slug = $('#n-slug').val();
                     const icon = $('#n-icon').val();
-                    if(!name || !slug || !icon) return Swal.showValidationMessage('Nama, Slug, dan Icon wajib diisi!');
-                    
+                    if(!name || !slug || !icon) return Swal.showValidationMessage('Lengkapi data!');
                     return {
-                        name: name,
-                        slug: slug,
-                        validation_code: $('#n-val-code').val(),
-                        category: $('#n-cat').val(),
-                        icon_url: icon,
-                        form_config: {
-                            target_label: $('#f-t-label').val(),
-                            target_type: $('#f-t-type').val(),
-                            has_server: $('#f-has-server').is(':checked'),
-                            server_label: $('#f-s-label').val(),
-                            server_type: $('#f-s-type').val()
-                        }
+                        name, slug, validation_code: $('#n-val-code').val(), category: $('#n-cat').val(), icon_url: icon,
+                        form_config: { target_label: $('#f-t-label').val(), target_type: $('#f-t-type').val(), has_server: $('#f-has-server').is(':checked'), server_label: $('#f-s-label').val(), server_type: $('#f-s-type').val() }
                     }
                 }
             });
-
             if (f) {
-                await fetch('/api/admin/brands', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(f)
-                });
+                await fetch('/api/admin/brands', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
                 loadBrands();
             }
         }
 
-        // 5. FUNGSI BARU: Edit Brand
+        // 5. Edit Brand
         async function editBrand(id) {
             try {
-                // Ambil data brand dari database
                 const res = await fetch(`/api/admin/brands/${id}`);
                 const result = await res.json();
                 const b = result.data;
@@ -293,101 +291,46 @@
                 const { value: f } = await Swal.fire({
                     title: '<span class="text-xs font-black uppercase tracking-widest text-slate-800">Edit Brand</span>',
                     width: '550px',
-                    confirmButtonText: 'UPDATE BRAND',
+                    confirmButtonText: 'UPDATE',
                     confirmButtonColor: '#2563eb',
                     showCancelButton: true,
                     html: `
                         <div class="text-left px-2 no-scrollbar" style="max-height: 70vh; overflow-y: auto;">
                             <label class="swal-input-label">Nama Brand</label>
-                            <input id="e-name" class="swal2-input !mt-0 !text-sm" value="${b.name}" onkeyup="document.getElementById('e-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '-')">
-                            
+                            <input id="e-name" class="swal2-input !mt-0 !text-sm" value="${b.name}">
                             <label class="swal-input-label">Slug URL</label>
                             <input id="e-slug" class="swal2-input !mt-0 !text-sm !bg-slate-50" value="${b.slug}" readonly>
-
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="swal-input-label">Kategori</label>
-                                    <select id="e-cat" class="swal2-input !mt-0 !text-sm">
-                                        <option value="Games" ${b.category === 'Games' ? 'selected' : ''}>Games</option>
-                                        <option value="Pulsa" ${b.category === 'Pulsa' ? 'selected' : ''}>Pulsa</option>
-                                        <option value="E-Wallet" ${b.category === 'E-Wallet' ? 'selected' : ''}>E-Wallet</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="swal-input-label">URL Icon</label>
-                                    <input id="e-icon" class="swal2-input !mt-0 !text-sm" value="${b.icon_url}">
-                                </div>
+                                <select id="e-cat" class="swal2-input !mt-0 !text-sm">
+                                    <option value="Games" ${b.category === 'Games' ? 'selected' : ''}>Games</option>
+                                    <option value="Pulsa" ${b.category === 'Pulsa' ? 'selected' : ''}>Pulsa</option>
+                                </select>
+                                <input id="e-icon" class="swal2-input !mt-0 !text-sm" value="${b.icon_url}">
                             </div>
-
                             <label class="swal-input-label text-blue-600">Kode Validasi Nickname</label>
-                            <input id="e-val-code" class="swal2-input !mt-0 !text-sm" value="${b.validation_code || ''}" placeholder="Contoh: freefire">
-
+                            <input id="e-val-code" class="swal2-input !mt-0 !text-sm" value="${b.validation_code || ''}">
                             <div class="mt-6 p-5 bg-slate-50 rounded-[24px] border border-slate-100">
-                                <p class="text-[10px] font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
-                                    <i class="fas fa-file-invoice text-blue-500"></i> Format Form Input
-                                </p>
-                                
-                                <div class="grid grid-cols-2 gap-3 mb-4">
-                                    <div>
-                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 1</label>
-                                        <input id="ef-t-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="${b.form_config.target_label}">
-                                    </div>
-                                    <div>
-                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input</label>
-                                        <select id="ef-t-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                            <option value="text" ${b.form_config.target_type === 'text' ? 'selected' : ''}>Text</option>
-                                            <option value="number" ${b.form_config.target_type === 'number' ? 'selected' : ''}>Nomor</option>
-                                            <option value="email" ${b.form_config.target_type === 'email' ? 'selected' : ''}>Email</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-2 mb-4">
-                                    <input type="checkbox" id="ef-has-server" class="w-4 h-4" ${b.form_config.has_server ? 'checked' : ''} onchange="document.getElementById('edit-server-config').classList.toggle('hidden')">
-                                    <label for="ef-has-server" class="text-[10px] font-bold text-slate-600 uppercase cursor-pointer">Gunakan Input Ke-2</label>
-                                </div>
-
-                                <div id="edit-server-config" class="${b.form_config.has_server ? '' : 'hidden'} grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Label Input 2</label>
-                                        <input id="ef-s-label" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full" value="${b.form_config.server_label}">
-                                    </div>
-                                    <div>
-                                        <label class="text-[9px] font-bold text-slate-400 uppercase">Tipe Input 2</label>
-                                        <select id="ef-s-type" class="swal2-input !mt-1 !text-xs !h-10 !m-0 !w-full">
-                                            <option value="text" ${b.form_config.server_type === 'text' ? 'selected' : ''}>Text</option>
-                                            <option value="number" ${b.form_config.server_type === 'number' ? 'selected' : ''}>Nomor</option>
-                                        </select>
-                                    </div>
+                                <input id="ef-t-label" class="swal2-input !mt-1 !text-xs !h-10" value="${b.form_config.target_label}">
+                                <select id="ef-t-type" class="swal2-input !mt-1 !text-xs !h-10">
+                                    <option value="text" ${b.form_config.target_type === 'text' ? 'selected' : ''}>Text</option>
+                                    <option value="number" ${b.form_config.target_type === 'number' ? 'selected' : ''}>Nomor</option>
+                                </select>
+                                <div class="mt-2"><input type="checkbox" id="ef-has-server" ${b.form_config.has_server ? 'checked' : ''} onchange="$('#edit-server-config').toggleClass('hidden')"> <label class="text-[10px] font-bold uppercase">Gunakan Input 2</label></div>
+                                <div id="edit-server-config" class="${b.form_config.has_server ? '' : 'hidden'} grid grid-cols-2 gap-3 mt-2">
+                                    <input id="ef-s-label" class="swal2-input !mt-1 !text-xs !h-10" value="${b.form_config.server_label}">
+                                    <select id="ef-s-type" class="swal2-input !mt-1 !text-xs !h-10">
+                                        <option value="text" ${b.form_config.server_type === 'text' ? 'selected' : ''}>Text</option>
+                                        <option value="number" ${b.form_config.server_type === 'number' ? 'selected' : ''}>Nomor</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                     `,
-                    preConfirm: () => {
-                        return {
-                            name: $('#e-name').val(),
-                            slug: $('#e-slug').val(),
-                            validation_code: $('#e-val-code').val(),
-                            category: $('#e-cat').val(),
-                            icon_url: $('#e-icon').val(),
-                            form_config: {
-                                target_label: $('#ef-t-label').val(),
-                                target_type: $('#ef-t-type').val(),
-                                has_server: $('#ef-has-server').is(':checked'),
-                                server_label: $('#ef-s-label').val(),
-                                server_type: $('#ef-s-type').val()
-                            }
-                        }
-                    }
+                    preConfirm: () => ({ name: $('#e-name').val(), slug: $('#e-slug').val(), validation_code: $('#e-val-code').val(), category: $('#e-cat').val(), icon_url: $('#e-icon').val(), form_config: { target_label: $('#ef-t-label').val(), target_type: $('#ef-t-type').val(), has_server: $('#ef-has-server').is(':checked'), server_label: $('#ef-s-label').val(), server_type: $('#ef-s-type').val() } })
                 });
 
                 if (f) {
-                    await fetch(`/api/admin/brands/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(f)
-                    });
-                    Swal.fire('Berhasil', 'Brand diperbarui', 'success');
+                    await fetch(`/api/admin/brands/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
                     loadBrands();
                 }
             } catch (e) { console.error(e); }
