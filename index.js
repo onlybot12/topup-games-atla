@@ -539,7 +539,7 @@ app.post('/api/create-payment', async (req, res) => {
         
         if (target2) {
             // Jika nama brand mengandung "Mobile Legends"
-            if (brand && brand.name.toLowerCase().includes('mobile legends')) {
+            if (brand &&  (brand.name.toLowerCase().includes('mobile legends')  || brand.slug.includes('mobile-legends'))) {
                 finalTarget = `${target1}|${target2}`; // Format: 123456|1234
             } else {
                 finalTarget = `${target1}${target2}`;  // Format: Gabung (1234561234)
