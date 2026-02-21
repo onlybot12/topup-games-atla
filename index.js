@@ -476,7 +476,7 @@ app.get('/api/services', async (req, res) => {
         res.json({ status: true, data });
     } catch (e) { res.status(500).json({ status: false }); }
 });
-
+/*
 app.post('/api/create-payment', async (req, res) => {
     const { service_id, target, whatsapp, voucher_code, email } = req.body;
     try {
@@ -520,6 +520,81 @@ app.post('/api/create-payment', async (req, res) => {
             res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else { res.json({ status: false, message: depoRes.data.message }); }
     } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
+});
+*/
+
+app.post('/api/create-payment', async (req, res) => {
+    // Ambil target1 dan target2 dari body
+    const { service_id, target1, target2, whatsapp, voucher_code, email } = req.body;
+    
+    try {
+        const service = await Service.findOne({ service_id, is_active: true });
+        if (!service) return res.json({ status: false, message: "Layanan Offline" });
+
+        // Cari Brand dari produk ini untuk cek format target
+        const brand = await Brand.findOne({ services: service_id });
+        
+        // --- LOGIKA PARSING TARGET (Gasken!) ---
+        let finalTarget = target1; // Default hanya ID
+        
+        if (target2) {
+            // Jika nama brand mengandung "Mobile Legends"
+            if (brand && brand.name.toLowerCase().includes('mobile legends')) {
+                finalTarget = `${target1}|${target2}`; // Format: 123456|1234
+            } else {
+                finalTarget = `${target1}${target2}`;  // Format: Gabung (1234561234)
+            }
+        }
+        // ----------------------------------------
+
+        let conf = await Config.findOne({ key: 'qris_settings' }) || { admin_fee: 700, tax_percent: 1.4 };
+        let sellPrice = service.price_sell;
+        let usedVoucher = null;
+
+        if (voucher_code) {
+            const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
+            if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
+                sellPrice -= v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                usedVoucher = v.code;
+            }
+        }
+
+        const multiplier = (100 - conf.tax_percent) / 100;
+        const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
+        const reff_id = `PAY-${Date.now()}`;
+
+        const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`,
+            qs.stringify({ api_key: API_KEY, reff_id, nominal: nominalBayar, type: 'ewallet', metode: 'qris' }), 
+            { headers: requestHeaders });
+
+        if (depoRes.data.status) {
+            const depositId = depoRes.data.data.id;
+            const tr = new Transaction({
+                deposit_id: depositId,
+                order_id: `ORD-${depositId}`,
+                qr_image: depoRes.data.data.qr_image,
+                amount: nominalBayar,
+                base_price: service.price_original,
+                item_name: service.name,
+                target: finalTarget, // Simpan target yang sudah diformat ke DB
+                whatsapp, 
+                status: 'pending',
+                email: email || 'customer@lanastore.com',
+                meta: { 
+                    code: service.service_id, 
+                    target: finalTarget, // Ini yang akan ditembak ke API Atlantic saat sukses
+                    applied_voucher: usedVoucher 
+                }
+            });
+            await tr.save();
+            res.json({ status: true, redirect_url: `/transaction/${depositId}` });
+        } else {
+            res.json({ status: false, message: depoRes.data.message });
+        }
+    } catch (e) { 
+        console.error(e);
+        res.status(500).json({ status: false, message: "Server Error" }); 
+    }
 });
 
 app.post('/api/check-status', async (req, res) => {
