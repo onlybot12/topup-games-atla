@@ -4,7 +4,7 @@
     <title><%= config.shop_name %> - <%= config.meta_description %></title>
     <%- include('../partials/user/heads') %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         body { 
@@ -18,36 +18,20 @@
         }
         main { flex: 1; }
 
-        /* --- ANIMASI REVEAL SAAT SCROLL --- */
+        /* --- ANIMASI REVEAL --- */
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* --- EFEK CARD GAME UTAMA (3 KOLOM HP) --- */
+        /* --- CARD UTAMA --- */
         .brand-card-main { 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 20px;
-            cursor: pointer;
-            overflow: hidden;
         }
-        
-        /* Hover Desktop */
-        @media (min-width: 1024px) {
-            .brand-card-main:hover { 
-                transform: translateY(-8px); 
-                border-color: #3b82f6; 
-                box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-            }
-        }
-
-        /* Animasi Klik HP */
-        .brand-card-main:active { 
-            transform: scale(0.92); 
-            background-color: #0f172a;
-        }
+        .brand-card-main:active { transform: scale(0.92); background-color: #0f172a; }
 
         .brand-item img {
             width: 100%;
@@ -56,33 +40,33 @@
             border-radius: 16px;
         }
 
-        /* --- POPULAR SECTION (Layout Ikon Kiri, Teks Kanan - Dark) --- */
+        /* --- POPULAR SECTION (Style Foto) --- */
         .popular-container {
             background-color: #1e293b; 
             border-radius: 24px;
-            padding: 20px;
+            padding: 24px;
             border: 1px solid #334155;
         }
         .popular-card {
             background-color: #0f172a;
             border-radius: 16px;
-            padding: 10px;
+            padding: 12px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             border: 1px solid rgba(255,255,255,0.05);
             transition: all 0.2s ease;
             text-decoration: none !important;
         }
-        .popular-card:active { transform: scale(0.95); background: #1e293b; }
+        .popular-card:active { transform: scale(0.95); }
         .popular-card img {
             width: 52px;
             height: 52px;
-            border-radius: 10px;
+            border-radius: 12px;
             object-fit: cover;
         }
 
-        /* --- TIMER BOX --- */
+        /* --- TIMER --- */
         .timer-box {
             background: #ef4444;
             color: white;
@@ -99,6 +83,7 @@
         }
 
         .category-tabs::-webkit-scrollbar { display: none; }
+        footer a { text-decoration: none !important; }
     </style>
 </head>
 <body>
@@ -114,7 +99,7 @@
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                 <input type="text" id="searchInput" onkeyup="searchGame()" placeholder="Cari Game..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <span class="font-black text-blue-500 text-xl tracking-tighter uppercase"><%= config.shop_name.split(' ')[0] %></span>
         </div>
@@ -138,7 +123,7 @@
         </div>
         <% } %>
 
-        <!-- 2. FLASH SALE (Sistem Slider Geser) -->
+        <!-- 2. FLASH SALE -->
         <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
         <section class="mb-10 reveal">
             <div class="flex items-center justify-between mb-4 px-1">
@@ -167,15 +152,15 @@
         </section>
         <% } %>
 
-        <!-- 3. POPULER SEKARANG (Teks Besar & Bersih) -->
+        <!-- 3. POPULER SEKARANG -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
         <section class="popular-container mb-10 shadow-lg reveal">
-            <div class="flex items-center gap-2 mb-1">
+            <div class="flex items-center gap-3 mb-1">
                 <span class="text-2xl animate-bounce">⚠️</span>
                 <h3 class="font-black text-white uppercase text-xl tracking-tight"><%= config.title_popular %></h3>
             </div>
-            <p class="text-slate-400 text-[10px] mb-6 ml-1 font-bold uppercase tracking-widest opacity-60">Beberapa produk paling populer saat ini.</p>
+            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium tracking-wide opacity-80">Beberapa produk yang paling populer saat ini.</p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <% popularBrands.forEach(brand => { %>
@@ -183,7 +168,7 @@
                     <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     <div class="overflow-hidden">
                         <p class="font-bold text-white text-sm uppercase truncate tracking-wide"><%= brand.name %></p>
-                        <p class="text-slate-500 text-[9px] font-black uppercase"><%= brand.category %></p>
+                        <p class="text-slate-500 text-[10px] font-black uppercase"><%= brand.category %></p>
                     </div>
                 </a>
                 <% }) %>
@@ -196,7 +181,7 @@
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
                 <button onclick="filterCat('All')" class="cat-btn px-6 py-2.5 rounded-full bg-blue-600 text-white text-[11px] font-black uppercase shadow-lg shadow-blue-500/20">Semua</button>
                 <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
-                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-6 py-2.5 rounded-full bg-slate-800 text-slate-400 text-[11px] font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
+                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-5 py-2.5 rounded-full bg-slate-800 text-slate-400 text-[11px] font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
                 <% }) %>
             </div>
 
@@ -214,68 +199,103 @@
 
     </main>
 
-    <!-- FOOTER (Bersih, Font Standar) -->
-    <footer class="border-t border-slate-800 py-12 px-6 bg-[#0a0f1a] mt-auto">
-        <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
-            <h2 class="text-2xl font-black text-blue-500 mb-4 tracking-tighter uppercase"><%= config.shop_name %></h2>
-            <p class="text-sm text-slate-400 max-w-md mb-8 font-medium leading-relaxed">
-                Platform top-up game otomatis 24 jam nonstop dengan verifikasi pembayaran real-time.
-            </p>
-            
-            <div class="w-full max-w-xs h-px bg-slate-800 mb-8 opacity-40"></div>
-            
-            <p class="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase">
-                © 2026 <%= config.shop_name.toUpperCase() %> • ALL RIGHTS RESERVED
-            </p>
+    <!-- FOOTER (Style Foto) -->
+    <footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                
+                <!-- Brand & Trade Info -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                            <i class="fas fa-gem text-xl"></i>
+                        </div>
+                        <span class="text-2xl font-black text-white tracking-tighter uppercase"><%= config.shop_name %></span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">
+                        <%= config.footer_description || 'No #1 supplier top up game & voucher terlaris, murah, aman legal 100% buka 24 Jam dengan payment terlengkap Indonesia' %>
+                    </p>
+                    <div class="space-y-1">
+                        <p class="text-white font-bold text-sm leading-tight max-w-sm">
+                            <%= config.footer_trade_info || 'Direktorat Jenderal Perlindungan Konsumen dan Tertib Niaga Kementerian Perdagangan RI 0853-1111-1010' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Links Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2">
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Peta Situs</h4>
+                        <ul class="space-y-4 text-sm text-gray-300">
+                            <li><a href="/" class="hover:text-white">Beranda</a></li>
+                            <li><a href="/search" class="hover:text-white">Masuk</a></li>
+                            <li><a href="/faq" class="hover:text-white">Ulasan</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Dukungan</h4>
+                        <ul class="space-y-4 text-sm text-gray-300">
+                            <li><a href="<%= config.wa_link %>" class="hover:text-white">Whatsapp</a></li>
+                            <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white">Whatsapp CS</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Legalitas</h4>
+                        <ul class="space-y-4 text-sm text-gray-300">
+                            <li><a href="/faq" class="hover:text-white">Kebijakan Privasi</a></li>
+                            <li><a href="/faq" class="hover:text-white">Syarat & Ketentuan</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Partnership</h4>
+                        <ul class="space-y-4 text-sm text-gray-300">
+                            <li><a href="#" class="hover:text-white">Reseller</a></li>
+                            <li><a href="#" class="hover:text-white">Jasa Web Topup</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copyright Line -->
+            <div class="pt-8 border-t border-slate-800 text-center md:text-left">
+                <p class="text-xs text-gray-500 font-medium">
+                    © 2026 <%= config.shop_name %> - Top up Game dan Beli Voucher Game termurah dan terpercaya di Indonesia. . All rights reserved.
+                </p>
+            </div>
         </div>
     </footer>
+
+    <!-- Floating Support -->
+    <a href="https://wa.me/<%= config.wa_cs %>" class="fixed bottom-6 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl z-[100] active:scale-75 transition-all">
+        <i class="fas fa-headset text-xl"></i>
+    </a>
 
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
     <script>
-        // Init Main Slider
-        new Swiper(".mainSwiper", {
-            loop: true,
-            autoplay: { delay: 4000 },
-            pagination: { el: ".swiper-pagination", clickable: true },
-        });
+        new Swiper(".mainSwiper", { loop: true, autoplay: { delay: 4000 }, pagination: { el: ".swiper-pagination", clickable: true } });
+        new Swiper(".flashSwiper", { loop: true, autoplay: { delay: 3000 }, slidesPerView: 1.2, spaceBetween: 12, breakpoints: { 640: { slidesPerView: 2.5 } } });
 
-        // Init Flash Sale Slider (Geser ke Kanan)
-        new Swiper(".flashSwiper", {
-            loop: true,
-            autoplay: { delay: 3000 },
-            slidesPerView: 1.2,
-            spaceBetween: 12,
-            breakpoints: { 640: { slidesPerView: 2.5 } }
-        });
-
-        // Animasi Reveal Scroll
         function reveal() {
             var reveals = document.querySelectorAll(".reveal");
             for (var i = 0; i < reveals.length; i++) {
                 var windowHeight = window.innerHeight;
                 var elementTop = reveals[i].getBoundingClientRect().top;
-                var elementVisible = 100;
-                if (elementTop < windowHeight - elementVisible) {
-                    reveals[i].classList.add("active");
-                }
+                if (elementTop < windowHeight - 100) reveals[i].classList.add("active");
             }
         }
         window.addEventListener("scroll", reveal);
 
-        // Filter Kategori dengan Fade
         function filterCat(cat) {
-            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg shadow-blue-500/20').addClass('bg-slate-800 text-slate-400');
-            $(event.target).addClass('bg-blue-600 text-white shadow-lg shadow-blue-500/20').removeClass('bg-slate-800 text-slate-400');
-            
+            $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
+            $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
             $('.brand-item').fadeOut(200, function() {
                 if(cat === 'All') { $('.brand-item').fadeIn(300); } 
                 else { $(`.brand-item[data-category="${cat}"]`).fadeIn(300); }
             });
         }
 
-        // Search Game
         function searchGame() {
             let val = $('#searchInput').val().toLowerCase();
             $('.brand-item').each(function() {
@@ -284,27 +304,17 @@
             });
         }
 
-        // --- LOGIKA COUNTDOWN TIMER ---
         function startCountdown() {
             const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
             if(!endDateStr) return;
-
             const endDate = new Date(endDateStr).getTime();
-            
-            const timerInterval = setInterval(function() {
+            setInterval(function() {
                 const now = new Date().getTime();
                 const distance = endDate - now;
-
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById("countdown").innerHTML = "<div class='timer-box'>EXPIRED</div>";
-                    return;
-                }
-
+                if (distance < 0) { document.getElementById("countdown").innerHTML = "EXPIRED"; return; }
                 const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((distance % (1000 * 60)) / 1000);
-
                 document.getElementById("countdown").innerHTML = `
                     <div class="timer-box">${String(h).padStart(2, '0')}</div>
                     <div class="text-red-500 font-bold">:</div>
@@ -314,7 +324,6 @@
                 `;
             }, 1000);
         }
-
         <% if (flashSales && flashSales.length > 0) { %> startCountdown(); <% } %>
     </script>
 </body>
