@@ -5,8 +5,11 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const qs = require('querystring');
 const path = require('path');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
 
 const connectDB = require('./config/database');
+const AdminLog = require('./models/AdminLog');
 const Transaction = require('./models/Transaction');
 const Service = require('./models/Service');
 const Voucher = require('./models/Voucher');
@@ -22,6 +25,12 @@ const PORT = process.env.PORT || 3000;
 // CONFIGURATION & MIDDLEWARE
 // ==========================
 app.use(cors());
+app.use(session({
+    secret: 'admin-login-secret', // Ganti dengan kunci rahasia bebas
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 } // Berlaku 24 Jam
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -31,6 +40,15 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Koneksi Database
 connectDB();
+
+// --- MIDDLEWARE PENJAGA PINTU ---
+const isAdmin = (req, res, next) => {
+    if (req.session.adminId) {
+        next();
+    } else {
+        res.redirect('/admin/login');
+    }
+};
 
 const ATLANTIC_BASE_URL = 'https://atlantich2h.com';
 const API_KEY = process.env.ATLANTIC_API_KEY || 'rviGKdaMWIqqG3bYYQGKTHioqOwkEw4hu1s4dPJrootJmQmhzfywCQ48sEe3b6fph8S59gtQKpRk3iXcAXe9L2eGOFqrsBsz5rkJ';
@@ -155,13 +173,21 @@ app.get('/faq', (req, res) => res.render('user/faq'));
 // ==========================
 // ROUTE VIEW (ADMIN SIDE)
 // ==========================
-app.get('/admin/layanan', (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
-app.get('/admin/voucher', (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
-app.get('/admin/pengaturan', (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
-app.get('/admin/brand', (req, res) => res.render('admin/brand-manage', { currentPage: 'brand' }));
-app.get('/admin/banner', (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
-app.get('/admin/flash-sale', (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
-app.get('/admin/dashboard', async (req, res) => {
+app.get('/admin/login', (req, res) => {
+    if(req.session.adminId) return res.redirect('/admin/dashboard');
+    res.render('admin/login');
+});
+app.get('/admin/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/admin/login');
+});
+app.get('/admin/layanan', isAdmin, (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
+app.get('/admin/voucher', isAdmin, (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
+app.get('/admin/pengaturan', isAdmin, (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
+app.get('/admin/brand', isAdmin, (req, res) => res.render('admin/brand-manage', { currentPage: 'brand' }));
+app.get('/admin/banner', isAdmin, (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
+app.get('/admin/flash-sale', isAdmin, (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
+app.get('/admin/dashboard', isAdmin, async (req, res) => {
     try {
         const now = new Date();
         const startOfToday = new Date(now.setHours(0,0,0,0));
@@ -210,6 +236,42 @@ app.get('/admin/dashboard', async (req, res) => {
         res.status(500).send("Error loading dashboard: " + e.message);
     }
 });
+
+
+// --- LOGIKA LOGIN ---
+app.post('/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        // Mencari di koleksi AdminLog
+        const admin = await AdminLog.findOne({ username });
+
+        if (admin && await bcrypt.compare(password, admin.password)) {
+            req.session.adminId = admin._id;
+            res.json({ status: true, message: "Login Berhasil" });
+        } else {
+            res.json({ status: false, message: "Username atau Password Salah" });
+        }
+    } catch (e) {
+        res.status(500).json({ status: false, message: "Server Error" });
+    }
+});
+
+// --- FITUR BUAT AKUN PERTAMA KALI ---
+// Buka: http://localhost:3000/make-admin
+app.get('/make-admin', async (req, res) => {
+    try {
+        const hashed = await bcrypt.hash('admin123', 10);
+        // Simpan ke koleksi AdminLog
+        await AdminLog.create({ 
+            username: 'admin', 
+            password: hashed 
+        });
+        res.send("Admin Created in AdminLog collection! Username: admin, Pass: admin123");
+    } catch (e) {
+        res.send("Gagal membuat admin (mungkin sudah ada)");
+    }
+});
+
 
 // Halaman Checklist Layanan untuk Brand
 app.get('/admin/brand/services/:id', async (req, res) => {
