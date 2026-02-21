@@ -14,7 +14,21 @@ const ConfigSchema = new mongoose.Schema({
     shop_name: { type: String, default: "Lana Store" },
     meta_description: { type: String, default: "Topup Game Tercepat & Termurah di Indonesia" },
     meta_keywords: { type: String, default: "topup game, diamond ml, ff murah, vouchers" },
-    logo_url: { type: String, default: "" }
+    logo_url: { type: String, default: "" },
+
+    // --- TAMBAHAN FOOTER BRANDING ---
+    footer_description: { 
+        type: String, 
+        default: "No #1 supplier top up game & voucher terlaris, murah, aman legal 100% buka 24 Jam dengan payment terlengkap Indonesia" 
+    },
+    footer_trade_info: { 
+        type: String, 
+        default: "Direktorat Jenderal Perlindungan Konsumen dan Tertib Niaga Kementerian Perdagangan RI 0853-1111-1010" 
+    },
+    wa_cs: { 
+        type: String, 
+        default: "" 
+    } // Nomor WhatsApp khusus Customer Service (Floating Button)
 });
 
 module.exports = mongoose.model('Config', ConfigSchema);
