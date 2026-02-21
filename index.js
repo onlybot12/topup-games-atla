@@ -141,7 +141,15 @@ app.get('/transaction/:deposit_id', async (req, res) => {
     } catch (error) { res.status(500).send('Server Error'); }
 });
 
-app.get('/search', (req, res) => res.render('user/search'));
+app.get('/search', async (req, res) => {
+    try {
+        const config = await Config.findOne({ key: 'qris_settings' }) || { shop_name: "Lana Store" };
+        res.render('user/search', { config });
+    } catch (e) {
+        res.status(500).send("Server Error");
+    }
+});
+// app.get('/search', (req, res) => res.render('user/search'));
 app.get('/faq', (req, res) => res.render('user/faq'));
 
 // ==========================
