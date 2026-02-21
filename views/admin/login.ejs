@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Admin Login - Lana Store</title>
+    <%- include('../partials/head') %>
+    <style>
+        body { background-color: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-card { background: #1e293b; border: 1px solid #334155; border-radius: 32px; width: 100%; max-width: 400px; padding: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 14px 20px; color: white; width: 100%; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="login-card animate-fade-in">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-4 shadow-lg shadow-blue-900/40">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h2 class="text-white font-black text-xl uppercase tracking-tight">Admin Login</h2>
+            <p class="text-slate-500 text-xs mt-1 font-bold">LANA STORE PANEL</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 mb-2 block tracking-widest">Username</label>
+                <input type="text" id="username" class="input-box" placeholder="admin" required>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 mb-2 block tracking-widest">Password</label>
+                <input type="password" id="password" class="input-box" placeholder="••••••••" required>
+            </div>
+            <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl mt-6 transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                MASUK PANEL
+            </button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $('#loginForm').on('submit', async function(e) {
+            e.preventDefault();
+            const btn = $('#btnLogin');
+            btn.attr('disabled', true).text('OTENTIKASI...');
+
+            const data = {
+                username: $('#username').val(),
+                password: $('#password').val()
+            };
+
+            try {
+                const res = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if(result.status) {
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: result.message, background: '#1e293b', color: '#fff', confirmButtonColor: '#2563eb' });
+                    btn.attr('disabled', false).text('MASUK PANEL');
+                }
+            } catch (e) {
+                alert("Server Error");
+                btn.attr('disabled', false).text('MASUK PANEL');
+            }
+        });
+    </script>
+</body>
+</html>
