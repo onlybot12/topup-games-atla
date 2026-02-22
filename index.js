@@ -586,10 +586,23 @@ app.post('/api/create-payment', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 */
-
 app.post('/api/create-payment', async (req, res) => {
     // Ambil target1 dan target2 dari body
     const { service_id, target1, target2, whatsapp, voucher_code, email } = req.body;
+
+    // --- 🛡️ PROTEKSI ANTI XSS (Via ID/Username/Email Only) ---
+    // Regex ini mengizinkan: Huruf, Angka, @, Titik, Underscore (untuk Genshin), Strip, Pipa, Kurung, dan Spasi.
+    // Menolak: < > / \ ; ' " { } [ ]
+    const safePattern = /^[a-zA-Z0-9@._\-|() ]+$/;
+    
+    if ((target1 && !safePattern.test(target1)) || (target2 && !safePattern.test(target2))) {
+        console.error("⚠️ DETEKSI INPUT BERBAHAYA (XSS/Injection):", { target1, target2 });
+        return res.status(400).json({ 
+            status: false, 
+            message: "Karakter tidak diizinkan! Gunakan format ID/Username/Email yang benar." 
+        });
+    }
+    // -----------------------------------------------------
     
     try {
         const service = await Service.findOne({ service_id, is_active: true });
@@ -598,35 +611,42 @@ app.post('/api/create-payment', async (req, res) => {
         // Cari Brand dari produk ini untuk cek format target
         const brand = await Brand.findOne({ services: service_id });
         
-        // --- LOGIKA PARSING TARGET (Gasken!) ---
-        let finalTarget = target1; // Default hanya ID
+        // --- ⚙️ LOGIKA PARSING TARGET (Gasken!) ---
+        let finalTarget = target1; // Default hanya ID (target1)
         
         if (target2) {
-            // Jika nama brand mengandung "Mobile Legends"
-            if (brand &&  (brand.name.toLowerCase().includes('mobile legends')  || brand.slug.includes('mobile-legends'))) {
-                finalTarget = `${target1}|${target2}`; // Format: 123456|1234
-            } else {
-                finalTarget = `${target1}${target2}`;  // Format: Gabung (1234561234)
+            // 1. Khusus Mobile Legends (Pakai Pembatas | )
+            if (brand && (brand.name.toLowerCase().includes('mobile legends') || brand.slug.includes('mobile-legends'))) {
+                finalTarget = `${target1}|${target2}`; // Contoh: 123456|1234
+            } 
+            // 2. Selain ML (Genshin Impact, dll) digabung langsung
+            else {
+                finalTarget = `${target1}${target2}`;  // Contoh: 881234567os_america
             }
         }
         // ----------------------------------------
 
+        // Ambil Pengaturan Biaya Admin dari Database
         let conf = await Config.findOne({ key: 'qris_settings' }) || { admin_fee: 700, tax_percent: 1.4 };
         let sellPrice = service.price_sell;
         let usedVoucher = null;
 
+        // Validasi Voucher
         if (voucher_code) {
             const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
             if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
-                sellPrice -= v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
-                usedVoucher = v.code;
+                let discount = v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
+                sellPrice -= discount;
+                usedVoucher = v.code; // Dicatat untuk dipotong kuota saat payment SUCCESS
             }
         }
 
+        // Kalkulasi Nominal Bayar (Admin Fee + Pajak MDR)
         const multiplier = (100 - conf.tax_percent) / 100;
         const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
-        const reff_id = `PAY-${Date.now()}`;
+        const reff_id = `LAN-${Date.now()}`;
 
+        // Request Deposit QRIS ke Atlantic
         const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`,
             qs.stringify({ api_key: API_KEY, reff_id, nominal: nominalBayar, type: 'ewallet', metode: 'qris' }), 
             { headers: requestHeaders });
@@ -635,31 +655,34 @@ app.post('/api/create-payment', async (req, res) => {
             const depositId = depoRes.data.data.id;
             const tr = new Transaction({
                 deposit_id: depositId,
-                order_id: `ORD-${depositId}`,
+                order_id: `LAN-${depositId}`,
                 qr_image: depoRes.data.data.qr_image,
                 amount: nominalBayar,
                 base_price: service.price_original,
                 item_name: service.name,
-                target: finalTarget, // Simpan target yang sudah diformat ke DB
+                target: finalTarget, // Target yang sudah rapi (Gabung/Pipa)
                 whatsapp, 
                 status: 'pending',
                 email: email || 'customer@lanastore.com',
                 meta: { 
                     code: service.service_id, 
-                    target: finalTarget, // Ini yang akan ditembak ke API Atlantic saat sukses
+                    target: finalTarget, // Ini yang akan ditembak ke API Atlantic saat Sukses
                     applied_voucher: usedVoucher 
                 }
             });
             await tr.save();
+            
+            // Redirect User ke Halaman Pembayaran
             res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else {
             res.json({ status: false, message: depoRes.data.message });
         }
     } catch (e) { 
-        console.error(e);
+        console.error("Error Create Payment:", e);
         res.status(500).json({ status: false, message: "Server Error" }); 
     }
 });
+
 
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
