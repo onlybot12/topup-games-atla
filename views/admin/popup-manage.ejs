@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Admin - Kelola Popup Promo</title>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-slate-50 overflow-x-hidden">
+    <%- include('../partials/sidebar') %>
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b px-4 flex items-center justify-between sticky top-0 z-40">
+            <h1 class="font-bold text-slate-800 text-sm uppercase">Popup Notifikasi</h1>
+            <button onclick="addPopup()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">
+                <i class="fas fa-plus mr-1"></i> Tambah Popup
+            </button>
+        </header>
+
+        <main class="p-4 md:p-8">
+            <div id="popup-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Data Popup -->
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function loadPopups() {
+            const res = await fetch('/api/admin/popups');
+            const json = await res.json();
+            const grid = $('#popup-list').empty();
+            json.data.forEach(p => {
+                grid.append(`
+                    <div class="bg-white p-4 rounded-[32px] border shadow-sm">
+                        <img src="${p.image_url}" class="w-full aspect-square object-cover rounded-2xl mb-4 border">
+                        <p class="text-xs font-bold text-slate-800 truncate">${p.description || 'Tidak ada deskripsi'}</p>
+                        <div class="flex justify-between items-center mt-4">
+                            <span class="text-[10px] text-blue-500 font-bold">Aktif</span>
+                            <button onclick="deletePopup('${p._id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        async function addPopup() {
+            const { value: f } = await Swal.fire({
+                title: 'Tambah Popup Baru',
+                html: `
+                    <input id="p-img" class="swal2-input" placeholder="URL Gambar (Kotak/Persegi)">
+                    <input id="p-desc" class="swal2-input" placeholder="Deskripsi Singkat">
+                    <input id="p-link" class="swal2-input" placeholder="Link Tujuan (WhatsApp/Web)">
+                `,
+                preConfirm: () => ({ 
+                    image_url: $('#p-img').val(), 
+                    description: $('#p-desc').val(), 
+                    target_link: $('#p-link').val() 
+                })
+            });
+            if(f.image_url) {
+                await fetch('/api/admin/popups', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(f) });
+                loadPopups();
+            }
+        }
+
+        async function deletePopup(id) {
+            await fetch(`/api/admin/popups/${id}`, { method: 'DELETE' });
+            loadPopups();
+        }
+
+        $(document).ready(loadPopups);
+    </script>
+</body>
+</html>
