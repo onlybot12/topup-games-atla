@@ -84,6 +84,12 @@
 
         .category-tabs::-webkit-scrollbar { display: none; }
         footer a { text-decoration: none !important; }
+
+        /* --- POPUP MODAL SLIDER STYLE --- */
+        #popupModal { transition: opacity 0.3s ease; }
+        .popup-content { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .swiper-pagination-popup { position: relative !important; bottom: 0 !important; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -270,6 +276,57 @@
         <i class="fas fa-headset text-xl"></i>
     </a>
 
+    <!-- ==========================
+         POPUP NOTIFIKASI MODAL 
+         ========================== -->
+    <% if (typeof popups !== 'undefined' && popups.length > 0) { %>
+    <div id="popupModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
+        <!-- Overlay Blur -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePopup()"></div>
+        
+        <!-- Modal Container -->
+        <div class="popup-content relative bg-dark-800 border border-dark-700 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closePopup()" class="absolute top-4 right-4 z-[160] w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center active:scale-75 transition-all">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+
+            <!-- Swiper Popup -->
+            <div class="swiper popupSwiper">
+                <div class="swiper-wrapper">
+                    <% popups.forEach(p => { %>
+                    <div class="swiper-slide">
+                        <a href="<%= p.target_link || '#' %>">
+                            <img src="<%= p.image_url %>" class="w-full aspect-square object-cover" alt="Promo">
+                        </a>
+                        <div class="p-6 text-center">
+                            <p class="text-xs text-slate-300 font-semibold leading-relaxed mb-4">
+                                <%= p.description %>
+                            </p>
+                            <% if(p.target_link) { %>
+                            <a href="<%= p.target_link %>" class="text-blue-400 text-[11px] font-black underline break-all uppercase tracking-tighter">
+                                Klik Disini
+                            </a>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+                <!-- Pagination Fraction (1/2, 2/2) -->
+                <% if (popups.length > 1) { %>
+                <div class="swiper-pagination-popup text-[10px] font-black text-slate-500 text-center"></div>
+                <% } %>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-dark-900/50 border-t border-dark-700 flex items-center justify-center gap-3">
+                <input type="checkbox" id="dontShowAgain" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-0">
+                <label for="dontShowAgain" class="text-[10px] text-slate-400 font-black uppercase tracking-widest cursor-pointer">Jangan tampilkan lagi</label>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
@@ -325,6 +382,38 @@
             }, 1000);
         }
         <% if (flashSales && flashSales.length > 0) { %> startCountdown(); <% } %>
+
+        /* --- SCRIPT POPUP MODAL --- */
+        function initPopup() {
+            const isDismissed = localStorage.getItem('lana_popup_dismissed');
+            const modal = document.getElementById('popupModal');
+            
+            if (!isDismissed && modal) {
+                modal.classList.remove('hidden');
+                new Swiper(".popupSwiper", {
+                    loop: true,
+                    pagination: {
+                        el: ".swiper-pagination-popup",
+                        type: "fraction",
+                    },
+                });
+            }
+        }
+
+        function closePopup() {
+            const checkbox = document.getElementById('dontShowAgain');
+            if (checkbox && checkbox.checked) {
+                // Simpan status agar tidak muncul lagi (misal selama 24 jam atau selamanya)
+                localStorage.setItem('lana_popup_dismissed', 'true');
+            }
+            document.getElementById('popupModal').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('popupModal').classList.add('hidden');
+            }, 300);
+        }
+
+        // Jalankan pengecekan popup saat window load
+        window.addEventListener('load', initPopup);
     </script>
 </body>
 </html>
