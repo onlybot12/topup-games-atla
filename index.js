@@ -17,6 +17,7 @@ const Config = require('./models/Config');
 const Brand = require('./models/Brand');
 const Banner = require('./models/Banner'); // Tambahan Model
 const FlashSale = require('./models/FlashSale'); // Tambahan Model
+const Popup = require('./models/Popup');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -102,8 +103,8 @@ app.get('/', async (req, res) => {
                 title_flash_sale: "PASTI TER-MURAAHH"
             });
         }
-
-        res.render('user/indexx', { banners, flashSales, brands, config });
+        const popups = await Popup.find({ is_active: true });
+        res.render('user/indexx', { banners, flashSales, brands, config, popups });
     } catch (e) { res.status(500).send("Database Error"); }
 });
 
@@ -194,6 +195,7 @@ app.get('/admin/logout', (req, res) => {
 app.get('/admin/layanan', isAdmin, (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
 app.get('/admin/voucher', isAdmin, (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
 app.get('/admin/pengaturan', isAdmin, (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
+app.get('/admin/popup', isAdmin, (req, res) => res.render('admin/popup-manage', { currentPage: 'popup' }));
 app.get('/admin/brand', isAdmin, (req, res) => res.render('admin/brand-manage', { currentPage: 'brand' }));
 app.get('/admin/banner', isAdmin, (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
 app.get('/admin/flash-sale', isAdmin, (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
@@ -283,6 +285,22 @@ app.get('/admin/brand/services/:id', isAdmin, async (req, res) => {
     }
 });
 
+
+app.get('/api/admin/popups', isAdmin, async (req, res) => {
+    const data = await Popup.find().sort({ created_at: -1 });
+    res.json({ status: true, data });
+});
+
+app.post('/api/admin/popups', isAdmin, async (req, res) => {
+    const newPopup = new Popup(req.body);
+    await newPopup.save();
+    res.json({ status: true });
+});
+
+app.delete('/api/admin/popups/:id', isAdmin, async (req, res) => {
+    await Popup.findByIdAndDelete(req.params.id);
+    res.json({ status: true });
+});
 
 
 // ─── Route: Validasi ID Game (Proxy) ──────────────────────────────
