@@ -338,7 +338,7 @@ app.post("/api/admin/profile-atla", isAdmin, async (req, res) => {
         const response = await axios.post(
             "https://atlantich2h.com/get_profile",
             qs.stringify({ api_key: API_KEY }), // 
-            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            { headers: requestHeaders }
         );
 
         const extData = response.data;
