@@ -1,4 +1,4 @@
-require('dotenv').config() /;
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -497,7 +497,7 @@ app.get('/api/admin/vouchers', async (req, res) => {
     res.json({ status: true, data });
 });
 
-app.post('/api/admin/vouchers', async (req, res) => {
+app.post('/api/admin/vouchers', isAdmin, async (req, res) => {
     try {
         const v = new Voucher(req.body);
         await v.save();
