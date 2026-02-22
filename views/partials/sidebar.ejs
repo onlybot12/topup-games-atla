@@ -9,11 +9,13 @@
     </div>
     
     <nav class="flex-1 p-4 space-y-1.5 no-scrollbar overflow-y-auto">
-        <p class="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Produk & Brand</p>
+        <p class="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Utama</p>
 
-        <a href="/admin/dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'dashboard' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+        <a href="/admin/dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all no-underline <%= currentPage === 'dashboard' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
            <i class="fas fa-th-large"></i> <span>Dashboard</span>
-       </a>
+        </a>
+
+        <p class="px-4 py-2 mt-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Produk & Brand</p>
 
         <a href="/admin/brand" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'brand' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
             <i class="fas fa-tags text-sm"></i> <span>Kelola Brand</span>
@@ -28,6 +30,11 @@
         <a href="/admin/banner" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'banner' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
             <i class="fas fa-images text-sm"></i> <span>Kelola Banner</span>
         </a>
+
+        <!-- MENU BARU: KELOLA POPUP -->
+        <a href="/admin/popup" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'popup' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
+            <i class="fas fa-window-restore text-sm"></i> <span>Kelola Popup</span>
+        </a>
         
         <a href="/admin/flash-sale" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'flashsale' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
             <i class="fas fa-bolt text-sm"></i> <span>Flash Sale</span>
@@ -40,7 +47,7 @@
         <p class="px-4 py-2 mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistem</p>
         
         <a href="/admin/pengaturan" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'pengaturan' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
-            <i class="fas fa-cog text-sm"></i> <span>Pengaturan QRIS</span>
+            <i class="fas fa-cog text-sm"></i> <span>Pengaturan</span>
         </a>
         
         <div class="my-4 border-t border-slate-800"></div>
