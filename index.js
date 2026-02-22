@@ -258,7 +258,7 @@ app.post('/admin/login', async (req, res) => {
 
 
 // Halaman Checklist Layanan untuk Brand
-app.get('/admin/brand/services/:id', async (req, res) => {
+app.get('/admin/brand/services/:id', isAdmin, async (req, res) => {
     try {
         const brandData = await Brand.findById(req.params.id);
         if (!brandData) return res.status(404).send("Brand tidak ditemukan");
@@ -310,7 +310,7 @@ app.get('/api/admin/brands', async (req, res) => {
     res.json({ status: true, data: brands });
 });
 
-app.post('/api/admin/brands', async (req, res) => {
+app.post('/api/admin/brands', isAdmin, async (req, res) => {
     try {
         const count = await Brand.countDocuments();
         const newBrand = new Brand({ ...req.body, index: count });
@@ -319,7 +319,7 @@ app.post('/api/admin/brands', async (req, res) => {
     } catch (e) { res.status(400).json({ status: false, message: "Gagal: Slug duplikat" }); }
 });
 
-app.put('/api/admin/brands/reorder', async (req, res) => {
+app.put('/api/admin/brands/reorder', isAdmin, async (req, res) => {
     try {
         const { order } = req.body; 
         const ops = order.map((id, idx) => ({
@@ -330,12 +330,12 @@ app.put('/api/admin/brands/reorder', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-app.put('/api/admin/brands/popular/:id', async (req, res) => {
+app.put('/api/admin/brands/popular/:id', isAdmin, async (req, res) => {
     await Brand.findByIdAndUpdate(req.params.id, { is_popular: req.body.is_popular });
     res.json({ status: true });
 });
 
-app.delete('/api/admin/brands/:id', async (req, res) => {
+app.delete('/api/admin/brands/:id', isAdmin, async (req, res) => {
     await Brand.findByIdAndDelete(req.params.id);
     res.json({ status: true });
 });
@@ -356,7 +356,7 @@ app.put('/api/admin/brands/:id', async (req, res) => {
 });
 // --------------------------------------
 
-app.put('/api/admin/brands/:id/services', async (req, res) => {
+app.put('/api/admin/brands/:id/services', isAdmin, async (req, res) => {
     try {
         await Brand.findByIdAndUpdate(req.params.id, { services: req.body.services });
         res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
@@ -366,34 +366,34 @@ app.put('/api/admin/brands/:id/services', async (req, res) => {
 // ==========================
 // API: BANNER & FLASH SALE
 // ==========================
-app.get('/api/admin/banners', async (req, res) => {
+app.get('/api/admin/banners', isAdmin, async (req, res) => {
     const data = await Banner.find().sort({ created_at: -1 });
     res.json({ status: true, data });
 });
 
-app.post('/api/admin/banners', async (req, res) => {
+app.post('/api/admin/banners', isAdmin, async (req, res) => {
     const newB = new Banner(req.body);
     await newB.save();
     res.json({ status: true });
 });
 
-app.delete('/api/admin/banners/:id', async (req, res) => {
+app.delete('/api/admin/banners/:id', isAdmin, async (req, res) => {
     await Banner.findByIdAndDelete(req.params.id);
     res.json({ status: true });
 });
 
-app.get('/api/admin/flash-sales', async (req, res) => {
+app.get('/api/admin/flash-sales', isAdmin, async (req, res) => {
     const data = await FlashSale.find().sort({ end_date: 1 });
     res.json({ status: true, data });
 });
 
-app.post('/api/admin/flash-sales', async (req, res) => {
+app.post('/api/admin/flash-sales', isAdmin, async (req, res) => {
     const newFS = new FlashSale(req.body);
     await newFS.save();
     res.json({ status: true });
 });
 
-app.delete('/api/admin/flash-sales/:id', async (req, res) => {
+app.delete('/api/admin/flash-sales/:id', isAdmin, async (req, res) => {
     await FlashSale.findByIdAndDelete(req.params.id);
     res.json({ status: true });
 });
@@ -409,7 +409,7 @@ app.get('/api/admin/config', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-app.put('/api/admin/config', async (req, res) => {
+app.put('/api/admin/config', isAdmin, async (req, res) => {
     try {
         await Config.findOneAndUpdate({ key: 'qris_settings' }, req.body, { upsert: true });
         res.json({ status: true });
@@ -419,7 +419,7 @@ app.put('/api/admin/config', async (req, res) => {
 // ==========================
 // API: LAYANAN (SYNC & DATATABLES)
 // ==========================
-app.post('/api/admin/sync-services', async (req, res) => {
+app.post('/api/admin/sync-services', isAdmin, async (req, res) => {
     const { profit } = req.body;
     const profitPercent = parseFloat(profit) || 0;
     try {
@@ -469,7 +469,7 @@ app.get('/api/admin/services', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-app.put('/api/admin/services/:id', async (req, res) => {
+app.put('/api/admin/services/:id', isAdmin, async (req, res) => {
     try {
         const { price_sell, is_active } = req.body;
         await Service.findByIdAndUpdate(req.params.id, { price_sell, is_active });
@@ -477,7 +477,7 @@ app.put('/api/admin/services/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false }); }
 });
 
-app.delete('/api/admin/delete-services', async (req, res) => {
+app.delete('/api/admin/delete-services', isAdmin, async (req, res) => {
     try {
         await Service.deleteMany({});
         res.json({ status: true });
@@ -505,7 +505,7 @@ app.post('/api/admin/vouchers', isAdmin, async (req, res) => {
     } catch (e) { res.status(400).json({ status: false, message: "Kode Duplikat" }); }
 });
 
-app.delete('/api/admin/vouchers/:id', async (req, res) => {
+app.delete('/api/admin/vouchers/:id', isAdmin, async (req, res) => {
     await Voucher.findByIdAndDelete(req.params.id);
     res.json({ status: true });
 });
