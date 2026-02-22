@@ -199,6 +199,7 @@ app.get('/admin/popup', isAdmin, (req, res) => res.render('admin/popup-manage', 
 app.get('/admin/brand', isAdmin, (req, res) => res.render('admin/brand-manage', { currentPage: 'brand' }));
 app.get('/admin/banner', isAdmin, (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
 app.get('/admin/flash-sale', isAdmin, (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
+app.get('/admin/vendor', isAdmin, (req, res) => res.render('admin/vendor', { currentPage: 'vendor' }));
 app.get('/admin/dashboard', isAdmin, async (req, res) => {
     try {
         const now = new Date();
@@ -327,6 +328,38 @@ app.get('/api/validasi/:code', async (req, res) => {
         }
     } catch (e) {
         res.status(500).json({ success: false, message: 'Gagal validasi: ' + e.message });
+    }
+});
+
+
+// --- API: AMBIL PROFIL ATLANTIC VENDOR ---
+app.post("/api/admin/profile-atla", isAdmin, async (req, res) => {
+    try {
+        const response = await axios.post(
+            "https://atlantich2h.com/get_profile",
+            qs.stringify({ api_key: API_KEY }), // 
+            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        );
+
+        const extData = response.data;
+
+        if (extData.status === "true" || extData.status === true) {
+            return res.json({
+                success: true,
+                profile: {
+                    nama: extData.data.name,
+                    user: extData.data.username,
+                    email: extData.data.email,
+                    hp: extData.data.phone,
+                    saldo: parseFloat(extData.data.balance),
+                    status: extData.data.status,
+                },
+            });
+        } else {
+            res.json({ success: false, message: extData.message || "Gagal mengambil data" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Koneksi API Gagal" });
     }
 });
 
