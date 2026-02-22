@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title><%= config.shop_name %> - <%= config.meta_description %></title>
     <%- include('../partials/user/heads') %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -24,7 +23,7 @@
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* --- CARD UTAMA --- */
+        /* --- CARD UTAMA (3 KOLOM HP) --- */
         .brand-card-main { 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
             background: #1e293b;
@@ -40,7 +39,7 @@
             border-radius: 16px;
         }
 
-        /* --- POPULAR SECTION (Style Foto) --- */
+        /* --- POPULAR SECTION (Ikon Kiri, Teks Kanan) --- */
         .popular-container {
             background-color: #1e293b; 
             border-radius: 24px;
@@ -85,11 +84,11 @@
         .category-tabs::-webkit-scrollbar { display: none; }
         footer a { text-decoration: none !important; }
 
-        /* --- POPUP MODAL SLIDER STYLE --- */
-        #popupModal { transition: opacity 0.3s ease; }
-        .popup-content { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .swiper-pagination-popup { position: relative !important; bottom: 0 !important; margin-bottom: 10px; }
+        /* --- POPUP MODAL STYLE --- */
+        #popupModal { transition: opacity 0.4s ease; opacity: 0; pointer-events: none; }
+        #popupModal.show { opacity: 1; pointer-events: auto; display: flex !important; }
+        .popup-content { transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        #popupModal.show .popup-content { transform: scale(1); }
     </style>
 </head>
 <body>
@@ -129,7 +128,7 @@
         </div>
         <% } %>
 
-        <!-- 2. FLASH SALE -->
+        <!-- 2. FLASH SALE (Slider Geser) -->
         <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
         <section class="mb-10 reveal">
             <div class="flex items-center justify-between mb-4 px-1">
@@ -144,6 +143,7 @@
                     <% flashSales.forEach(f => { %>
                     <div class="swiper-slide">
                         <div class="glass p-4 rounded-[24px] flex items-center gap-4 border border-blue-500/20 active:scale-95 transition-all">
+                            <!-- FIXED: Menggunakan f.image_url sesuai objek flash sale -->
                             <img src="<%= f.image_url || '/api/placeholder/100/100' %>" class="w-16 h-16 rounded-xl object-cover shadow-lg">
                             <div class="flex-1 overflow-hidden">
                                 <h4 class="font-bold text-sm text-slate-100 truncate uppercase leading-tight"><%= f.item_name %></h4>
@@ -158,7 +158,7 @@
         </section>
         <% } %>
 
-        <!-- 3. POPULER SEKARANG -->
+        <!-- 3. POPULER SEKARANG (Layout Ikon Kiri) -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
         <section class="popular-container mb-10 shadow-lg reveal">
@@ -187,7 +187,7 @@
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
                 <button onclick="filterCat('All')" class="cat-btn px-6 py-2.5 rounded-full bg-blue-600 text-white text-[11px] font-black uppercase shadow-lg shadow-blue-500/20">Semua</button>
                 <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
-                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-5 py-2.5 rounded-full bg-slate-800 text-slate-400 text-[11px] font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
+                <button onclick="filterCat('<%= cat %>')" class="cat-btn px-6 py-2.5 rounded-full bg-slate-800 text-slate-400 text-[11px] font-black uppercase hover:bg-slate-700 transition-all"><%= cat %></button>
                 <% }) %>
             </div>
 
@@ -205,86 +205,16 @@
 
     </main>
 
-    <!-- FOOTER (Style Foto) -->
-    <footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                
-                <!-- Brand & Trade Info -->
-                <div class="lg:col-span-2">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <i class="fas fa-gem text-xl"></i>
-                        </div>
-                        <span class="text-2xl font-black text-white tracking-tighter uppercase"><%= config.shop_name %></span>
-                    </div>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">
-                        <%= config.footer_description || 'No #1 supplier top up game & voucher terlaris, murah, aman legal 100% buka 24 Jam dengan payment terlengkap Indonesia' %>
-                    </p>
-                    <div class="space-y-1">
-                        <p class="text-white font-bold text-sm leading-tight max-w-sm">
-                            <%= config.footer_trade_info || 'Direktorat Jenderal Perlindungan Konsumen dan Tertib Niaga Kementerian Perdagangan RI 0853-1111-1010' %>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Links Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2">
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Peta Situs</h4>
-                        <ul class="space-y-4 text-sm text-gray-300">
-                            <li><a href="/" class="hover:text-white">Beranda</a></li>
-                            <li><a href="/search" class="hover:text-white">Masuk</a></li>
-                            <li><a href="/faq" class="hover:text-white">Ulasan</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Dukungan</h4>
-                        <ul class="space-y-4 text-sm text-gray-300">
-                            <li><a href="<%= config.wa_link %>" class="hover:text-white">Whatsapp</a></li>
-                            <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white">Whatsapp CS</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Legalitas</h4>
-                        <ul class="space-y-4 text-sm text-gray-300">
-                            <li><a href="/faq" class="hover:text-white">Kebijakan Privasi</a></li>
-                            <li><a href="/faq" class="hover:text-white">Syarat & Ketentuan</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Partnership</h4>
-                        <ul class="space-y-4 text-sm text-gray-300">
-                            <li><a href="#" class="hover:text-white">Reseller</a></li>
-                            <li><a href="#" class="hover:text-white">Jasa Web Topup</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Copyright Line -->
-            <div class="pt-8 border-t border-slate-800 text-center md:text-left">
-                <p class="text-xs text-gray-500 font-medium">
-                    © 2026 <%= config.shop_name %> - Top up Game dan Beli Voucher Game termurah dan terpercaya di Indonesia. . All rights reserved.
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Floating Support -->
-    <a href="https://wa.me/<%= config.wa_cs %>" class="fixed bottom-6 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl z-[100] active:scale-75 transition-all">
-        <i class="fas fa-headset text-xl"></i>
-    </a>
+    <!-- FOOTER (Partial) -->
+    <%- include('../partials/user/footer') %>
 
     <!-- ==========================
-         POPUP NOTIFIKASI MODAL 
+         POPUP MODAL SLIDER 
          ========================== -->
     <% if (typeof popups !== 'undefined' && popups.length > 0) { %>
     <div id="popupModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
-        <!-- Overlay Blur -->
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePopup()"></div>
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closePopup()"></div>
         
-        <!-- Modal Container -->
         <div class="popup-content relative bg-dark-800 border border-dark-700 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl">
             <!-- Close Button -->
             <button onclick="closePopup()" class="absolute top-4 right-4 z-[160] w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center active:scale-75 transition-all">
@@ -300,25 +230,18 @@
                             <img src="<%= p.image_url %>" class="w-full aspect-square object-cover" alt="Promo">
                         </a>
                         <div class="p-6 text-center">
-                            <p class="text-xs text-slate-300 font-semibold leading-relaxed mb-4">
+                            <p class="text-xs text-slate-300 font-semibold leading-relaxed mb-4 uppercase tracking-tighter">
                                 <%= p.description %>
                             </p>
-                            <% if(p.target_link) { %>
-                            <a href="<%= p.target_link %>" class="text-blue-400 text-[11px] font-black underline break-all uppercase tracking-tighter">
-                                Klik Disini
-                            </a>
-                            <% } %>
                         </div>
                     </div>
                     <% }) %>
                 </div>
                 <!-- Pagination Fraction (1/2, 2/2) -->
-                <% if (popups.length > 1) { %>
-                <div class="swiper-pagination-popup text-[10px] font-black text-slate-500 text-center"></div>
-                <% } %>
+                <div class="swiper-pagination-popup text-[10px] font-black text-slate-500 text-center mb-2"></div>
             </div>
 
-            <!-- Modal Footer -->
+            <!-- Modal Footer (Per-Device Lock) -->
             <div class="p-4 bg-dark-900/50 border-t border-dark-700 flex items-center justify-center gap-3">
                 <input type="checkbox" id="dontShowAgain" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-0">
                 <label for="dontShowAgain" class="text-[10px] text-slate-400 font-black uppercase tracking-widest cursor-pointer">Jangan tampilkan lagi</label>
@@ -331,9 +254,13 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
     <script>
+        // Init Slider Utama
         new Swiper(".mainSwiper", { loop: true, autoplay: { delay: 4000 }, pagination: { el: ".swiper-pagination", clickable: true } });
+        
+        // Init Flash Sale Slider
         new Swiper(".flashSwiper", { loop: true, autoplay: { delay: 3000 }, slidesPerView: 1.2, spaceBetween: 12, breakpoints: { 640: { slidesPerView: 2.5 } } });
 
+        // Animasi Scroll Reveal
         function reveal() {
             var reveals = document.querySelectorAll(".reveal");
             for (var i = 0; i < reveals.length; i++) {
@@ -344,6 +271,7 @@
         }
         window.addEventListener("scroll", reveal);
 
+        // Filter Kategori
         function filterCat(cat) {
             $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
             $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
@@ -353,6 +281,7 @@
             });
         }
 
+        // Search Game
         function searchGame() {
             let val = $('#searchInput').val().toLowerCase();
             $('.brand-item').each(function() {
@@ -361,6 +290,7 @@
             });
         }
 
+        // Countdown Timer
         function startCountdown() {
             const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
             if(!endDateStr) return;
@@ -383,36 +313,35 @@
         }
         <% if (flashSales && flashSales.length > 0) { %> startCountdown(); <% } %>
 
-        /* --- SCRIPT POPUP MODAL --- */
+        // Popup Modal Logic (Device Locked)
         function initPopup() {
-            const isDismissed = localStorage.getItem('lana_popup_dismissed');
+            const isDismissed = localStorage.getItem('lana_dismiss');
             const modal = document.getElementById('popupModal');
-            
             if (!isDismissed && modal) {
-                modal.classList.remove('hidden');
-                new Swiper(".popupSwiper", {
-                    loop: true,
-                    pagination: {
-                        el: ".swiper-pagination-popup",
-                        type: "fraction",
-                    },
-                });
+                setTimeout(() => {
+                    modal.classList.add('show');
+                    new Swiper(".popupSwiper", {
+                        loop: true,
+                        autoplay: { delay: <%= config.popup_delay || 5000 %>, disableOnInteraction: false },
+                        pagination: { el: ".swiper-pagination-popup", type: "fraction" },
+                    });
+                }, 1000);
             }
         }
 
         function closePopup() {
             const checkbox = document.getElementById('dontShowAgain');
             if (checkbox && checkbox.checked) {
-                // Simpan status agar tidak muncul lagi (misal selama 24 jam atau selamanya)
-                localStorage.setItem('lana_popup_dismissed', 'true');
+                localStorage.setItem('lana_dismiss', 'true');
             }
-            document.getElementById('popupModal').style.opacity = '0';
+            const modal = document.getElementById('popupModal');
+            modal.style.opacity = '0';
             setTimeout(() => {
-                document.getElementById('popupModal').classList.add('hidden');
-            }, 300);
+                modal.classList.remove('show');
+                modal.classList.add('hidden');
+            }, 400);
         }
 
-        // Jalankan pengecekan popup saat window load
         window.addEventListener('load', initPopup);
     </script>
 </body>
