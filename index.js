@@ -42,6 +42,16 @@ app.set('views', path.join(__dirname, 'views'));
 connectDB();
 
 // --- MIDDLEWARE PENJAGA PINTU ---
+
+const isAdminn = (req, res, next) => {
+    if (req.session.adminId) {
+        next();
+    } else {
+        res.redirect('/admin/login');
+    }
+};
+
+
 const isAdmin = (req, res, next) => {
     if (req.session.adminId) {
         next();
