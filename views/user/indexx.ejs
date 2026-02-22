@@ -23,7 +23,7 @@
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* --- CARD UTAMA (3 KOLOM HP) --- */
+        /* --- CARD GAME UTAMA --- */
         .brand-card-main { 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
             background: #1e293b;
@@ -39,7 +39,7 @@
             border-radius: 16px;
         }
 
-        /* --- POPULAR SECTION (Ikon Kiri, Teks Kanan) --- */
+        /* --- POPULAR SECTION --- */
         .popular-container {
             background-color: #1e293b; 
             border-radius: 24px;
@@ -61,7 +61,7 @@
         .popular-card img {
             width: 52px;
             height: 52px;
-            border-radius: 12px;
+            border-radius: 10px;
             object-fit: cover;
         }
 
@@ -143,7 +143,6 @@
                     <% flashSales.forEach(f => { %>
                     <div class="swiper-slide">
                         <div class="glass p-4 rounded-[24px] flex items-center gap-4 border border-blue-500/20 active:scale-95 transition-all">
-                            <!-- FIXED: Menggunakan f.image_url sesuai objek flash sale -->
                             <img src="<%= f.image_url || '/api/placeholder/100/100' %>" class="w-16 h-16 rounded-xl object-cover shadow-lg">
                             <div class="flex-1 overflow-hidden">
                                 <h4 class="font-bold text-sm text-slate-100 truncate uppercase leading-tight"><%= f.item_name %></h4>
@@ -158,7 +157,7 @@
         </section>
         <% } %>
 
-        <!-- 3. POPULER SEKARANG (Layout Ikon Kiri) -->
+        <!-- 3. POPULER SEKARANG -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
         <section class="popular-container mb-10 shadow-lg reveal">
@@ -166,7 +165,7 @@
                 <span class="text-2xl animate-bounce">⚠️</span>
                 <h3 class="font-black text-white uppercase text-xl tracking-tight"><%= config.title_popular %></h3>
             </div>
-            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium tracking-wide opacity-80">Beberapa produk yang paling populer saat ini.</p>
+            <p class="text-slate-400 text-xs mb-6 ml-1 font-medium tracking-wide opacity-80 uppercase tracking-widest text-[10px]">Beberapa produk paling populer saat ini.</p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <% popularBrands.forEach(brand => { %>
@@ -174,7 +173,7 @@
                     <img src="<%= brand.icon_url %>" alt="<%= brand.name %>">
                     <div class="overflow-hidden">
                         <p class="font-bold text-white text-sm uppercase truncate tracking-wide"><%= brand.name %></p>
-                        <p class="text-slate-500 text-[10px] font-black uppercase"><%= brand.category %></p>
+                        <p class="text-slate-500 text-[9px] font-black uppercase"><%= brand.category %></p>
                     </div>
                 </a>
                 <% }) %>
@@ -205,8 +204,75 @@
 
     </main>
 
-    <!-- FOOTER (Partial) -->
-    <%- include('../partials/user/footer') %>
+    <!-- FOOTER (Style Profesional Sesuai Foto) -->
+    <footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800 mt-auto">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
+                
+                <!-- Branding & Info Instansi -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-2xl font-black text-blue-500 tracking-tighter uppercase italic"><%= config.shop_name.split(' ')[0] %></span>
+                        <span class="text-2xl font-black text-white tracking-tighter uppercase"><%= config.shop_name.split(' ').slice(1).join(' ') %></span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">
+                        <%= config.footer_description %>
+                    </p>
+                    <div class="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl inline-block">
+                        <p class="text-white font-bold text-xs leading-tight">
+                            <%= config.footer_trade_info %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigasi Links -->
+                <div class="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2">
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Peta Situs</h4>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="/" class="hover:text-white transition-all">Beranda</a></li>
+                            <li><a href="/search" class="hover:text-white transition-all">Masuk</a></li>
+                            <li><a href="/faq" class="hover:text-white transition-all">Ulasan</a></li>
+                            <li><a href="#" class="hover:text-white opacity-50">API Docs</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Dukungan</h4>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="<%= config.wa_link %>" class="hover:text-white">Whatsapp</a></li>
+                            <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white">Whatsapp CS</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Legalitas</h4>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="/faq" class="hover:text-white">Kebijakan Privasi</a></li>
+                            <li><a href="/faq" class="hover:text-white">Syarat & Ketentuan</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Partnership</h4>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="#" class="hover:text-white">Reseller</a></li>
+                            <li><a href="#" class="hover:text-white">Jasa Web Topup</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copyright Line (Teks Biasa) -->
+            <div class="pt-8 border-t border-slate-800 text-center md:text-left">
+                <p class="text-xs text-gray-500 font-medium m-0 tracking-wide">
+                    © 2026 <%= config.shop_name %> - Top up Game dan Beli Voucher Game termurah dan terpercaya di Indonesia. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating CS Button -->
+    <a href="https://wa.me/<%= config.wa_cs %>" class="fixed bottom-6 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl z-[100] active:scale-75 transition-all">
+        <i class="fas fa-headset text-xl"></i>
+    </a>
 
     <!-- ==========================
          POPUP MODAL SLIDER 
@@ -215,9 +281,9 @@
     <div id="popupModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closePopup()"></div>
         
-        <div class="popup-content relative bg-dark-800 border border-dark-700 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl">
+        <div class="popup-content relative bg-slate-900 border border-slate-800 rounded-[40px] w-full max-w-sm overflow-hidden shadow-2xl shadow-blue-500/10">
             <!-- Close Button -->
-            <button onclick="closePopup()" class="absolute top-4 right-4 z-[160] w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center active:scale-75 transition-all">
+            <button onclick="closePopup()" class="absolute top-5 right-5 z-[160] w-9 h-9 bg-black/40 text-white rounded-full flex items-center justify-center active:scale-75 transition-all">
                 <i class="fas fa-times text-xs"></i>
             </button>
 
@@ -225,26 +291,30 @@
             <div class="swiper popupSwiper">
                 <div class="swiper-wrapper">
                     <% popups.forEach(p => { %>
-                    <div class="swiper-slide">
+                    <div class="swiper-slide flex flex-col">
                         <a href="<%= p.target_link || '#' %>">
                             <img src="<%= p.image_url %>" class="w-full aspect-square object-cover" alt="Promo">
                         </a>
-                        <div class="p-6 text-center">
-                            <p class="text-xs text-slate-300 font-semibold leading-relaxed mb-4 uppercase tracking-tighter">
+                        <div class="p-8 text-center">
+                            <p class="text-[13px] text-slate-300 font-bold leading-relaxed mb-4 uppercase tracking-tighter">
                                 <%= p.description %>
                             </p>
+                            <% if(p.target_link) { %>
+                            <a href="<%= p.target_link %>" class="inline-block bg-blue-600/10 text-blue-400 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+                                Info Selengkapnya
+                            </a>
+                            <% } %>
                         </div>
                     </div>
                     <% }) %>
                 </div>
-                <!-- Pagination Fraction (1/2, 2/2) -->
                 <div class="swiper-pagination-popup text-[10px] font-black text-slate-500 text-center mb-2"></div>
             </div>
 
             <!-- Modal Footer (Per-Device Lock) -->
-            <div class="p-4 bg-dark-900/50 border-t border-dark-700 flex items-center justify-center gap-3">
-                <input type="checkbox" id="dontShowAgain" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-0">
-                <label for="dontShowAgain" class="text-[10px] text-slate-400 font-black uppercase tracking-widest cursor-pointer">Jangan tampilkan lagi</label>
+            <div class="p-5 bg-slate-950/50 border-t border-slate-800/50 flex items-center justify-center gap-3">
+                <input type="checkbox" id="dontShowAgain" class="w-5 h-5 rounded-lg border-slate-700 bg-slate-800 text-blue-600 focus:ring-0 cursor-pointer">
+                <label for="dontShowAgain" class="text-[11px] text-slate-500 font-black uppercase tracking-widest cursor-pointer">Jangan tampilkan lagi</label>
             </div>
         </div>
     </div>
@@ -254,13 +324,11 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
     <script>
-        // Init Slider Utama
+        // INIT SWIPERS
         new Swiper(".mainSwiper", { loop: true, autoplay: { delay: 4000 }, pagination: { el: ".swiper-pagination", clickable: true } });
-        
-        // Init Flash Sale Slider
         new Swiper(".flashSwiper", { loop: true, autoplay: { delay: 3000 }, slidesPerView: 1.2, spaceBetween: 12, breakpoints: { 640: { slidesPerView: 2.5 } } });
 
-        // Animasi Scroll Reveal
+        // REVEAL ANIMATION
         function reveal() {
             var reveals = document.querySelectorAll(".reveal");
             for (var i = 0; i < reveals.length; i++) {
@@ -271,7 +339,7 @@
         }
         window.addEventListener("scroll", reveal);
 
-        // Filter Kategori
+        // FILTER CATEGORY
         function filterCat(cat) {
             $('.cat-btn').removeClass('bg-blue-600 text-white shadow-lg').addClass('bg-slate-800 text-slate-400');
             $(event.target).addClass('bg-blue-600 text-white shadow-lg').removeClass('bg-slate-800 text-slate-400');
@@ -281,7 +349,7 @@
             });
         }
 
-        // Search Game
+        // SEARCH GAME
         function searchGame() {
             let val = $('#searchInput').val().toLowerCase();
             $('.brand-item').each(function() {
@@ -290,7 +358,7 @@
             });
         }
 
-        // Countdown Timer
+        // COUNTDOWN FLASH SALE
         function startCountdown() {
             const endDateStr = "<%= (flashSales && flashSales.length > 0) ? flashSales[0].end_date : '' %>";
             if(!endDateStr) return;
@@ -313,7 +381,7 @@
         }
         <% if (flashSales && flashSales.length > 0) { %> startCountdown(); <% } %>
 
-        // Popup Modal Logic (Device Locked)
+        // POPUP LOGIC
         function initPopup() {
             const isDismissed = localStorage.getItem('lana_dismiss');
             const modal = document.getElementById('popupModal');
@@ -330,16 +398,10 @@
         }
 
         function closePopup() {
-            const checkbox = document.getElementById('dontShowAgain');
-            if (checkbox && checkbox.checked) {
-                localStorage.setItem('lana_dismiss', 'true');
-            }
+            if (document.getElementById('dontShowAgain').checked) localStorage.setItem('lana_dismiss', 'true');
             const modal = document.getElementById('popupModal');
             modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.classList.remove('show');
-                modal.classList.add('hidden');
-            }, 400);
+            setTimeout(() => { modal.classList.remove('show'); modal.classList.add('hidden'); }, 400);
         }
 
         window.addEventListener('load', initPopup);
