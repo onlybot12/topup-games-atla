@@ -45,7 +45,11 @@
         </a>
 
         <p class="px-4 py-2 mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistem</p>
-        
+
+       <a href="/admin/vendor" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all <%= currentPage === 'vendor' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800' %>">
+            <i class="fas fa-store"></i> <span>Vendor Info</span>
+        </a>
+
         <a href="/admin/pengaturan" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all no-underline <%= currentPage === 'pengaturan' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-400' %>">
             <i class="fas fa-cog text-sm"></i> <span>Pengaturan</span>
         </a>
