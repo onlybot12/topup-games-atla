@@ -1,31 +1,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<!-- SEO DYNAMICS -->
-<% if (typeof config !== 'undefined') { %>
-    <title><%= config.shop_name %> - <%= config.meta_description %></title>
-    <meta name="description" content="<%= config.meta_description %>">
-    <meta name="keywords" content="<%= config.meta_keywords %>">
-    
-    <!-- Open Graph (Agar saat share link di WA/FB muncul gambar & judul rapi) -->
-    <meta property="og:title" content="<%= config.shop_name %>">
-    <meta property="og:description" content="<%= config.meta_description %>">
-    <meta property="og:image" content="<%= config.logo_url %>">
-    <meta property="og:type" content="website">
-<% } else { %>
-    <title>Lana Store - Topup Game Murah</title>
-<% } %>
-
+<!-- Library CSS & JS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-    #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    @media (max-width: 1023px) {
-        #sidebar { transform: translateX(-100%); width: 280px; position: fixed; height: 100%; z-index: 1000; }
-        #sidebar.active { transform: translateX(0); }
+    
+    body { 
+        font-family: 'Plus Jakarta Sans', sans-serif; 
+        background-color: #f8fafc; 
     }
+
+    /* Logic CSS Sidebar Android Style */
+    #sidebar { 
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+
+    @media (max-width: 1023px) {
+        #sidebar { 
+            transform: translateX(-100%); 
+            width: 280px; 
+            position: fixed; 
+            height: 100%; 
+            z-index: 1000; 
+        }
+        #sidebar.active { 
+            transform: translateX(0); 
+        }
+    }
+
+    /* Reset link standar bootstrap */
+    a { text-decoration: none !important; }
+    
+    /* Custom Scrollbar untuk Sidebar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
