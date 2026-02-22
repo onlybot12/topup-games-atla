@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Admin - Vendor Info</title>
+    <%- include('../partials/head') %>
+    <style>
+        .vendor-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .vendor-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        .btn-info-vendor {
+            background-color: #f59e0b; /* Warna Orange sesuai foto */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border: none;
+            transition: 0.3s;
+        }
+        .btn-info-vendor:hover {
+            background-color: #d97706;
+        }
+        .saldo-box {
+            background-color: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-x-hidden">
+
+    <%- include('../partials/sidebar') %>
+
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Vendor & Koneksi</h1>
+            </div>
+        </header>
+
+        <main class="p-4 md:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- BOX VENDOR ATLANTIC -->
+                <div class="vendor-card shadow-sm">
+                    <div class="flex justify-between items-start mb-6">
+                        <!-- Logo Vendor -->
+                        <img src="https://c.termai.cc/i118/F7Bx.png" alt="Atlantic Logo" class="h-12 object-contain">
+                        
+                        <!-- Button Informasi -->
+                        <button onclick="fetchVendorInfo()" class="btn-info-vendor uppercase tracking-tighter">
+                            <i class="fas fa-info-circle mr-1"></i> Informasi
+                        </button>
+                    </div>
+
+                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Atlantic Pedia</h3>
+                    <div class="w-full h-px bg-slate-100 my-4"></div>
+                    
+                    <!-- Info Saldo -->
+                    <div class="saldo-box">
+                        <i class="fas fa-wallet text-blue-500"></i>
+                        <span id="display-saldo">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Anda bisa menambah box vendor lain disini -->
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Fungsi untuk mengambil info saldo saat halaman dibuka
+        async function getInitialBalance() {
+            try {
+                const res = await fetch('/api/admin/profile-atla', { method: 'POST' });
+                const json = await res.json();
+                if(json.success) {
+                    $('#display-saldo').text('Rp ' + json.profile.saldo.toLocaleString('id-ID'));
+                }
+            } catch (e) {}
+        }
+
+        // Fungsi saat tombol Informasi diklik (Munculkan Detail JSON)
+        async function fetchVendorInfo() {
+            Swal.fire({
+                title: 'Loading...',
+                text: 'Sedang mengambil data dari Atlantic H2H',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const res = await fetch('/api/admin/profile-atla', { method: 'POST' });
+                const json = await res.json();
+
+                if(json.success) {
+                    const p = json.profile;
+                    Swal.fire({
+                        title: '<span class="text-sm font-black uppercase">Detail Akun Vendor</span>',
+                        background: '#fff',
+                        confirmButtonColor: '#2563eb',
+                        html: `
+                            <div class="text-left space-y-3 p-2">
+                                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Akun</p>
+                                    <p class="text-sm font-bold text-slate-800">${p.nama}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</p>
+                                        <p class="text-sm font-bold text-slate-800">${p.user}</p>
+                                    </div>
+                                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+                                        <p class="text-sm font-bold text-green-600 uppercase">${p.status}</p>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Terdaftar</p>
+                                    <p class="text-sm font-bold text-slate-800">${p.email}</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nomor Telepon</p>
+                                    <p class="text-sm font-bold text-slate-800">${p.hp}</p>
+                                </div>
+                                <div class="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-200">
+                                    <p class="text-[10px] font-black text-blue-100 uppercase tracking-widest">Saldo Saat Ini</p>
+                                    <p class="text-xl font-black text-white">Rp ${p.saldo.toLocaleString('id-ID')}</p>
+                                </div>
+                            </div>
+                        `
+                    });
+                    // Update saldo di box utama juga
+                    $('#display-saldo').text('Rp ' + p.saldo.toLocaleString('id-ID'));
+                } else {
+                    Swal.fire('Gagal', json.message, 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Terjadi kesalahan koneksi ke server', 'error');
+            }
+        }
+
+        $(document).ready(function() {
+            getInitialBalance();
+        });
+    </script>
+</body>
+</html>
