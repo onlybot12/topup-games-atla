@@ -258,7 +258,7 @@ app.post('/admin/login', async (req, res) => {
 
 
 // Halaman Checklist Layanan untuk Brand
-app.get('/admin/brand/services/:id', async (req, res) => {
+app.get('/admin/brand/services/:id', isAdmin, async (req, res) => {
     try {
         const brandData = await Brand.findById(req.params.id);
         if (!brandData) return res.status(404).send("Brand tidak ditemukan");
@@ -276,7 +276,7 @@ app.get('/admin/brand/services/:id', async (req, res) => {
 
 
 // ─── Route: Validasi ID Game (Proxy) ──────────────────────────────
-app.get('/api/validasi/:code', async (req, res) => {
+app.get('/api/validasi/:code', isAdmin, async (req, res) => {
     const { code } = req.params;
     const { id, server } = req.query;
 
