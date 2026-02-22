@@ -790,4 +790,55 @@ app.get('/api/transactions/recent', async (req, res) => {
     } catch (error) { res.status(500).json({ status: false }); }
 });
 
+
+// ==========================
+// DYNAMIC SITEMAP FOR SEO
+// ==========================
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        // Ambil data semua brand yang aktif dari database
+        const brands = await Brand.find({ status: 'active' });
+        
+        // Ganti URL ini dengan domain asli website Anda nanti
+        const baseUrl = 'https://maulanastore.my.id'; 
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+        // 1. Tambahkan Halaman Statis
+        const staticPages = [
+            { url: '/', priority: '1.0' },
+            { url: '/search', priority: '0.8' },
+            { url: '/faq', priority: '0.5' }
+        ];
+
+        staticPages.forEach(page => {
+            xml += `
+  <url>
+    <loc>${baseUrl}${page.url}</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>${page.priority}</priority>
+  </url>`;
+        });
+
+        // 2. Tambahkan Halaman Game/Brand secara Dinamis
+        brands.forEach(brand => {
+            xml += `
+  <url>
+    <loc>${baseUrl}/id/${brand.slug}</loc>
+    <lastmod>${brand.updated_at ? brand.updated_at.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.9</priority>
+  </url>`;
+        });
+
+        xml += `\n</urlset>`;
+
+        // Set header sebagai XML agar dibaca oleh Google sebagai sitemap
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (e) {
+        res.status(500).send("Error generating sitemap");
+    }
+});
+
 app.listen(PORT, () => console.log(`🚀 Lana Store Server Berjalan di Port ${PORT}`));
