@@ -39,6 +39,32 @@
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
         textarea.custom-input { min-height: 80px; resize: none; }
+
+        /* Style untuk Tab Button */
+        .tab-btn {
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .tab-btn.inactive {
+            color: #64748b;
+        }
+        .tab-btn.inactive:hover {
+            background-color: #f1f5f9;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-50 overflow-x-hidden">
@@ -46,7 +72,6 @@
     <%- include('../partials/sidebar') %>
 
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <!-- HEADER DENGAN HAMBURGER -->
         <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600 active:scale-95 transition-all">
@@ -60,111 +85,110 @@
         </header>
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
+
+            <!-- TAB NAVIGATION (SESUAI FOTO) -->
+            <div class="flex gap-2 mb-8 bg-white p-2 rounded-2xl border border-slate-200 w-fit">
+                <button onclick="switchTab('umum')" id="btn-tab-umum" class="tab-btn active">Umum</button>
+                <button onclick="switchTab('whatsapp')" id="btn-tab-whatsapp" class="tab-btn inactive">WhatsApp</button>
+            </div>
             
-            <!-- SECTION 1: SEO & BRANDING -->
-            <div class="config-card">
-                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <i class="fas fa-search"></i> SEO & Branding (Google Search)
-                </p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="input-label">Nama Toko (Judul Web)</label>
-                        <input type="text" id="shop_name" class="custom-input" placeholder="Contoh: Lana Store">
-                    </div>
-                    <div>
-                        <label class="input-label">Meta Deskripsi (Ringkasan di Google)</label>
-                        <textarea id="meta_description" class="custom-input" placeholder="Topup Game Tercepat & Termurah di Indonesia..."></textarea>
-                    </div>
-                    <div>
-                        <label class="input-label">Keywords (Pisahkan dengan koma)</label>
-                        <input type="text" id="meta_keywords" class="custom-input" placeholder="topup ml, ff murah, diamond ml">
-                    </div>
-                    <div>
-                        <label class="input-label">URL Logo Toko (Icon Share)</label>
-                        <input type="text" id="logo_url" class="custom-input" placeholder="https://link-gambar-logo.png">
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 2: BIAYA & PAJAK -->
-            <div class="config-card">
-                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <i class="fas fa-wallet"></i> Biaya Transaksi QRIS
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="input-label">Admin Fee (Tetap Rp)</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">Rp</span>
-                            <input type="number" id="admin_fee" class="custom-input !pl-12" placeholder="700">
+            <!-- SECTION UMUM -->
+            <div id="section-umum" class="animate-fade-in">
+                <!-- SECTION 1: SEO & BRANDING -->
+                <div class="config-card">
+                    <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                        <i class="fas fa-search"></i> SEO & Branding
+                    </p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="input-label">Nama Toko</label>
+                            <input type="text" id="shop_name" class="custom-input" placeholder="Lana Store">
                         </div>
-                    </div>
-                    <div>
-                        <label class="input-label">Pajak MDR Atlantic (%)</label>
-                        <div class="relative">
-                            <input type="number" id="tax_percent" step="0.1" class="custom-input !pr-10" placeholder="1.4">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">%</span>
+                        <div>
+                            <label class="input-label">Meta Deskripsi</label>
+                            <textarea id="meta_description" class="custom-input" placeholder="Topup Game Tercepat..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="input-label">Keywords</label>
+                                <input type="text" id="meta_keywords" class="custom-input" placeholder="topup ml, ff">
+                            </div>
+                            <div>
+                                <label class="input-label">URL Logo</label>
+                                <input type="text" id="logo_url" class="custom-input" placeholder="https://...">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- SECTION 3: FOOTER BRANDING (NEW) -->
-            <div class="config-card">
-                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <i class="fas fa-shoe-prints"></i> Footer Branding & Legalitas
-                </p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="input-label">Tagline Footer (Deskripsi singkat di bawah logo)</label>
-                        <textarea id="footer_description" class="custom-input" placeholder="No #1 supplier top up game & voucher terlaris..."></textarea>
-                    </div>
-                    <div>
-                        <label class="input-label">Info Kementerian (Perlindungan Konsumen)</label>
-                        <input type="text" id="footer_trade_info" class="custom-input" placeholder="Direktorat Jenderal Perlindungan Konsumen...">
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 4: TEKS HALAMAN DEPAN -->
-            <div class="config-card">
-                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <i class="fas fa-font"></i> Teks Halaman Utama
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="input-label">Judul Flash Sale</label>
-                        <input type="text" id="title_flash_sale" class="custom-input" placeholder="PASTI TERMURAH">
-                    </div>
-                    <div>
-                        <label class="input-label">Judul Brand Populer</label>
-                        <input type="text" id="title_popular" class="custom-input" placeholder="POPULER SEKARANG">
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 5: KONTAK & SOSIAL MEDIA -->
-            <div class="config-card">
-                <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <i class="fas fa-share-alt"></i> Kontak & Sosial Media
-                </p>
-                <div class="space-y-6">
-                    <div>
-                        <label class="input-label">WhatsApp Utama (Untuk Link di Footer)</label>
-                        <input type="text" id="wa_link" class="custom-input" placeholder="Gunakan format: https://wa.me/628123...">
-                    </div>
-                    <div>
-                        <label class="input-label">WhatsApp CS (Untuk Tombol Melayang / Floating)</label>
-                        <input type="text" id="wa_cs" class="custom-input" placeholder="Contoh: 62812345678">
-                    </div>
+                <!-- SECTION 2: BIAYA & PAJAK -->
+                <div class="config-card">
+                    <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                        <i class="fas fa-wallet"></i> Biaya Transaksi QRIS
+                    </p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="input-label">Instagram Username</label>
-                            <input type="text" id="ig_link" class="custom-input" placeholder="@lanastore">
+                            <label class="input-label">Admin Fee (Rp)</label>
+                            <input type="number" id="admin_fee" class="custom-input" placeholder="700">
                         </div>
                         <div>
-                            <label class="input-label">Link TikTok</label>
-                            <input type="text" id="tiktok_link" class="custom-input" placeholder="https://tiktok.com/@...">
+                            <label class="input-label">MDR Atlantic (%)</label>
+                            <input type="number" id="tax_percent" step="0.1" class="custom-input" placeholder="1.4">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: FOOTER BRANDING -->
+                <div class="config-card">
+                    <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                        <i class="fas fa-shoe-prints"></i> Footer Branding
+                    </p>
+                    <div class="space-y-4">
+                        <textarea id="footer_description" class="custom-input" placeholder="Deskripsi footer..."></textarea>
+                        <input type="text" id="footer_trade_info" class="custom-input" placeholder="Info kementerian...">
+                    </div>
+                </div>
+
+                <!-- SECTION 4: TEKS HALAMAN DEPAN -->
+                <div class="config-card">
+                    <p class="text-blue-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                        <i class="fas fa-font"></i> Teks Halaman Utama
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input type="text" id="title_flash_sale" class="custom-input" placeholder="Judul Flash Sale">
+                        <input type="text" id="title_popular" class="custom-input" placeholder="Judul Populer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION WHATSAPP (UI BERUBAH) -->
+            <div id="section-whatsapp" class="hidden animate-fade-in">
+                <div class="config-card">
+                    <p class="text-green-600 font-black text-[11px] uppercase mb-6 tracking-widest flex items-center gap-2">
+                        <i class="fab fa-whatsapp text-lg"></i> WhatsApp Gateway API
+                    </p>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="input-label">Ngechat API KEY</label>
+                            <input type="text" id="wa_gateway_apikey" class="custom-input" placeholder="Masukkan x-api-key">
+                        </div>
+                        <div>
+                            <label class="input-label">Ngechat Session ID</label>
+                            <input type="text" id="wa_gateway_session" class="custom-input" placeholder="Masukkan Session ID">
+                        </div>
+                        
+                        <div class="pt-4 border-t border-slate-100">
+                            <p class="text-blue-600 font-black text-[11px] uppercase mb-4 tracking-widest">Kontak Toko</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="input-label">WhatsApp Utama</label>
+                                    <input type="text" id="wa_link" class="custom-input" placeholder="https://wa.me/...">
+                                </div>
+                                <div>
+                                    <label class="input-label">WhatsApp CS (Floating)</label>
+                                    <input type="text" id="wa_cs" class="custom-input" placeholder="6281xxx">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -175,9 +199,9 @@
                 <div class="flex items-start gap-4">
                     <i class="fas fa-info-circle text-blue-400 text-lg mt-1"></i>
                     <div>
-                        <h4 class="font-bold text-sm mb-1">Penting</h4>
+                        <h4 class="font-bold text-sm mb-1">Informasi</h4>
                         <p class="text-slate-400 text-[11px] leading-relaxed">
-                            Pastikan Nama Toko dan Meta Deskripsi diisi dengan kata-kata yang sering dicari (Misal: Topup ML Murah) agar Google lebih mudah menemukan website Anda. Perubahan biaya admin akan langsung berpengaruh pada nominal bayar QRIS pelanggan.
+                            Gunakan tab di atas untuk berpindah antara pengaturan SEO/Biaya dan pengaturan API WhatsApp. Klik Simpan untuk menerapkan semua perubahan sekaligus.
                         </p>
                     </div>
                 </div>
@@ -189,6 +213,21 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // FUNGSI SWITCH TAB
+        function switchTab(tab) {
+            if (tab === 'umum') {
+                $('#section-umum').removeClass('hidden');
+                $('#section-whatsapp').addClass('hidden');
+                $('#btn-tab-umum').addClass('active').removeClass('inactive');
+                $('#btn-tab-whatsapp').addClass('inactive').removeClass('active');
+            } else {
+                $('#section-umum').addClass('hidden');
+                $('#section-whatsapp').removeClass('hidden');
+                $('#btn-tab-whatsapp').addClass('active').removeClass('inactive');
+                $('#btn-tab-umum').addClass('inactive').removeClass('active');
+            }
+        }
+
         async function loadConfig() {
             try {
                 const res = await fetch('/api/admin/config');
@@ -199,20 +238,18 @@
                     $('#meta_description').val(d.meta_description);
                     $('#meta_keywords').val(d.meta_keywords);
                     $('#logo_url').val(d.logo_url);
-                    
                     $('#admin_fee').val(d.admin_fee);
                     $('#tax_percent').val(d.tax_percent);
-
                     $('#footer_description').val(d.footer_description);
                     $('#footer_trade_info').val(d.footer_trade_info);
-                    
                     $('#title_flash_sale').val(d.title_flash_sale);
                     $('#title_popular').val(d.title_popular);
-                    
                     $('#wa_link').val(d.wa_link);
                     $('#wa_cs').val(d.wa_cs);
-                    $('#ig_link').val(d.ig_link);
-                    $('#tiktok_link').val(d.tiktok_link);
+                    
+                    // New WhatsApp API fields
+                    $('#wa_gateway_apikey').val(d.wa_gateway_apikey);
+                    $('#wa_gateway_session').val(d.wa_gateway_session);
                 }
             } catch (e) { console.error("Gagal muat data"); }
         }
@@ -234,8 +271,9 @@
                 title_popular: $('#title_popular').val(),
                 wa_link: $('#wa_link').val(),
                 wa_cs: $('#wa_cs').val(),
-                ig_link: $('#ig_link').val(),
-                tiktok_link: $('#tiktok_link').val()
+                // Save WhatsApp API
+                wa_gateway_apikey: $('#wa_gateway_apikey').val(),
+                wa_gateway_session: $('#wa_gateway_session').val()
             };
 
             try {
