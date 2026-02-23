@@ -9,6 +9,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
 const connectDB = require('./config/database');
+const sendWag = require('./config/wa-gateway');
 const AdminLog = require('./models/AdminLog');
 const Transaction = require('./models/Transaction');
 const Service = require('./models/Service');
