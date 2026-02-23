@@ -456,30 +456,37 @@ app.get('/api/admin/get-unique-categories', isAdmin, async (req, res) => {
     res.json({ status: true, data: categories });
 });
 
-// API: Terapkan profit kategori ke database lokal (Tanpa hit API Atlantic)
+// API: Terapkan profit per KATEGORI spesifik
 app.put('/api/admin/apply-markup', isAdmin, async (req, res) => {
-    try {
-        const profitSettings = await CategoryProfit.find();
-        const profitMap = {};
-        profitSettings.forEach(s => { profitMap[s.category_name] = s; });
-        const allServices = await Service.find();
+    const { category } = req.body; // Ambil nama kategori dari body
 
-        const operations = allServices.map(item => {
+    try {
+        // 1. Ambil aturan profit untuk kategori tersebut
+        const profitSetting = await CategoryProfit.findOne({ category_name: category });
+        
+        if (!profitSetting) {
+            return res.json({ status: false, message: "Aturan profit untuk kategori ini belum di-set!" });
+        }
+
+        // 2. Ambil semua layanan yang masuk dalam kategori ini
+        const services = await Service.find({ category: category });
+
+        if (services.length === 0) {
+            return res.json({ status: false, message: "Tidak ada produk dalam kategori ini." });
+        }
+
+        // 3. Siapkan operasi update massal
+        const operations = services.map(item => {
             const modal = item.price_original;
             let jual = modal;
 
-            const setting = profitMap[item.category];
-            if (setting) {
-                if (setting.type === 'percentage') {
-                    jual = modal + (modal * setting.value / 100);
-                } else {
-                    jual = modal + setting.value;
-                }
+            if (profitSetting.type === 'percentage') {
+                jual = modal + (modal * profitSetting.value / 100);
             } else {
-                jual = modal + (modal * 5 / 100); // Default 5%
+                jual = modal + profitSetting.value;
             }
 
-            // Bulatkan ke 100 terdekat
+            // Bulatkan ke 100 terdekat ke atas
             jual = Math.ceil(jual / 100) * 100;
 
             return {
@@ -490,11 +497,12 @@ app.put('/api/admin/apply-markup', isAdmin, async (req, res) => {
             };
         });
 
-        if (operations.length > 0) {
-            await Service.bulkWrite(operations);
-        }
+        await Service.bulkWrite(operations);
 
-        res.json({ status: true, message: `Berhasil memperbarui ${operations.length} harga produk!` });
+        res.json({ 
+            status: true, 
+            message: `Berhasil update ${services.length} produk di kategori ${category}!` 
+        });
     } catch (e) {
         res.status(500).json({ status: false, message: e.message });
     }
