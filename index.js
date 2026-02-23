@@ -762,6 +762,31 @@ app.post('/api/check-status', async (req, res) => {
 
             if (buyRes.data.status) {
                 await Transaction.updateOne({ deposit_id }, { $set: { status: 'success', sn: buyRes.data.data.sn, updated_at: new Date() } });
+
+                // ==========================================
+                // 📲 TAMBAHAN: AUTO WHATSAPP NOTIFICATION
+                // ==========================================
+                try {
+                    const conf = await Config.findOne({ key: 'qris_settings' });
+                    if (conf && conf.wa_gateway_apikey && conf.wa_gateway_session) {
+                        const pesanWA = `*TRANSAKSI KAMU BERHASIL* ✅\n\n` +
+                                        `Terima kasih telah berbelanja di *${conf.shop_name}*.\n\n` +
+                                        `*Detail Pesanan:*\n` +
+                                        `• Order ID: ${currentTr.order_id}\n` +
+                                        `• Produk: ${currentTr.item_name}\n` +
+                                        `• Tujuan: ${currentTr.target}\n` +
+                                        `• Status: SUKSES\n` +
+                                        `• SN: ${buyRes.data.data.sn}\n\n` +
+                                        `Pesanan Anda diproses otomatis oleh sistem. Jika ada kendala silakan hubungi Kami.`;
+
+                        // Panggil function dari config/wa-gateway.js
+                        sendWag(conf.wa_gateway_session, conf.wa_gateway_apikey, currentTr.whatsapp, pesanWA);
+                    }
+                } catch (waErr) {
+                    console.error("Gagal mengirim notifikasi WA:", waErr.message);
+                }
+                // ==========================================
+
                 res.json({ status: true, state: 'success', sn: buyRes.data.data.sn });
             } else {
                 if(buyRes.data.message.includes('uplicate')) return res.json({ status: true, state: 'success', sn: 'Diproses' });
