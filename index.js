@@ -19,6 +19,7 @@ const Brand = require('./models/Brand');
 const Banner = require('./models/Banner'); // Tambahan Model
 const FlashSale = require('./models/FlashSale'); // Tambahan Model
 const Popup = require('./models/Popup');
+const CategoryProfit = require('./models/CategoryProfit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -424,6 +425,33 @@ app.put('/api/admin/brands/:id/services', isAdmin, async (req, res) => {
         res.json({ status: true, message: "Daftar layanan berhasil diperbarui" });
     } catch (e) { res.status(500).json({ status: false }); }
 });
+
+
+// Ambil semua settingan profit kategori
+app.get('/api/admin/category-profits', isAdmin, async (req, res) => {
+    const data = await CategoryProfit.find();
+    res.json({ status: true, data });
+});
+
+// Simpan atau Update profit kategori
+app.post('/api/admin/category-profits', isAdmin, async (req, res) => {
+    const { category_name, type, value } = req.body;
+    try {
+        await CategoryProfit.findOneAndUpdate(
+            { category_name },
+            { type, value: parseFloat(value) },
+            { upsert: true }
+        );
+        res.json({ status: true, message: "Profit kategori diperbarui" });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
+// Ambil daftar kategori unik yang ada di database layanan (buat referensi admin)
+app.get('/api/admin/get-unique-categories', isAdmin, async (req, res) => {
+    const categories = await Service.distinct('category');
+    res.json({ status: true, data: categories });
+});
+
 
 // ==========================
 // API: BANNER & FLASH SALE
