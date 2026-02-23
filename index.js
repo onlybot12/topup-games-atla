@@ -194,6 +194,10 @@ app.get('/admin/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/admin/login');
 });
+// Route View: Smart Markup Kategori
+app.get('/admin/profit-kategori', isAdmin, (req, res) => {
+    res.render('admin/profit-kategori', { currentPage: 'markup' });
+});
 app.get('/admin/layanan', isAdmin, (req, res) => res.render('admin/kelola-layanan', { currentPage: 'layanan' }));
 app.get('/admin/voucher', isAdmin, (req, res) => res.render('admin/create-voucher', { currentPage: 'voucher' }));
 app.get('/admin/pengaturan', isAdmin, (req, res) => res.render('admin/pengaturan', { currentPage: 'pengaturan' }));
