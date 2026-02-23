@@ -9,6 +9,9 @@ const ConfigSchema = new mongoose.Schema({
     wa_link: { type: String, default: "" },
     ig_link: { type: String, default: "" },
     tiktok_link: { type: String, default: "" },
+    // Tambahkan field ini ke ConfigSchema Anda
+    wa_gateway_session: { type: String, default: "" },
+    wa_gateway_apikey: { type: String, default: "" },
     
     // --- TAMBAHAN SEO ---
     shop_name: { type: String, default: "Lana Store" },
