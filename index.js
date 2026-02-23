@@ -456,6 +456,49 @@ app.get('/api/admin/get-unique-categories', isAdmin, async (req, res) => {
     res.json({ status: true, data: categories });
 });
 
+// API: Terapkan profit kategori ke database lokal (Tanpa hit API Atlantic)
+app.put('/api/admin/apply-markup', isAdmin, async (req, res) => {
+    try {
+        const profitSettings = await CategoryProfit.find();
+        const profitMap = {};
+        profitSettings.forEach(s => { profitMap[s.category_name] = s; });
+        const allServices = await Service.find();
+
+        const operations = allServices.map(item => {
+            const modal = item.price_original;
+            let jual = modal;
+
+            const setting = profitMap[item.category];
+            if (setting) {
+                if (setting.type === 'percentage') {
+                    jual = modal + (modal * setting.value / 100);
+                } else {
+                    jual = modal + setting.value;
+                }
+            } else {
+                jual = modal + (modal * 5 / 100); // Default 5%
+            }
+
+            // Bulatkan ke 100 terdekat
+            jual = Math.ceil(jual / 100) * 100;
+
+            return {
+                updateOne: {
+                    filter: { _id: item._id },
+                    update: { $set: { price_sell: jual, updated_at: new Date() } }
+                }
+            };
+        });
+
+        if (operations.length > 0) {
+            await Service.bulkWrite(operations);
+        }
+
+        res.json({ status: true, message: `Berhasil memperbarui ${operations.length} harga produk!` });
+    } catch (e) {
+        res.status(500).json({ status: false, message: e.message });
+    }
+});
 
 // ==========================
 // API: BANNER & FLASH SALE
