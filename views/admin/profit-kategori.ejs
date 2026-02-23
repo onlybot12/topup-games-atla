@@ -7,7 +7,7 @@
 <body class="bg-slate-50 overflow-x-hidden">
     <%- include('../partials/sidebar') %>
     <div id="main-content" class="lg:ml-64 min-h-screen">
-        <header class="h-16 bg-white border-b px-4 flex items-center justify-between sticky top-0 z-40">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
                     <i class="fas fa-bars-staggered"></i>
@@ -18,12 +18,15 @@
 
         <main class="p-4 md:p-8">
             <div class="bg-blue-600 rounded-[28px] p-6 text-white mb-8 shadow-xl shadow-blue-200">
-                <h2 class="font-black text-lg mb-1 uppercase italic">Atur Cuan Per Produk</h2>
-                <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Set profit berbeda untuk tiap kategori agar harga kompetitif.</p>
+                <h2 class="font-black text-lg mb-1 uppercase italic">Atur Cuan Per Kategori</h2>
+                <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest leading-tight">
+                    Update harga jadi lebih mudah. Klik ikon petir (⚡) pada tiap kategori untuk menerapkan harga baru ke kategori tersebut.
+                </p>
             </div>
 
             <div id="category-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Data Kategori render disini -->
+                <div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase text-[10px]">Memuat Kategori...</div>
             </div>
         </main>
     </div>
@@ -32,49 +35,94 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         async function loadSettings() {
-            // Ambil kategori unik dari database layanan
-            const catRes = await fetch('/api/admin/get-unique-categories');
-            const catJson = await catRes.json();
-            
-            // Ambil settingan profit yang sudah ada
-            const profRes = await fetch('/api/admin/category-profits');
-            const profJson = await profRes.json();
-            
-            const profitMap = {};
-            profJson.data.forEach(p => { profitMap[p.category_name] = p; });
+            try {
+                const catRes = await fetch('/api/admin/get-unique-categories');
+                const catJson = await catRes.json();
+                
+                const profRes = await fetch('/api/admin/category-profits');
+                const profJson = await profRes.json();
+                
+                const profitMap = {};
+                if (profJson.data) {
+                    profJson.data.forEach(p => { profitMap[p.category_name] = p; });
+                }
 
-            const grid = $('#category-list').empty();
-            catJson.data.forEach(cat => {
-                const set = profitMap[cat] || { type: 'percentage', value: 5 };
-                grid.append(`
-                    <div class="bg-white border p-5 rounded-[24px] shadow-sm flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Kategori</p>
-                            <h3 class="font-black text-slate-800 text-sm uppercase">${cat}</h3>
-                            <p class="text-[11px] font-bold text-blue-600 mt-2">
-                                Profit: ${set.value} ${set.type === 'percentage' ? '%' : 'Rp'}
-                            </p>
+                const grid = $('#category-list').empty();
+
+                catJson.data.forEach(cat => {
+                    const set = profitMap[cat] || { type: 'percentage', value: 5 };
+                    grid.append(`
+                        <div class="bg-white border p-5 rounded-[24px] shadow-sm flex items-center justify-between border-slate-200">
+                            <div class="flex-grow">
+                                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Kategori</p>
+                                <h3 class="font-black text-slate-800 text-sm uppercase">${cat}</h3>
+                                <p class="text-[11px] font-bold text-blue-600 mt-1 uppercase">
+                                    Profit: ${set.value} ${set.type === 'percentage' ? '%' : 'Rp'}
+                                </p>
+                            </div>
+                            <div class="flex gap-2">
+                                <!-- TOMBOL APPLY PER KATEGORI -->
+                                <button onclick="applyMarkupPerCat('${cat}', this)" class="w-10 h-10 bg-yellow-400 text-slate-900 rounded-xl active:scale-90 transition-all border border-yellow-500 shadow-sm shadow-yellow-100" title="Terapkan Harga Kategori Ini">
+                                    <i class="fas fa-bolt text-xs"></i>
+                                </button>
+                                <!-- TOMBOL EDIT SETTING -->
+                                <button onclick="editProfit('${cat}', '${set.type}', ${set.value})" class="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl active:scale-90 transition-all border border-slate-200">
+                                    <i class="fas fa-pen text-xs"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button onclick="editProfit('${cat}', '${set.type}', ${set.value})" class="w-10 h-10 bg-slate-900 text-white rounded-xl active:scale-90 transition-all">
-                            <i class="fas fa-pen text-xs"></i>
-                        </button>
-                    </div>
-                `);
-            });
+                    `);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // FUNGSI APPLY PER KATEGORI (⚡)
+        async function applyMarkupPerCat(catName, btn) {
+            const $btn = $(btn);
+            const originalHtml = $btn.html();
+            
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            try {
+                const res = await fetch('/api/admin/apply-markup', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: catName })
+                });
+                const data = await res.json();
+                
+                if(data.status) {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
+                    Toast.fire({ icon: 'success', title: data.message });
+                } else {
+                    Swal.fire('Gagal', data.message, 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Koneksi gagal', 'error');
+            } finally {
+                $btn.prop('disabled', false).html(originalHtml);
+            }
         }
 
         async function editProfit(name, type, val) {
             const { value: form } = await Swal.fire({
-                title: 'Set Profit: ' + name,
+                title: '<span class="text-sm font-black uppercase">Set Profit: ' + name + '</span>',
+                confirmButtonColor: '#2563eb',
                 html: `
                     <div class="text-left">
                         <label class="text-[10px] font-bold text-slate-400 uppercase">Tipe Profit</label>
-                        <select id="sw-type" class="swal2-input !mt-1">
+                        <select id="sw-type" class="swal2-input !mt-1 !text-sm">
                             <option value="percentage" ${type==='percentage'?'selected':''}>Persentase (%)</option>
                             <option value="fixed" ${type==='fixed'?'selected':''}>Rupiah (Rp)</option>
                         </select>
                         <label class="text-[10px] font-bold text-slate-400 uppercase mt-3 block">Nilai Profit</label>
-                        <input id="sw-val" type="number" class="swal2-input !mt-1" value="${val}">
+                        <input id="sw-val" type="number" class="swal2-input !mt-1 !text-sm" value="${val}">
                     </div>
                 `,
                 preConfirm: () => ({ category_name: name, type: $('#sw-type').val(), value: $('#sw-val').val() })
