@@ -638,47 +638,65 @@ app.post('/api/create-payment', async (req, res) => {
     } catch (e) { res.status(500).json({ status: false, message: "Server Error" }); }
 });
 */
+
 app.post('/api/create-payment', async (req, res) => {
-    // Ambil target1 dan target2 dari body
+    // 1. Ambil input dari body
     const { service_id, target1, target2, whatsapp, voucher_code, email } = req.body;
 
-    // --- 🛡️ PROTEKSI ANTI XSS (Via ID/Username/Email Only) ---
-    // Regex ini mengizinkan: Huruf, Angka, @, Titik, Underscore (untuk Genshin), Strip, Pipa, Kurung, dan Spasi.
-    // Menolak: < > / \ ; ' " { } [ ]
+    // --- 🛡️ PROTEKSI ANTI XSS & VALIDASI INPUT ---
+    // Pattern untuk ID/Username (Huruf, Angka, @, Titik, Underscore, Strip, Pipa, Kurung)
     const safePattern = /^[a-zA-Z0-9@._\-|() ]+$/;
     
+    // Pattern khusus NOMOR (Hanya angka 0-9)
+    const numericPattern = /^[0-9]+$/;
+
+    // Cek Keamanan target1 dan target2 dari injeksi script
     if ((target1 && !safePattern.test(target1)) || (target2 && !safePattern.test(target2))) {
-        console.error("⚠️ DETEKSI INPUT BERBAHAYA (XSS/Injection):", { target1, target2 });
+        console.error("⚠️ DETEKSI INPUT BERBAHAYA:", { target1, target2 });
         return res.status(400).json({ 
             status: false, 
-            message: "Karakter tidak diizinkan! Gunakan format ID/Username/Email yang benar." 
+            message: "Karakter tidak diizinkan! Gunakan format ID/Username yang benar." 
         });
     }
-    // -----------------------------------------------------
+
+    // --- 📱 VALIDASI & BERSIHKAN NOMOR WHATSAPP ---
+    // Menghapus karakter selain angka (spasi, +, -, dll)
+    let cleanWA = whatsapp ? whatsapp.replace(/[^0-9]/g, '') : '';
+    
+    if (!cleanWA || !numericPattern.test(cleanWA) || cleanWA.length < 9) {
+        return res.status(400).json({ 
+            status: false, 
+            message: "Nomor WhatsApp tidak valid! Harus berupa angka." 
+        });
+    }
+
+    // Ubah format 08... menjadi 628... agar standar internasional
+    if (cleanWA.startsWith('0')) {
+        cleanWA = '62' + cleanWA.slice(1);
+    }
+    // ---------------------------------------------
     
     try {
         const service = await Service.findOne({ service_id, is_active: true });
         if (!service) return res.json({ status: false, message: "Layanan Offline" });
 
-        // Cari Brand dari produk ini untuk cek format target
+        // Cari Brand untuk menentukan format target (ML vs Game Lain)
         const brand = await Brand.findOne({ services: service_id });
         
         // --- ⚙️ LOGIKA PARSING TARGET (Gasken!) ---
-        let finalTarget = target1; // Default hanya ID (target1)
+        let finalTarget = target1; // Default hanya ID
         
         if (target2) {
-            // 1. Khusus Mobile Legends (Pakai Pembatas | )
+            // Jika brand adalah Mobile Legends (Cek Nama atau Slug)
             if (brand && (brand.name.toLowerCase().includes('mobile legends') || brand.slug.includes('mobile-legends'))) {
-                finalTarget = `${target1}|${target2}`; // Contoh: 123456|1234
-            } 
-            // 2. Selain ML (Genshin Impact, dll) digabung langsung
-            else {
-                finalTarget = `${target1}${target2}`;  // Contoh: 881234567os_america
+                finalTarget = `${target1}|${target2}`; // Format khusus ML: 12345|1234
+            } else {
+                finalTarget = `${target1}${target2}`;  // Format Game Lain (Genshin, dll): Gabung Langsung 123451234
             }
         }
         // ----------------------------------------
 
-        // Ambil Pengaturan Biaya Admin dari Database
+        // Ambil Pengaturan Biaya Admin & Pajak MDR dari Database
         let conf = await Config.findOne({ key: 'qris_settings' }) || { admin_fee: 700, tax_percent: 1.4 };
         let sellPrice = service.price_sell;
         let usedVoucher = null;
@@ -689,18 +707,26 @@ app.post('/api/create-payment', async (req, res) => {
             if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
                 let discount = v.type === 'percentage' ? (sellPrice * v.value / 100) : v.value;
                 sellPrice -= discount;
-                usedVoucher = v.code; // Dicatat untuk dipotong kuota saat payment SUCCESS
+                usedVoucher = v.code; 
             }
         }
 
         // Kalkulasi Nominal Bayar (Admin Fee + Pajak MDR)
         const multiplier = (100 - conf.tax_percent) / 100;
         const nominalBayar = Math.ceil((sellPrice + conf.admin_fee) / multiplier);
+        
+        // Gunakan Prefix LAN-
         const reff_id = `LAN-${Date.now()}`;
 
         // Request Deposit QRIS ke Atlantic
         const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`,
-            qs.stringify({ api_key: API_KEY, reff_id, nominal: nominalBayar, type: 'ewallet', metode: 'qris' }), 
+            qs.stringify({ 
+                api_key: API_KEY, 
+                reff_id, 
+                nominal: nominalBayar, 
+                type: 'ewallet', 
+                metode: 'qris' 
+            }), 
             { headers: requestHeaders });
 
         if (depoRes.data.status) {
@@ -712,28 +738,29 @@ app.post('/api/create-payment', async (req, res) => {
                 amount: nominalBayar,
                 base_price: service.price_original,
                 item_name: service.name,
-                target: finalTarget, // Target yang sudah rapi (Gabung/Pipa)
-                whatsapp, 
+                target: finalTarget, // Target yang sudah diformat (Gabung atau Pipa)
+                whatsapp: cleanWA,   // Nomor WA yang sudah dibersihkan
                 status: 'pending',
                 email: email || 'customer@lanastore.com',
                 meta: { 
                     code: service.service_id, 
-                    target: finalTarget, // Ini yang akan ditembak ke API Atlantic saat Sukses
+                    target: finalTarget, 
                     applied_voucher: usedVoucher 
                 }
             });
             await tr.save();
             
-            // Redirect User ke Halaman Pembayaran
+            // Redirect ke Halaman Pembayaran
             res.json({ status: true, redirect_url: `/transaction/${depositId}` });
         } else {
             res.json({ status: false, message: depoRes.data.message });
         }
     } catch (e) { 
-        console.error("Error Create Payment:", e);
+        console.error("Error Create Payment:", e.message);
         res.status(500).json({ status: false, message: "Server Error" }); 
     }
 });
+
 
 
 app.post('/api/check-status', async (req, res) => {
