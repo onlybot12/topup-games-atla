@@ -566,24 +566,60 @@ app.put('/api/admin/config', isAdmin, async (req, res) => {
 // ==========================
 app.post('/api/admin/sync-services', isAdmin, async (req, res) => {
     const { profit } = req.body;
-    const profitPercent = parseFloat(profit) || 0;
+    const profitPercentFallback = parseFloat(profit) || 0; // Backup jika kategori belum di-set profitnya
+
     try {
+        // 1. Ambil semua aturan profit kategori dari database lokal
+        const profitSettings = await CategoryProfit.find();
+        const profitMap = {};
+        profitSettings.forEach(s => { 
+            profitMap[s.category_name] = s; 
+        });
+
+        // 2. Ambil data layanan terbaru dari API Atlantic
         const response = await axios.post(`${ATLANTIC_BASE_URL}/layanan/price_list`,
-            qs.stringify({ api_key: API_KEY, type: 'prabayar' }), { headers: requestHeaders, timeout: 60000 });
+            qs.stringify({ api_key: API_KEY, type: 'prabayar' }), 
+            { headers: requestHeaders, timeout: 60000 }
+        );
 
         if (response.data.status) {
             const services = response.data.data;
+
             const operations = services.map(item => {
                 const modal = parseInt(item.price) || 0;
-                let jual = Math.ceil((modal + (modal * profitPercent / 100)) / 100) * 100;
+                let jual = modal;
+
+                // 3. LOGIKA SMART MARKUP (Cek Profit per Kategori)
+                const setting = profitMap[item.category];
+
+                if (setting) {
+                    // Jika kategori ditemukan di database CategoryProfit
+                    if (setting.type === 'percentage') {
+                        jual = modal + (modal * setting.value / 100);
+                    } else {
+                        jual = modal + setting.value;
+                    }
+                } else {
+                    // Jika kategori BELUM PERNAH di-set profitnya, pakai profit global dari input header
+                    jual = modal + (modal * profitPercentFallback / 100);
+                }
+
+                // 4. Bulatkan ke 100 terdekat ke atas (contoh: 10.120 -> 10.200)
+                jual = Math.ceil(jual / 100) * 100;
+
                 return {
                     updateOne: {
                         filter: { service_id: item.code },
                         update: {
                             $set: {
-                                name: item.name, category: item.category, brand: item.provider,
-                                price_original: modal, price_sell: jual,
-                                status_api: item.status.toLowerCase(), img_url: item.img_url, updated_at: new Date()
+                                name: item.name, 
+                                category: item.category, 
+                                brand: item.provider,
+                                price_original: modal, 
+                                price_sell: jual,
+                                status_api: item.status.toLowerCase(), 
+                                img_url: item.img_url, 
+                                updated_at: new Date()
                             },
                             $setOnInsert: { is_active: true }
                         },
@@ -591,10 +627,19 @@ app.post('/api/admin/sync-services', isAdmin, async (req, res) => {
                     }
                 };
             });
+
+            // 5. Eksekusi update massal ke MongoDB
             await Service.bulkWrite(operations);
-            res.json({ status: true, message: `Sync ${services.length} data berhasil!` });
+            res.json({ 
+                status: true, 
+                message: `Sync ${services.length} data berhasil dengan Smart Markup!` 
+            });
+        } else {
+            res.json({ status: false, message: response.data.message });
         }
-    } catch (e) { res.status(500).json({ status: false, message: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ status: false, message: e.message }); 
+    }
 });
 
 app.get('/api/admin/services', async (req, res) => {
