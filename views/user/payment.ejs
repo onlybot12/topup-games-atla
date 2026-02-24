@@ -145,13 +145,13 @@
             const checkInterval = setInterval(async () => {
                 try {
                     const res = await axios.post('/api/check-status', { deposit_id: depositId, meta: meta });
-                    
-                    if(res.data.state === 'success') {
+
+                    if (res.data.state === 'success') {
                         clearInterval(checkInterval);
-                        
+
                         // 1. Tanda Pembayaran Sukses
                         updateStatusUI('paid');
-                        
+
                         // 2. Simulasi Proses Pengiriman (Biar Terlihat Otomatis)
                         setTimeout(() => {
                             updateStatusUI('processing');
@@ -160,22 +160,31 @@
                         // 3. Tampilkan Struk Lengkap
                         setTimeout(() => {
                             updateStatusUI('success');
-                            
+
                             // HIDE QRIS & INFO BOX LAMA
                             document.getElementById('qrisContainer').classList.add('hidden');
                             document.getElementById('orderInfoBox').classList.add('hidden');
-                            
+
                             // SHOW RESULT LENGKAP
                             document.getElementById('successResult').classList.remove('hidden');
+
+                            // Tampilkan SN hasil pengiriman produk dari /transaksi/status
                             document.getElementById('snDisplay').innerText = res.data.sn || "Cek Riwayat Game";
-                            
+
                             saveToHistory(res.data.sn);
                         }, 3500);
 
-                    } else if(res.data.state === 'failed') {
+                    } else if (res.data.state === 'pending_delivery') {
+                        // Pembayaran sudah diterima, produk masih diproses supplier
+                        // Jangan clearInterval, biarkan tetap polling sampai sukses
+                        updateStatusUI('paid');
+                        setTimeout(() => updateStatusUI('processing'), 1200);
+
+                    } else if (res.data.state === 'failed') {
                         clearInterval(checkInterval);
                         alert("Gagal: " + res.data.message);
                     }
+
                 } catch (e) {}
             }, 3000);
         }
