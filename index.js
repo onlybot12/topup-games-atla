@@ -166,9 +166,15 @@ app.get('/transaction/:deposit_id', async (req, res) => {
     try {
         const tr = await Transaction.findOne({ deposit_id: depositId });
         if (!tr) return res.status(404).send("Transaksi tidak ditemukan");
-        
+        let config = await Config.findOne({ key: 'qris_settings' });
+        if (!config) {
+            config = { 
+                shop_name: "Lana Store", 
+                meta_description: "Topup Murah 24 Jam" 
+            };
+        }
         // Render EJS Payment dan kirim data transaksi
-        res.render('user/payment', { tr: tr });
+        res.render('user/payment', { tr: tr, config: config });
     } catch (error) { res.status(500).send('Server Error'); }
 });
 
