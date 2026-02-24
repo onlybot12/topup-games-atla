@@ -26,8 +26,8 @@ async function sendWag(sesiId, apikey, number, message) {
                 headers: {
                     'Content-Type': 'application/json',
                     'x-api-key': apikey,
-                },
-                timeout: 10000 // Timeout 10 detik agar tidak menghambat proses lain
+                }
+                // Timeout 10 detik agar tidak menghambat proses lain
             }
         );
 
