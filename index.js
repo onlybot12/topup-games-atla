@@ -859,7 +859,7 @@ app.post('/api/create-payment', async (req, res) => {
                 reff_id, 
                 nominal: nominalBayar, 
                 type: 'ewallet', 
-                metode: 'qris' 
+                metode: 'qrisfast' 
             }), 
             { headers: requestHeaders });
 
