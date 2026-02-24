@@ -895,8 +895,179 @@ app.post('/api/create-payment', async (req, res) => {
     }
 });
 
+app.post('/api/check-status', async (req, res) => {
+    const { deposit_id, meta } = req.body;
+    try {
+
+        const statusRes = await axios.post(
+            `${ATLANTIC_BASE_URL}/deposit/status`,
+            qs.stringify({ api_key: API_KEY, id: deposit_id }),
+            { headers: requestHeaders }
+        );
+        let status = statusRes.data.data.status;
+
+        // Jika masih processing, coba paksa instant agar jadi success
+        if (status === 'processing') {
+            try {
+                await axios.post(
+                    `${ATLANTIC_BASE_URL}/deposit/instant`,
+                    qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }),
+                    { headers: requestHeaders }
+                );
+                status = 'success';
+            } catch (e) {}
+        }
+
+        if (status === 'success') {
+            const currentTr = await Transaction.findOne({ deposit_id });
+
+            if (currentTr.meta && currentTr.meta.applied_voucher) {
+                await Voucher.updateOne(
+                    { code: currentTr.meta.applied_voucher },
+                    { $inc: { used_count: 1 } }
+                );
+                await Transaction.updateOne(
+                    { deposit_id },
+                    { $set: { "meta.applied_voucher": null } }
+                );
+            }
+
+            const buyRes = await axios.post(
+                `${ATLANTIC_BASE_URL}/transaksi/create`,
+                qs.stringify({
+                    api_key: API_KEY,
+                    code: meta.code,
+                    target: meta.target,
+                    reff_id: `TRX-${deposit_id}`  // ID referensi kita
+                }),
+                { headers: requestHeaders }
+            );
+
+            if (buyRes.data.status || buyRes.data.message?.includes('uplicate')) {
+
+                const trxId = buyRes.data.data?.id;
+
+                if (!trxId) {
+                    console.error(`[CREATE] Tidak ada trxId dari response create deposit_id: ${deposit_id}`);
+                    await Transaction.updateOne(
+                        { deposit_id },
+                        { $set: { status: 'pending_delivery', sn: 'Diproses', updated_at: new Date() } }
+                    );
+                    return res.json({ status: true, state: 'pending_delivery', sn: 'Diproses', message: 'Produk sedang diproses.' });
+                }
+
+                // Simpan trxId ke DB untuk keperluan polling berikutnya
+                await Transaction.updateOne({ deposit_id }, { $set: { trx_id: trxId } });
+
+                let deliverySN = buyRes.data.data?.sn || null;
+                let deliveryState = 'pending_delivery';
+
+                try {
+                    const trxStatusRes = await axios.post(
+                        `${ATLANTIC_BASE_URL}/transaksi/status`,
+                        qs.stringify({
+                            api_key: API_KEY,
+                            id: trxId,       // ✅ ID dari response /transaksi/create
+                            type: 'prabayar'
+                        }),
+                        { headers: requestHeaders }
+                    );
+
+                    const trxData = trxStatusRes.data?.data;
+
+                    console.log(`[DELIVERY STATUS] trxId: ${trxId} | status: ${trxData?.status} | sn: ${trxData?.sn}`);
+
+                    if (trxData?.status === 'success') {
+                        deliveryState = 'success';
+                        deliverySN = trxData?.sn || deliverySN;
+                    } else if (trxData?.status === 'gagal') {
+                        deliveryState = 'failed';
+                    } else {
+                        // Status lain: pending, processing, dll
+                        deliveryState = 'pending_delivery';
+                    }
+                } catch (trxErr) {
+                    console.error(`[DELIVERY STATUS] Gagal cek status pengiriman trxId: ${trxId} |`, trxErr.message);
+                }
+
+                // ==========================================
+                // STEP 5: Update DB & kirim response
+                // ==========================================
+                if (deliveryState === 'success') {
+                    await Transaction.updateOne(
+                        { deposit_id },
+                        { $set: { status: 'success', sn: deliverySN, updated_at: new Date() } }
+                    );
+
+                    // 📲 Kirim notifikasi WhatsApp
+                    try {
+                        const conf = await Config.findOne({ key: 'qris_settings' });
+                        if (conf && conf.wa_gateway_apikey && conf.wa_gateway_session) {
+                            const pesanWA = `*TRANSAKSI KAMU BERHASIL* ✅\n\n` +
+                                            `Terima kasih telah berbelanja di *${conf.shop_name}*.\n\n` +
+                                            `*Detail Pesanan:*\n` +
+                                            `• Order ID: ${currentTr.order_id}\n` +
+                                            `• Produk: ${currentTr.item_name}\n` +
+                                            `• Tujuan: ${currentTr.target}\n` +
+                                            `• Status: SUKSES\n` +
+                                            `• SN: ${deliverySN}\n\n` +
+                                            `Pesanan Anda diproses otomatis oleh sistem. Jika ada kendala silakan hubungi Kami.`;
+                            sendWag(conf.wa_gateway_session, conf.wa_gateway_apikey, currentTr.whatsapp, pesanWA);
+                        }
+                    } catch (waErr) {
+                        console.error("Gagal mengirim notifikasi WA:", waErr.message);
+                    }
+
+                    // SN dari trxData.sn hasil /transaksi/status dikirim ke frontend
+                    // Frontend akan tampilkan di snDisplay
+                    return res.json({ status: true, state: 'success', sn: deliverySN });
+
+                } else if (deliveryState === 'failed') {
+                    await Transaction.updateOne(
+                        { deposit_id },
+                        { $set: { status: 'failed', updated_at: new Date() } }
+                    );
+                    return res.json({ status: true, state: 'failed', message: 'Pengiriman produk gagal.' });
+
+                } else {
+                    // Masih pending — frontend polling ulang, interval tetap jalan
+                    await Transaction.updateOne(
+                        { deposit_id },
+                        { $set: { status: 'pending_delivery', sn: 'Diproses', updated_at: new Date() } }
+                    );
+                    return res.json({ status: true, state: 'pending_delivery', sn: 'Diproses', message: 'Produk sedang diproses oleh supplier.' });
+                }
+
+            } else {
+                // Create gagal bukan karena duplicate
+                await Transaction.updateOne(
+                    { deposit_id },
+                    { $set: { status: 'failed', updated_at: new Date() } }
+                );
+                return res.json({ status: true, state: 'failed', message: buyRes.data.message });
+            }
+
+        } else if (status === 'cancel') {
+            await Transaction.updateOne(
+                { deposit_id },
+                { $set: { status: 'cancelled' } }
+            );
+            return res.json({ status: true, state: 'expired' });
+
+        } else {
+            // Status deposit masih pending/waiting dari payment gateway
+            return res.json({ status: true, state: status });
+        }
+
+    } catch (error) {
+        console.error("[CHECK STATUS ERROR]", error.message);
+        res.status(500).json({ status: false });
+    }
+});
 
 
+
+/*
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -963,6 +1134,8 @@ app.post('/api/check-status', async (req, res) => {
     } catch (error) { res.status(500).json({ status: false }); }
 });
 
+
+*/
 app.get('/api/transaction/:id', async (req, res) => {
     try {
         const tr = await Transaction.findOne({ $or: [{ deposit_id: req.params.id }, { order_id: req.params.id }] });
