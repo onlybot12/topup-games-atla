@@ -215,7 +215,7 @@ app.get('/admin/vendor', isAdmin, (req, res) => res.render('admin/vendor', { cur
 app.get('/admin/dashboard', isAdmin, async (req, res) => {
     try {
         const now = new Date();
-        const startOfToday = new Date(now.setHours(0,0,0,0));
+        const startOfToday = new Date(new Date().setHours(0,0,0,0));
         const startOfYesterday = new Date(new Date().setDate(new Date().getDate() - 1));
         startOfYesterday.setHours(0,0,0,0);
         const endOfYesterday = new Date(startOfToday);
@@ -224,6 +224,11 @@ app.get('/admin/dashboard', isAdmin, async (req, res) => {
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+        // 1. Ambil Pengaturan Biaya dari Database agar hitungan dinamis
+        const conf = await Config.findOne({ key: 'qris_settings' }) || { tax_percent: 1.6, vendor_fee_fixed: 200 };
+        const multiplier = (100 - conf.tax_percent) / 100; // Contoh: 0.984 jika pajak 1.6%
+        const fixedFee = conf.vendor_fee_fixed; // Contoh: 200
+
         // Fungsi pembantu untuk hitung Statistik
         const getStats = async (startDate, endDate = new Date()) => {
             const result = await Transaction.aggregate([
@@ -231,18 +236,42 @@ app.get('/admin/dashboard', isAdmin, async (req, res) => {
                 { $group: {
                     _id: null,
                     count: { $sum: 1 },
-                    omset: { $sum: "$amount" },
-                    profit: { $sum: { $subtract: ["$amount", "$base_price"] } }
+                    omset: { $sum: "$amount" }, // Total yang dibayar user (Omset kotor)
+                    
+                    // --- RUMUS PROFIT BERSIH REAL ---
+                    // Uang yang Anda terima = (Bayaran User * 0.984) - 200
+                    // Profit = Uang yang Anda terima - Harga Modal Atlantic
+                    profit: { 
+                        $sum: { 
+                            $subtract: [
+                                { 
+                                    $subtract: [
+                                        { $multiply: ["$amount", multiplier] }, 
+                                        fixedFee 
+                                    ] 
+                                }, 
+                                "$base_price" 
+                            ] 
+                        } 
+                    }
                 }}
             ]);
-            return result[0] || { count: 0, omset: 0, profit: 0 };
+            
+            const data = result[0] || { count: 0, omset: 0, profit: 0 };
+            return {
+                count: data.count,
+                omset: Math.round(data.omset),
+                profit: Math.round(data.profit) // Dibulatkan agar tidak ada koma desimal
+            };
         };
 
-        // Jalankan semua perhitungan
-        const today = await getStats(startOfToday);
-        const yesterday = await getStats(startOfYesterday, endOfYesterday);
-        const thisMonth = await getStats(startOfThisMonth);
-        const lastMonth = await getStats(startOfLastMonth, endOfLastMonth);
+        // Jalankan semua perhitungan (Menggunakan Promise.all agar lebih cepat/Anti-Lag)
+        const [today, yesterday, thisMonth, lastMonth] = await Promise.all([
+            getStats(startOfToday),
+            getStats(startOfYesterday, endOfYesterday),
+            getStats(startOfThisMonth),
+            getStats(startOfLastMonth, endOfLastMonth)
+        ]);
 
         // Ambil 10 Produk Terlaris
         const topProducts = await Transaction.aggregate([
@@ -258,6 +287,7 @@ app.get('/admin/dashboard', isAdmin, async (req, res) => {
             topProducts
         });
     } catch (e) {
+        console.error("Dashboard Error:", e.message);
         res.status(500).send("Error loading dashboard: " + e.message);
     }
 });
