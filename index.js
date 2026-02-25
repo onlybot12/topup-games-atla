@@ -350,7 +350,7 @@ app.delete('/api/admin/popups/:id', isAdmin, async (req, res) => {
 
 
 
-
+/*
 // --- API: STATISTIK TRANSAKSI (CARD ATAS) ---
 app.get('/api/admin/transactions/stats', isAdmin, async (req, res) => {
     try {
@@ -373,6 +373,81 @@ app.get('/api/admin/transactions/stats', isAdmin, async (req, res) => {
         
         res.json({ status: true, data });
     } catch (e) { res.status(500).json({ status: false }); }
+});
+*/
+
+// ─── API: STATISTIK TRANSAKSI + PROFIT HARI INI ──────────────────
+app.get('/api/admin/transactions/stats', isAdmin, async (req, res) => {
+    try {
+        const startOfToday = new Date();
+        startOfToday.setHours(0,0,0,0);
+
+        // Hitung Status General
+        const stats = await Transaction.aggregate([
+            { $group: { _id: "$status", total: { $sum: 1 } } }
+        ]);
+
+        // Hitung Profit Hari Ini (Berdasarkan Pajak MDR di Config)
+        const conf = await Config.findOne({ key: 'qris_settings' }) || { tax_percent: 1.6, vendor_fee_fixed: 200 };
+        const multiplier = (100 - conf.tax_percent) / 100;
+
+        const profitToday = await Transaction.aggregate([
+            { $match: { status: 'success', created_at: { $gte: startOfToday } } },
+            { $group: {
+                _id: null,
+                total: { $sum: { $subtract: [ { $subtract: [ { $multiply: ["$amount", multiplier] }, conf.vendor_fee_fixed ] }, "$base_price" ] } }
+            }}
+        ]);
+
+        const result = { total: 0, success: 0, pending: 0, failed: 0, profit_today: profitToday[0]?.total || 0 };
+        stats.forEach(s => {
+            if(s._id === 'success') result.success = s.total;
+            else if(s._id === 'pending') result.pending = s.total;
+            else if(s._id === 'failed') result.failed = s.total;
+            result.total += s.total;
+        });
+
+        res.json({ status: true, data: result });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
+// ─── API: CEK MANUAL (FORCE CHECK) ──────────────────────────────
+app.post('/api/admin/transactions/check-manual', isAdmin, async (req, res) => {
+    const { deposit_id } = req.body;
+    try {
+        // Panggil fungsi internal check status (gunakan logic yang sama dengan user)
+        // Kita cukup beritahu server untuk menjalankan pengecekan ulang
+        const tr = await Transaction.findOne({ deposit_id });
+        if(!tr) return res.json({ status: false, message: "Trx tidak ada" });
+        
+        // Kirim request ke endpoint check-status internal kita
+        const response = await axios.post(`https://maulanastore.my.id/api/check-status`, {
+            deposit_id: tr.deposit_id,
+            meta: tr.meta
+        });
+        
+        res.json({ status: true, message: "Status diperbarui!", data: response.data });
+    } catch (e) { res.status(500).json({ status: false, message: e.message }); }
+});
+
+// ─── API: EXPORT CSV ──────────────────────────────────────────
+app.get('/api/admin/transactions/export', isAdmin, async (req, res) => {
+    try {
+        const data = await Transaction.find({ status: 'success' }).sort({ created_at: -1 });
+        let csv = "Tanggal,OrderID,Item,Target,Whatsapp,Harga,Profit\n";
+        
+        const conf = await Config.findOne({ key: 'qris_settings' }) || { tax_percent: 1.6, vendor_fee_fixed: 200 };
+        const multiplier = (100 - conf.tax_percent) / 100;
+
+        data.forEach(t => {
+            const profit = Math.round(((t.amount * multiplier) - conf.vendor_fee_fixed) - t.base_price);
+            csv += `${t.created_at.toISOString()},${t.order_id},${t.item_name},${t.target},${t.whatsapp},${t.amount},${profit}\n`;
+        });
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`Laporan-LanaStore-${Date.now()}.csv`);
+        res.send(csv);
+    } catch (e) { res.status(500).send("Export Gagal"); }
 });
 
 // --- API: LIST TRANSAKSI (SERVER-SIDE DATATABLES) ---
@@ -409,6 +484,8 @@ app.get('/api/admin/transactions/list', isAdmin, async (req, res) => {
         });
     } catch (e) { res.status(500).json({ status: false }); }
 });
+
+
 
 
 // ─── Route: Validasi ID Game (Proxy) ──────────────────────────────
