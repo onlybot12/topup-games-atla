@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Admin - Riwayat Transaksi</title>
+    <%- include('../partials/head') %>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; }
+        .table-container { border-radius: 24px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
+        .table { font-size: 13px !important; }
+        .table th { border-top: none !important; font-size: 11px !important; color: #94a3b8; text-transform: uppercase; }
+        .table td { vertical-align: middle !important; padding: 15px 10px !important; white-space: nowrap; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <%- include('../partials/sidebar') %>
+
+    <div id="main-content" class="lg:ml-64 min-h-screen">
+        <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Riwayat Transaksi</h1>
+            </div>
+        </header>
+
+        <main class="p-4 md:p-6">
+            
+            <!-- STATS CARDS -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card shadow-sm border-l-4 border-l-blue-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Order</p>
+                    <h3 id="stat-total" class="text-xl font-black text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="stat-card shadow-sm border-l-4 border-l-green-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Success</p>
+                    <h3 id="stat-success" class="text-xl font-black text-green-600 mt-1">0</h3>
+                </div>
+                <div class="stat-card shadow-sm border-l-4 border-l-yellow-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
+                    <h3 id="stat-pending" class="text-xl font-black text-yellow-600 mt-1">0</h3>
+                </div>
+                <div class="stat-card shadow-sm border-l-4 border-l-red-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Failed</p>
+                    <h3 id="stat-failed" class="text-xl font-black text-red-600 mt-1">0</h3>
+                </div>
+            </div>
+
+            <!-- TABLE CARD -->
+            <div class="table-container shadow-sm overflow-hidden">
+                <div class="table-responsive no-scrollbar">
+                    <table id="tableTransactions" class="table table-hover w-100 align-middle">
+                        <thead>
+                            <tr>
+                                <th>WAKTU</th>
+                                <th>ORDER ID</th>
+                                <th>LAYANAN</th>
+                                <th>TARGET</th>
+                                <th>WHATSAPP</th>
+                                <th>STATUS</th>
+                                <th>DETAIL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600 font-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // 1. Load Stats
+        async function loadStats() {
+            const res = await fetch('/api/admin/transactions/stats');
+            const json = await res.json();
+            if(json.status) {
+                $('#stat-total').text(json.data.total);
+                $('#stat-success').text(json.data.success);
+                $('#stat-pending').text(json.data.pending);
+                $('#stat-failed').text(json.data.failed);
+            }
+        }
+
+        // 2. Init DataTable (Server-Side)
+        $(document).ready(function() {
+            loadStats();
+            $('#tableTransactions').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": { "url": "/api/admin/transactions/list", "type": "GET" },
+                "pageLength": 10,
+                "order": [[0, "desc"]],
+                "columns": [
+                    { 
+                        "data": "created_at",
+                        "render": d => {
+                            const dt = new Date(d);
+                            return `<span class="text-[11px] leading-none">${dt.toLocaleDateString('id-ID')}<br><span class="text-slate-400">${dt.toLocaleTimeString('id-ID')}</span></span>`;
+                        }
+                    },
+                    { "data": "order_id", "render": d => `<span class="text-blue-600 font-bold font-mono">${d}</span>` },
+                    { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[150px] uppercase text-[11px]">${d}</span>` },
+                    { "data": "target", "render": d => `<span class="font-mono text-slate-800">${d}</span>` },
+                    { "data": "whatsapp", "render": d => `<a href="https://wa.me/${d}" target="_blank" class="text-green-600 no-underline"><i class="fab fa-whatsapp"></i> ${d}</a>` },
+                    { 
+                        "data": "status",
+                        "render": d => {
+                            let color = d === 'success' ? 'bg-green-100 text-green-600' : (d === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600');
+                            return `<span class="px-2 py-1 rounded-lg text-[10px] font-black uppercase ${color}">${d}</span>`;
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": d => `<button onclick='showDetail(${JSON.stringify(d)})' class="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-900 hover:text-white transition-all"><i class="fas fa-eye text-xs"></i></button>`
+                    }
+                ],
+                "language": { "search": "", "searchPlaceholder": "Cari Order ID / WA..." }
+            });
+        });
+
+        // 3. Popup Detail Transaksi
+        function showDetail(tr) {
+            Swal.fire({
+                title: '<span class="text-xs font-black uppercase tracking-widest text-slate-400">Rincian Transaksi</span>',
+                width: '500px',
+                background: '#fff',
+                confirmButtonColor: '#2563eb',
+                html: `
+                    <div class="text-left space-y-3 px-1">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Status Serial Number (SN)</p>
+                            <p class="text-sm font-bold text-blue-600 font-mono break-all">${tr.sn || 'Belum Tersedia'}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Harga Jual</p>
+                                <p class="text-sm font-bold text-slate-800">Rp ${parseInt(tr.amount).toLocaleString()}</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Harga Modal</p>
+                                <p class="text-sm font-bold text-red-600">Rp ${parseInt(tr.base_price).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div class="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-100 flex justify-between items-center">
+                            <div>
+                                <p class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Estimasi Profit</p>
+                                <p class="text-xl font-black">Rp ${Math.round(tr.amount - tr.base_price).toLocaleString()}</p>
+                            </div>
+                            <i class="fas fa-chart-line text-white/20 text-3xl"></i>
+                        </div>
+                    </div>
+                `
+            });
+        }
+    </script>
+</body>
+</html>
