@@ -1,67 +1,74 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Admin - Riwayat Transaksi</title>
+    <title>Admin - Transaksi Realtime</title>
     <%- include('../partials/head') %>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; }
+        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; transition: all 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .table-container { border-radius: 24px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
-        .table { font-size: 13px !important; }
-        .table th { border-top: none !important; font-size: 11px !important; color: #94a3b8; text-transform: uppercase; }
-        .table td { vertical-align: middle !important; padding: 15px 10px !important; white-space: nowrap; }
+        .btn-action { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
     <%- include('../partials/sidebar') %>
 
-    <div id="main-content" class="lg:ml-64 min-h-screen">
+    <div id="main-content" class="lg:ml-64 min-h-screen pb-20">
         <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
                     <i class="fas fa-bars-staggered"></i>
                 </button>
-                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Riwayat Transaksi</h1>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Monitoring Transaksi</h1>
             </div>
+            <!-- Tombol Export Laporan -->
+            <a href="/api/admin/transactions/export" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase no-underline">
+                <i class="fas fa-file-excel mr-1"></i> Export .CSV
+            </a>
         </header>
 
         <main class="p-4 md:p-6">
             
-            <!-- STATS CARDS -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="stat-card shadow-sm border-l-4 border-l-blue-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Order</p>
-                    <h3 id="stat-total" class="text-xl font-black text-slate-800 mt-1">0</h3>
+            <!-- STATS GRID -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="stat-card shadow-sm border-b-4 border-b-blue-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Order</p>
+                    <h3 id="stat-total" class="text-xl font-black text-slate-800 mt-2">0</h3>
                 </div>
-                <div class="stat-card shadow-sm border-l-4 border-l-green-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Success</p>
-                    <h3 id="stat-success" class="text-xl font-black text-green-600 mt-1">0</h3>
+                <div class="stat-card shadow-sm border-b-4 border-b-green-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Success</p>
+                    <h3 id="stat-success" class="text-xl font-black text-green-600 mt-2">0</h3>
                 </div>
-                <div class="stat-card shadow-sm border-l-4 border-l-yellow-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
-                    <h3 id="stat-pending" class="text-xl font-black text-yellow-600 mt-1">0</h3>
+                <div class="stat-card shadow-sm border-b-4 border-b-red-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Failed</p>
+                    <h3 id="stat-failed" class="text-xl font-black text-red-600 mt-2">0</h3>
                 </div>
-                <div class="stat-card shadow-sm border-l-4 border-l-red-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Failed</p>
-                    <h3 id="stat-failed" class="text-xl font-black text-red-600 mt-1">0</h3>
+                <div class="stat-card shadow-sm border-b-4 border-b-yellow-500">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Pending</p>
+                    <h3 id="stat-pending" class="text-xl font-black text-yellow-500 mt-2">0</h3>
+                </div>
+                <!-- CARD PROFIT HARI INI (BARU) -->
+                <div class="stat-card shadow-sm border-b-4 border-b-blue-600 bg-blue-50/30">
+                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest leading-none">Profit Hari Ini</p>
+                    <h3 id="stat-profit" class="text-xl font-black text-blue-700 mt-2">Rp 0</h3>
                 </div>
             </div>
 
-            <!-- TABLE CARD -->
+            <!-- TABLE -->
             <div class="table-container shadow-sm overflow-hidden">
                 <div class="table-responsive no-scrollbar">
-                    <table id="tableTransactions" class="table table-hover w-100 align-middle">
+                    <table id="tableTransactions" class="table table-hover align-middle w-100">
                         <thead>
-                            <tr>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
                                 <th>WAKTU</th>
                                 <th>ORDER ID</th>
                                 <th>LAYANAN</th>
                                 <th>TARGET</th>
-                                <th>WHATSAPP</th>
                                 <th>STATUS</th>
-                                <th>DETAIL</th>
+                                <th>AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="text-slate-600 font-semibold"></tbody>
@@ -77,7 +84,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // 1. Load Stats
         async function loadStats() {
             const res = await fetch('/api/admin/transactions/stats');
             const json = await res.json();
@@ -86,13 +92,14 @@
                 $('#stat-success').text(json.data.success);
                 $('#stat-pending').text(json.data.pending);
                 $('#stat-failed').text(json.data.failed);
+                $('#stat-profit').text('Rp ' + Math.round(json.data.profit_today).toLocaleString());
             }
         }
 
-        // 2. Init DataTable (Server-Side)
         $(document).ready(function() {
             loadStats();
-            $('#tableTransactions').DataTable({
+            
+            const table = $('#tableTransactions').DataTable({
                 "processing": true,
                 "serverSide": true,
                 "ajax": { "url": "/api/admin/transactions/list", "type": "GET" },
@@ -103,61 +110,97 @@
                         "data": "created_at",
                         "render": d => {
                             const dt = new Date(d);
-                            return `<span class="text-[11px] leading-none">${dt.toLocaleDateString('id-ID')}<br><span class="text-slate-400">${dt.toLocaleTimeString('id-ID')}</span></span>`;
+                            return `<div class="text-[10px] leading-tight text-slate-400">${dt.toLocaleDateString()}<br><span class="text-slate-800 font-bold">${dt.toLocaleTimeString()}</span></div>`;
                         }
                     },
-                    { "data": "order_id", "render": d => `<span class="text-blue-600 font-bold font-mono">${d}</span>` },
-                    { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[150px] uppercase text-[11px]">${d}</span>` },
-                    { "data": "target", "render": d => `<span class="font-mono text-slate-800">${d}</span>` },
-                    { "data": "whatsapp", "render": d => `<a href="https://wa.me/${d}" target="_blank" class="text-green-600 no-underline"><i class="fab fa-whatsapp"></i> ${d}</a>` },
+                    { "data": "order_id", "render": d => `<span class="text-blue-600 font-bold font-mono text-[11px]">${d}</span>` },
+                    { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[120px] text-[10px] uppercase">${d}</span>` },
+                    { "data": "target", "render": d => `<span class="font-mono text-slate-800 text-[11px]">${d}</span>` },
                     { 
                         "data": "status",
                         "render": d => {
                             let color = d === 'success' ? 'bg-green-100 text-green-600' : (d === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600');
-                            return `<span class="px-2 py-1 rounded-lg text-[10px] font-black uppercase ${color}">${d}</span>`;
+                            return `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${color}">${d}</span>`;
                         }
                     },
                     {
                         "data": null,
-                        "render": d => `<button onclick='showDetail(${JSON.stringify(d)})' class="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-900 hover:text-white transition-all"><i class="fas fa-eye text-xs"></i></button>`
+                        "render": d => `
+                            <div class="flex gap-1">
+                                <button onclick='showDetail(${JSON.stringify(d)})' class="btn-action bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white"><i class="fas fa-eye text-[10px]"></i></button>
+                                <button onclick='checkManual("${d.deposit_id}", this)' class="btn-action bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" title="Cek Manual"><i class="fas fa-bolt text-[10px]"></i></button>
+                            </div>`
                     }
-                ],
-                "language": { "search": "", "searchPlaceholder": "Cari Order ID / WA..." }
+                ]
             });
+
+            // 🔄 AUTO REFRESH TIAP 30 DETIK (LIVE VIEW)
+            setInterval(() => {
+                loadStats();
+                table.ajax.reload(null, false); // Reload tanpa reset posisi paging
+                console.log("Dashboard Auto-Updated");
+            }, 30000);
         });
 
-        // 3. Popup Detail Transaksi
+        // ⚡ FUNGSI CEK MANUAL (FORCE REFRESH)
+        async function checkManual(id, btn) {
+            const $btn = $(btn);
+            $btn.prop('disabled', true).find('i').addClass('fa-spin');
+            
+            try {
+                const res = await fetch('/api/admin/transactions/check-manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deposit_id: id })
+                });
+                const data = await res.json();
+                
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                Toast.fire({ icon: 'info', title: 'Pengecekan Selesai' });
+                
+                $('#tableTransactions').DataTable().ajax.reload(null, false);
+                loadStats();
+            } catch (e) {
+                Swal.fire('Error', 'Gagal cek manual', 'error');
+            } finally {
+                $btn.prop('disabled', false).find('i').removeClass('fa-spin');
+            }
+        }
+
         function showDetail(tr) {
             Swal.fire({
-                title: '<span class="text-xs font-black uppercase tracking-widest text-slate-400">Rincian Transaksi</span>',
+                title: '<span class="text-xs font-black uppercase text-slate-400">Detail Transaksi</span>',
                 width: '500px',
-                background: '#fff',
-                confirmButtonColor: '#2563eb',
+                confirmButtonColor: '#0f172a',
                 html: `
-                    <div class="text-left space-y-3 px-1">
+                    <div class="text-left space-y-3">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Status Serial Number (SN)</p>
-                            <p class="text-sm font-bold text-blue-600 font-mono break-all">${tr.sn || 'Belum Tersedia'}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase">Serial Number (SN)</p>
+                            <p class="text-sm font-bold text-blue-600 font-mono break-all">${tr.sn || 'No SN'}</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase">Data WhatsApp</p>
+                            <p class="text-sm font-bold text-slate-800">${tr.whatsapp}</p>
+                            <a href="https://wa.me/${tr.whatsapp}" target="_blank" class="text-[10px] text-green-600 font-bold uppercase no-underline">Hubungi Pembeli</a>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <p class="text-[9px] font-black text-slate-400 uppercase">Harga Jual</p>
-                                <p class="text-sm font-bold text-slate-800">Rp ${parseInt(tr.amount).toLocaleString()}</p>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Harga User</p>
+                                <p class="text-sm font-bold text-slate-800">Rp ${Math.round(tr.amount).toLocaleString()}</p>
                             </div>
                             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <p class="text-[9px] font-black text-slate-400 uppercase">Harga Modal</p>
-                                <p class="text-sm font-bold text-red-600">Rp ${parseInt(tr.base_price).toLocaleString()}</p>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Modal Atlantic</p>
+                                <p class="text-sm font-bold text-red-600">Rp ${Math.round(tr.base_price).toLocaleString()}</p>
                             </div>
                         </div>
-                        <div class="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-100 flex justify-between items-center">
+                        <div class="p-4 bg-blue-600 rounded-3xl text-white flex justify-between items-center shadow-lg">
                             <div>
-                                <p class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Estimasi Profit</p>
-                                <p class="text-xl font-black">Rp ${Math.round(tr.amount - tr.base_price).toLocaleString()}</p>
+                                <p class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Cuan Bersih</p>
+                                <p class="text-xl font-black">Rp ${Math.round(tr.amount * 0.984 - 200 - tr.base_price).toLocaleString()}</p>
                             </div>
-                            <i class="fas fa-chart-line text-white/20 text-3xl"></i>
+                            <i class="fas fa-wallet text-3xl opacity-20"></i>
                         </div>
-                    </div>
-                `
+                    </div>`
             });
         }
     </script>
