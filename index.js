@@ -1081,6 +1081,7 @@ app.post('/api/check-status', async (req, res) => {
             { headers: requestHeaders }
         );
         let status = statusRes.data.data.status;
+        /*
 
         // Jika masih processing, coba paksa instant agar jadi success
         if (status === 'processing') {
@@ -1093,6 +1094,7 @@ app.post('/api/check-status', async (req, res) => {
                 status = 'success';
             } catch (e) {}
         }
+        */
 
         if (status === 'success') {
             const currentTr = await Transaction.findOne({ deposit_id });
@@ -1151,7 +1153,7 @@ app.post('/api/check-status', async (req, res) => {
 
                     const trxData = trxStatusRes.data?.data;
 
-                    console.log(`[DELIVERY STATUS] trxId: ${trxId} | status: ${trxData?.status} | sn: ${trxData?.sn}`);
+                    // console.log(`[DELIVERY STATUS] trxId: ${trxId} | status: ${trxData?.status} | sn: ${trxData?.sn}`);
 
                     if (trxData?.status === 'success') {
                         deliveryState = 'success';
@@ -1163,7 +1165,7 @@ app.post('/api/check-status', async (req, res) => {
                         deliveryState = 'pending_delivery';
                     }
                 } catch (trxErr) {
-                    console.error(`[DELIVERY STATUS] Gagal cek status pengiriman trxId: ${trxId} |`, trxErr.message);
+                    console.error(`[STATUS] Gagal cek status pengiriman trxId: ${trxId} |`, trxErr.message);
                 }
 
                 // ==========================================
