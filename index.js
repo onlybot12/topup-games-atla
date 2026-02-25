@@ -212,6 +212,9 @@ app.get('/admin/brand', isAdmin, (req, res) => res.render('admin/brand-manage', 
 app.get('/admin/banner', isAdmin, (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
 app.get('/admin/flash-sale', isAdmin, (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
 app.get('/admin/vendor', isAdmin, (req, res) => res.render('admin/vendor', { currentPage: 'vendor' }));
+app.get('/admin/transaksi', isAdmin, (req, res) => {
+    res.render('admin/transaksi', { currentPage: 'transaksi' });
+});
 app.get('/admin/dashboard', isAdmin, async (req, res) => {
     try {
         const now = new Date();
@@ -343,6 +346,68 @@ app.post('/api/admin/popups', isAdmin, async (req, res) => {
 app.delete('/api/admin/popups/:id', isAdmin, async (req, res) => {
     await Popup.findByIdAndDelete(req.params.id);
     res.json({ status: true });
+});
+
+
+
+
+// --- API: STATISTIK TRANSAKSI (CARD ATAS) ---
+app.get('/api/admin/transactions/stats', isAdmin, async (req, res) => {
+    try {
+        const stats = await Transaction.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    total: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        const data = { total: 0, success: 0, pending: 0, failed: 0 };
+        stats.forEach(s => {
+            if(s._id === 'success') data.success = s.total;
+            else if(s._id === 'pending') data.pending = s.total;
+            else if(s._id === 'failed') data.failed = s.total;
+            data.total += s.total;
+        });
+        
+        res.json({ status: true, data });
+    } catch (e) { res.status(500).json({ status: false }); }
+});
+
+// --- API: LIST TRANSAKSI (SERVER-SIDE DATATABLES) ---
+app.get('/api/admin/transactions/list', isAdmin, async (req, res) => {
+    try {
+        let { draw, start, length, search } = req.query;
+        start = parseInt(start) || 0;
+        length = parseInt(length) || 10;
+        let query = {};
+
+        if (search && search.value) {
+            query = {
+                $or: [
+                    { order_id: { $regex: search.value, $options: 'i' } },
+                    { whatsapp: { $regex: search.value, $options: 'i' } },
+                    { target: { $regex: search.value, $options: 'i' } },
+                    { item_name: { $regex: search.value, $options: 'i' } }
+                ]
+            };
+        }
+
+        const totalRecords = await Transaction.countDocuments();
+        const filteredRecords = await Transaction.countDocuments(query);
+        const data = await Transaction.find(query)
+            .sort({ created_at: -1 })
+            .skip(start)
+            .limit(length);
+
+        res.json({
+            draw: parseInt(draw),
+            recordsTotal: totalRecords,
+            recordsFiltered: filteredRecords,
+            data: data
+        });
+    } catch (e) { res.status(500).json({ status: false }); }
 });
 
 
