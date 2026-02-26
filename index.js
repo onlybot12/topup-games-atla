@@ -451,22 +451,29 @@ app.get('/api/admin/transactions/export', isAdmin, async (req, res) => {
 });
 
 // --- API: LIST TRANSAKSI (SERVER-SIDE DATATABLES) ---
+
+// --- API: LIST TRANSAKSI (SERVER-SIDE DENGAN FILTER STATUS) ---
 app.get('/api/admin/transactions/list', isAdmin, async (req, res) => {
     try {
-        let { draw, start, length, search } = req.query;
+        let { draw, start, length, search, status_filter } = req.query; // Ambil status_filter
         start = parseInt(start) || 0;
         length = parseInt(length) || 10;
+        
         let query = {};
 
+        // 1. Logika Pencarian (Search Bar)
         if (search && search.value) {
-            query = {
-                $or: [
-                    { order_id: { $regex: search.value, $options: 'i' } },
-                    { whatsapp: { $regex: search.value, $options: 'i' } },
-                    { target: { $regex: search.value, $options: 'i' } },
-                    { item_name: { $regex: search.value, $options: 'i' } }
-                ]
-            };
+            query.$or = [
+                { order_id: { $regex: search.value, $options: 'i' } },
+                { whatsapp: { $regex: search.value, $options: 'i' } },
+                { target: { $regex: search.value, $options: 'i' } },
+                { item_name: { $regex: search.value, $options: 'i' } }
+            ];
+        }
+
+        // 2. Logika Filter Tab (Status)
+        if (status_filter && status_filter !== 'all') {
+            query.status = status_filter;
         }
 
         const totalRecords = await Transaction.countDocuments();
@@ -484,7 +491,6 @@ app.get('/api/admin/transactions/list', isAdmin, async (req, res) => {
         });
     } catch (e) { res.status(500).json({ status: false }); }
 });
-
 
 
 
