@@ -20,6 +20,7 @@ const transactionSchema = new mongoose.Schema({
     target: String,
     email: String,
     whatsapp: String,
+    vendor_id: { type: String, default: "-" }, 
     status: { 
         type: String, 
         default: 'pending', 
