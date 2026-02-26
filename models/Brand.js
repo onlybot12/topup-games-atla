@@ -7,11 +7,7 @@ const BrandSchema = new mongoose.Schema({
     icon_url: { type: String, required: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     is_popular: { type: Boolean, default: false },
-    
-    // FIELD: Untuk menyimpan urutan drag & drop
     index: { type: Number, default: 0 }, 
-
-    // FIELD BARU: Untuk kode validasi nickname (Contoh: 'freefire', 'mobilelegends')
     validation_code: { type: String, default: '' },
 
     form_config: {
@@ -23,8 +19,6 @@ const BrandSchema = new mongoose.Schema({
     },
     services: [{ type: String }] 
 });
-
-// Menambahkan index agar pencarian berdasarkan slug dan urutan index lebih cepat
 BrandSchema.index({ slug: 1 });
 BrandSchema.index({ index: 1 });
 
