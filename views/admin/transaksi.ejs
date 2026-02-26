@@ -91,6 +91,7 @@
                             <tr class="text-[10px] font-black text-slate-400 uppercase">
                                 <th>WAKTU</th>
                                 <th>ORDER ID</th>
+                                <th>ID VENDOR</th> <!-- KOLOM BARU -->
                                 <th>LAYANAN</th>
                                 <th>TARGET</th>
                                 <th>WA</th>
@@ -111,7 +112,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // AMBIL DATA CONFIG DARI EJS UNTUK KALKULASI JS
         const taxPercent = parseFloat("<%= config.tax_percent %>") || 1.6;
         const vendorFixed = parseInt("<%= config.vendor_fee_fixed %>") || 200;
         const multiplier = (100 - taxPercent) / 100;
@@ -145,11 +145,12 @@
                 "columns": [
                     { "data": "created_at", "render": d => { const dt = new Date(d); return `<div class="text-[10px] leading-tight text-slate-400">${dt.toLocaleDateString()}<br><span class="text-slate-800 font-bold">${dt.toLocaleTimeString()}</span></div>`; } },
                     { "data": "order_id", "render": d => `<span class="text-blue-600 font-bold font-mono text-[11px]">${d}</span>` },
+                    { "data": "vendor_id", "render": d => `<span class="text-slate-400 font-mono text-[10px]">${d || '-'}</span>` }, // DATA VENDOR ID
                     { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[100px] text-[10px] uppercase">${d}</span>` },
                     { "data": "target", "render": d => `<span class="font-mono text-slate-800 text-[11px]">${d}</span>` },
                     { "data": "whatsapp", "render": d => `<a href="https://wa.me/${d}" target="_blank" class="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center no-underline"><i class="fab fa-whatsapp text-sm"></i></a>` },
                     { "data": "status", "render": d => { let color = d === 'success' ? 'bg-green-100 text-green-600' : (d === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'); return `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${color}">${d}</span>`; } },
-                    { "data": null, "render": d => `<div class="flex gap-1"><button onclick='showDetail(${JSON.stringify(d)})' class="btn-action bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white"><i class="fas fa-eye text-[10px]"></i></button><button onclick='checkManual("${d.deposit_id}", this)' class="btn-action bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"><i class="fas fa-bolt text-[10px]"></i></button></div>` }
+                    { "data": null, "render": d => `<div class="flex gap-1"><button onclick='showDetail(${JSON.stringify(d)})' class="btn-action bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white"><i class="fas fa-eye text-[10px]"></i></button><button onclick='checkManual("${d.deposit_id}", this)' class="btn-action bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" title="Cek Manual"><i class="fas fa-bolt text-[10px]"></i></button></div>` }
                 ],
                 "language": { "search": "", "searchPlaceholder": "Cari Order ID..." }
             });
@@ -180,10 +181,8 @@
         }
 
         function showDetail(tr) {
-            // KALKULASI DINAMIS BERDASARKAN CONFIG DATABASE
             const terimaBersih = Math.round((tr.amount * multiplier) - vendorFixed);
             const untungBersih = terimaBersih - tr.base_price;
-
             Swal.fire({
                 title: '<span class="text-xs font-black uppercase text-slate-400">Detail Transaksi</span>',
                 width: '550px',
@@ -194,18 +193,14 @@
                             <p class="text-[9px] font-black text-slate-400 uppercase mb-1">SN / API Response</p>
                             <p class="text-sm font-bold text-blue-600 break-all font-mono">${tr.sn || 'Processing...'}</p>
                         </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border">
-                            <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Target / ID Game</p>
-                            <p class="text-sm font-bold font-mono">${tr.target}</p>
-                        </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-slate-50 p-4 rounded-2xl border">
-                                <p class="text-[9px] font-black text-slate-400 uppercase">Bayar User</p>
-                                <p class="text-sm font-bold">Rp ${Math.round(tr.amount).toLocaleString()}</p>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">ID Vendor (Atlantic)</p>
+                                <p class="text-xs font-bold font-mono">${tr.vendor_id || '-'}</p>
                             </div>
                             <div class="bg-slate-50 p-4 rounded-2xl border">
-                                <p class="text-[9px] font-black text-slate-400 uppercase text-red-500">Pajak Atlantic (${taxPercent}% + ${vendorFixed})</p>
-                                <p class="text-sm font-bold text-red-500">- Rp ${(Math.round(tr.amount) - terimaBersih).toLocaleString()}</p>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Voucher</p>
+                                <p class="text-sm font-bold text-orange-500">${tr.meta && tr.meta.applied_voucher ? tr.meta.applied_voucher : '-'}</p>
                             </div>
                         </div>
                         <div class="p-5 bg-blue-600 rounded-3xl text-white flex justify-between items-center shadow-lg">
