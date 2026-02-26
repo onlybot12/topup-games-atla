@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const ConfigSchema = new mongoose.Schema({
-    // Kunci unik untuk mencari pengaturan (biasanya di-isi: 'qris_settings')
     key: { type: String, unique: true, required: true },
     admin_fee: { type: Number, default: 700 }, 
     tax_percent: { type: Number, default: 1.6 }, 
