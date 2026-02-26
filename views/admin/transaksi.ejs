@@ -6,46 +6,43 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        
+        #sidebar { transition: transform 0.3s ease-in-out; }
+        @media (max-width: 1023px) {
+            #sidebar { transform: translateX(-100%); width: 280px; position: fixed; height: 100%; z-index: 1000; }
+            #sidebar.active { transform: translateX(0); }
+            #main-content { margin-left: 0 !important; }
+        }
+
         .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; transition: all 0.3s; }
         .table-container { border-radius: 24px; background: white; padding: 15px; border: 1px solid #e2e8f0; }
-        .btn-action { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        
-        /* Style Tombol Refresh */
-        .btn-refresh {
-            background-color: #2563eb;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            border: none;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-        .btn-refresh:active { transform: scale(0.9); }
+        .table { font-size: 13px !important; }
+        .table th { border-top: none !important; font-size: 11px !important; color: #94a3b8; text-transform: uppercase; font-weight: 800; }
+        .table td { vertical-align: middle !important; padding: 12px 8px !important; white-space: nowrap; }
+
+        .filter-tab { padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: all 0.3s; border: none; }
+        .filter-tab.active { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+
+        .btn-action { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: 0.2s; border:none; }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
     <%- include('../partials/sidebar') %>
 
-    <div id="main-content" class="lg:ml-64 min-h-screen pb-20">
+    <div id="main-content" class="lg:ml-64 min-h-screen pb-24">
         <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600">
+                <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border text-slate-600 active:scale-95 transition-all">
                     <i class="fas fa-bars-staggered"></i>
                 </button>
-                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Data Transaksi</h1>
+                <h1 class="font-bold text-slate-800 text-sm uppercase tracking-tight">Monitoring Transaksi</h1>
             </div>
             
             <div class="flex items-center gap-2">
-                <!-- TOMBOL REFRESH MANUAL (BARU) -->
-                <button onclick="refreshData()" id="btnRefresh" class="btn-refresh">
-                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                <button onclick="refreshData()" id="btnRefresh" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase border-none shadow-md">
+                    <i class="fas fa-sync-alt"></i>
                 </button>
-
-                <!-- Tombol Export -->
                 <a href="/api/admin/transactions/export" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase no-underline shadow-md">
                     <i class="fas fa-file-excel mr-1"></i> Export
                 </a>
@@ -53,23 +50,22 @@
         </header>
 
         <main class="p-4 md:p-6">
-            
-            <!-- STATS GRID -->
+            <!-- STATS CARDS -->
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <div class="stat-card shadow-sm border-b-4 border-b-blue-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Order</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Order</p>
                     <h3 id="stat-total" class="text-xl font-black text-slate-800 mt-2">0</h3>
                 </div>
                 <div class="stat-card shadow-sm border-b-4 border-b-green-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Success</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Success</p>
                     <h3 id="stat-success" class="text-xl font-black text-green-600 mt-2">0</h3>
                 </div>
                 <div class="stat-card shadow-sm border-b-4 border-b-red-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Failed</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Failed</p>
                     <h3 id="stat-failed" class="text-xl font-black text-red-600 mt-2">0</h3>
                 </div>
                 <div class="stat-card shadow-sm border-b-4 border-b-yellow-500">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Pending</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
                     <h3 id="stat-pending" class="text-xl font-black text-yellow-500 mt-2">0</h3>
                 </div>
                 <div class="stat-card shadow-sm border-b-4 border-b-blue-600 bg-blue-50/30">
@@ -78,7 +74,16 @@
                 </div>
             </div>
 
-            <!-- TABLE -->
+            <!-- TAB FILTER -->
+            <div class="flex gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
+                <button onclick="applyStatusFilter('all', this)" class="filter-tab active">Semua</button>
+                <button onclick="applyStatusFilter('success', this)" class="filter-tab">Success</button>
+                <button onclick="applyStatusFilter('pending', this)" class="filter-tab">Pending</button>
+                <button onclick="applyStatusFilter('failed', this)" class="filter-tab">Failed</button>
+                <button onclick="applyStatusFilter('cancelled', this)" class="filter-tab">Cancel</button>
+            </div>
+
+            <!-- TABLE CARD -->
             <div class="table-container shadow-sm overflow-hidden">
                 <div class="table-responsive no-scrollbar">
                     <table id="tableTransactions" class="table table-hover align-middle w-100">
@@ -88,6 +93,7 @@
                                 <th>ORDER ID</th>
                                 <th>LAYANAN</th>
                                 <th>TARGET</th>
+                                <th>WA</th>
                                 <th>STATUS</th>
                                 <th>AKSI</th>
                             </tr>
@@ -105,110 +111,106 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // 1. Fungsi Load Statistik
+        // AMBIL DATA CONFIG DARI EJS UNTUK KALKULASI JS
+        const taxPercent = parseFloat("<%= config.tax_percent %>") || 1.6;
+        const vendorFixed = parseInt("<%= config.vendor_fee_fixed %>") || 200;
+        const multiplier = (100 - taxPercent) / 100;
+
+        let currentStatusFilter = 'all';
+
         async function loadStats() {
-            try {
-                const res = await fetch('/api/admin/transactions/stats');
-                const json = await res.json();
-                if(json.status) {
-                    $('#stat-total').text(json.data.total);
-                    $('#stat-success').text(json.data.success);
-                    $('#stat-pending').text(json.data.pending);
-                    $('#stat-failed').text(json.data.failed);
-                    $('#stat-profit').text('Rp ' + Math.round(json.data.profit_today).toLocaleString());
-                }
-            } catch (e) { console.error("Gagal load statistik"); }
-        }
-
-        // 2. Fungsi Refresh Data Manual
-        async function refreshData() {
-            const btn = $('#btnRefresh');
-            // Tambahkan animasi putar pada ikon
-            btn.prop('disabled', true).html('<i class="fas fa-sync-alt fa-spin mr-1"></i> Loading...');
-
-            await loadStats();
-            $('#tableTransactions').DataTable().ajax.reload(null, false);
-
-            // Beri sedikit jeda agar tidak terlalu cepat
-            setTimeout(() => {
-                btn.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i> Refresh');
-            }, 500);
+            const res = await fetch('/api/admin/transactions/stats');
+            const json = await res.json();
+            if(json.status) {
+                $('#stat-total').text(json.data.total);
+                $('#stat-success').text(json.data.success);
+                $('#stat-pending').text(json.data.pending);
+                $('#stat-failed').text(json.data.failed);
+                $('#stat-profit').text('Rp ' + Math.round(json.data.profit_today).toLocaleString());
+            }
         }
 
         $(document).ready(function() {
-            // Load data awal sekali saja
             loadStats();
-            
-            $('#tableTransactions').DataTable({
+            const table = $('#tableTransactions').DataTable({
                 "processing": true,
                 "serverSide": true,
-                "ajax": { "url": "/api/admin/transactions/list", "type": "GET" },
+                "ajax": { 
+                    "url": "/api/admin/transactions/list", 
+                    "type": "GET",
+                    "data": function(d) { d.status_filter = currentStatusFilter; }
+                },
                 "pageLength": 10,
                 "order": [[0, "desc"]],
                 "columns": [
-                    { 
-                        "data": "created_at",
-                        "render": d => {
-                            const dt = new Date(d);
-                            return `<div class="text-[10px] leading-tight text-slate-400">${dt.toLocaleDateString()}<br><span class="text-slate-800 font-bold">${dt.toLocaleTimeString()}</span></div>`;
-                        }
-                    },
+                    { "data": "created_at", "render": d => { const dt = new Date(d); return `<div class="text-[10px] leading-tight text-slate-400">${dt.toLocaleDateString()}<br><span class="text-slate-800 font-bold">${dt.toLocaleTimeString()}</span></div>`; } },
                     { "data": "order_id", "render": d => `<span class="text-blue-600 font-bold font-mono text-[11px]">${d}</span>` },
-                    { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[120px] text-[10px] uppercase">${d}</span>` },
+                    { "data": "item_name", "render": d => `<span class="truncate inline-block max-w-[100px] text-[10px] uppercase">${d}</span>` },
                     { "data": "target", "render": d => `<span class="font-mono text-slate-800 text-[11px]">${d}</span>` },
-                    { 
-                        "data": "status",
-                        "render": d => {
-                            let color = d === 'success' ? 'bg-green-100 text-green-600' : (d === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600');
-                            return `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${color}">${d}</span>`;
-                        }
-                    },
-                    {
-                        "data": null,
-                        "render": d => `
-                            <div class="flex gap-1">
-                                <button onclick='showDetail(${JSON.stringify(d)})' class="btn-action bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white"><i class="fas fa-eye text-[10px]"></i></button>
-                                <button onclick='checkManual("${d.deposit_id}", this)' class="btn-action bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" title="Cek Manual"><i class="fas fa-bolt text-[10px]"></i></button>
-                            </div>`
-                    }
+                    { "data": "whatsapp", "render": d => `<a href="https://wa.me/${d}" target="_blank" class="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center no-underline"><i class="fab fa-whatsapp text-sm"></i></a>` },
+                    { "data": "status", "render": d => { let color = d === 'success' ? 'bg-green-100 text-green-600' : (d === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'); return `<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${color}">${d}</span>`; } },
+                    { "data": null, "render": d => `<div class="flex gap-1"><button onclick='showDetail(${JSON.stringify(d)})' class="btn-action bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white"><i class="fas fa-eye text-[10px]"></i></button><button onclick='checkManual("${d.deposit_id}", this)' class="btn-action bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"><i class="fas fa-bolt text-[10px]"></i></button></div>` }
                 ],
-                "language": { "search": "", "searchPlaceholder": "Cari Order ID / WA..." }
+                "language": { "search": "", "searchPlaceholder": "Cari Order ID..." }
             });
         });
 
+        function applyStatusFilter(status, el) {
+            $('.filter-tab').removeClass('active'); $(el).addClass('active');
+            currentStatusFilter = status;
+            $('#tableTransactions').DataTable().ajax.reload();
+        }
+
+        async function refreshData() {
+            const btn = $('#btnRefresh');
+            btn.prop('disabled', true).find('i').addClass('fa-spin');
+            await loadStats();
+            $('#tableTransactions').DataTable().ajax.reload(null, false);
+            setTimeout(() => { btn.prop('disabled', false).find('i').removeClass('fa-spin'); }, 800);
+        }
+
         async function checkManual(id, btn) {
-            const $btn = $(btn);
-            $btn.prop('disabled', true).find('i').addClass('fa-spin');
+            const $btn = $(btn); $btn.prop('disabled', true).find('i').addClass('fa-spin');
             try {
-                await fetch('/api/admin/transactions/check-manual', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deposit_id: id })
-                });
+                await fetch('/api/admin/transactions/check-manual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deposit_id: id }) });
                 $('#tableTransactions').DataTable().ajax.reload(null, false);
                 loadStats();
-            } catch (e) { alert("Error Server"); } 
+            } catch (e) { alert("Error"); } 
             finally { $btn.prop('disabled', false).find('i').removeClass('fa-spin'); }
         }
 
         function showDetail(tr) {
+            // KALKULASI DINAMIS BERDASARKAN CONFIG DATABASE
+            const terimaBersih = Math.round((tr.amount * multiplier) - vendorFixed);
+            const untungBersih = terimaBersih - tr.base_price;
+
             Swal.fire({
                 title: '<span class="text-xs font-black uppercase text-slate-400">Detail Transaksi</span>',
-                width: '500px',
+                width: '550px',
                 confirmButtonColor: '#0f172a',
                 html: `
-                    <div class="text-left space-y-3 px-1">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <p class="text-[9px] font-black text-slate-400 uppercase">Serial Number (SN)</p>
-                            <p class="text-sm font-bold text-blue-600 font-mono break-all">${tr.sn || 'No SN'}</p>
+                    <div class="text-left space-y-3 px-1 no-scrollbar" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="bg-slate-50 p-4 rounded-2xl border">
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-1">SN / API Response</p>
+                            <p class="text-sm font-bold text-blue-600 break-all font-mono">${tr.sn || 'Processing...'}</p>
                         </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <p class="text-[9px] font-black text-slate-400 uppercase">WhatsApp Buyer</p>
-                            <p class="text-sm font-bold text-slate-800">${tr.whatsapp}</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border">
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Target / ID Game</p>
+                            <p class="text-sm font-bold font-mono">${tr.target}</p>
                         </div>
-                        <div class="bg-blue-600 p-4 rounded-3xl text-white shadow-lg">
-                            <p class="text-[9px] font-black text-blue-200 uppercase tracking-widest leading-none">Keuntungan Bersih</p>
-                            <p class="text-xl font-black mt-1">Rp ${Math.round(tr.amount * 0.984 - 200 - tr.base_price).toLocaleString()}</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border">
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Bayar User</p>
+                                <p class="text-sm font-bold">Rp ${Math.round(tr.amount).toLocaleString()}</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border">
+                                <p class="text-[9px] font-black text-slate-400 uppercase text-red-500">Pajak Atlantic (${taxPercent}% + ${vendorFixed})</p>
+                                <p class="text-sm font-bold text-red-500">- Rp ${(Math.round(tr.amount) - terimaBersih).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div class="p-5 bg-blue-600 rounded-3xl text-white flex justify-between items-center shadow-lg">
+                            <div><p class="text-[9px] font-black text-blue-200 uppercase">Untung Bersih (Net)</p><p class="text-2xl font-black">Rp ${untungBersih.toLocaleString()}</p></div>
+                            <i class="fas fa-wallet text-3xl opacity-20"></i>
                         </div>
                     </div>`
             });
