@@ -1060,7 +1060,6 @@ app.post('/api/create-payment', async (req, res) => {
 
 
 
-
 app.post('/api/check-status', async (req, res) => {
     const { deposit_id, meta } = req.body;
     try {
@@ -1109,7 +1108,8 @@ app.post('/api/check-status', async (req, res) => {
                     return res.json({ status: true, state: 'pending_delivery', sn: 'Diproses', message: 'Produk sedang diproses.' });
                 }
 
-                await Transaction.updateOne({ deposit_id }, { $set: { trx_id: trxId } });
+                // --- 🛡️ TAMBAHKAN vendor_id DI SINI AGAR MUNCUL DI DASHBOARD ---
+                await Transaction.updateOne({ deposit_id }, { $set: { trx_id: trxId, vendor_id: trxId } });
 
                 let deliverySN = buyRes.data.data?.sn || null;
                 let deliveryState = 'pending_delivery';
@@ -1205,6 +1205,10 @@ app.post('/api/check-status', async (req, res) => {
         res.status(500).json({ status: false });
     }
 });
+
+
+
+
 
 
 
