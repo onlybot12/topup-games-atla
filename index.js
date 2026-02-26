@@ -958,10 +958,7 @@ app.post('/api/create-payment', async (req, res) => {
 */
 
 app.post('/api/create-payment', async (req, res) => {
-    // 1. Ambil input dari body
     const { service_id, target1, target2, whatsapp, voucher_code, email } = req.body;
-
-    // --- 🛡️ PROTEKSI ANTI XSS & VALIDASI INPUT ---
     const safePattern = /^[a-zA-Z0-9@._\-|() ]+$/;
     const numericPattern = /^[0-9]+$/;
 
@@ -973,7 +970,6 @@ app.post('/api/create-payment', async (req, res) => {
         });
     }
 
-    // --- 📱 VALIDASI & BERSIHKAN NOMOR WHATSAPP ---
     let cleanWA = whatsapp ? whatsapp.replace(/[^0-9]/g, '') : '';
     if (!cleanWA || !numericPattern.test(cleanWA) || cleanWA.length < 9) {
         return res.status(400).json({ 
@@ -985,27 +981,20 @@ app.post('/api/create-payment', async (req, res) => {
     if (cleanWA.startsWith('0')) {
         cleanWA = '62' + cleanWA.slice(1);
     }
-    // ---------------------------------------------
     
     try {
         const service = await Service.findOne({ service_id, is_active: true });
         if (!service) return res.json({ status: false, message: "Layanan Offline" });
-
-        // Cari Brand untuk menentukan format target (ML vs Game Lain)
         const brand = await Brand.findOne({ services: service_id });
-        
-        // --- ⚙️ LOGIKA PARSING TARGET (Gasken!) ---
         let finalTarget = target1; 
         if (target2) {
             if (brand && (brand.name.toLowerCase().includes('mobile legends') || brand.slug.includes('mobile-legends'))) {
-                finalTarget = `${target1}|${target2}`; // Format khusus ML
+                finalTarget = `${target1}|${target2}`; 
             } else {
-                finalTarget = `${target1}${target2}`;  // Format Game Lain (Gabung)
+                finalTarget = `${target1}${target2}`;  
             }
         }
 
-        // --- 💰 KALKULASI BIAYA DINAMIS DARI DATABASE ---
-        // Mengambil: admin_fee (Cuan Anda), tax_percent (MDR 1.6%), vendor_fee_fixed (Rp 200)
         let conf = await Config.findOne({ key: 'qris_settings' }) || { 
             admin_fee: 700, 
             tax_percent: 1.6, 
@@ -1014,8 +1003,6 @@ app.post('/api/create-payment', async (req, res) => {
 
         let sellPrice = service.price_sell;
         let usedVoucher = null;
-
-        // Validasi Voucher
         if (voucher_code) {
             const v = await Voucher.findOne({ code: voucher_code.toUpperCase(), is_active: true });
             if (v && v.used_count < v.quota && sellPrice >= v.min_order) {
@@ -1025,20 +1012,11 @@ app.post('/api/create-payment', async (req, res) => {
             }
         }
 
-        /**
-         * RUMUS SAKTI (REVERSE CALCULATION):
-         * Agar uang yang masuk ke saldo Anda utuh setelah dipotong pajak oleh vendor.
-         * Multiplier: (100 - 1.6) / 100 = 0.984
-         */
         const multiplier = (100 - (conf.tax_percent || 1.6)) / 100;
         const totalUangMasukHarapan = sellPrice + (conf.admin_fee || 700) + (conf.vendor_fee_fixed || 200);
-        
-        // Nominal yang harus di-scan pembeli
         const nominalBayar = Math.ceil(totalUangMasukHarapan / multiplier);
         
         const reff_id = `LAN-${Date.now()}`;
-
-        // Request Deposit ke Atlantic
         const depoRes = await axios.post(`${ATLANTIC_BASE_URL}/deposit/create`,
             qs.stringify({ 
                 api_key: API_KEY, 
@@ -1093,21 +1071,6 @@ app.post('/api/check-status', async (req, res) => {
             { headers: requestHeaders }
         );
         let status = statusRes.data.data.status;
-        /*
-
-        // Jika masih processing, coba paksa instant agar jadi success
-        if (status === 'processing') {
-            try {
-                await axios.post(
-                    `${ATLANTIC_BASE_URL}/deposit/instant`,
-                    qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }),
-                    { headers: requestHeaders }
-                );
-                status = 'success';
-            } catch (e) {}
-        }
-        */
-
         if (status === 'success') {
             const currentTr = await Transaction.findOne({ deposit_id });
 
@@ -1146,7 +1109,6 @@ app.post('/api/check-status', async (req, res) => {
                     return res.json({ status: true, state: 'pending_delivery', sn: 'Diproses', message: 'Produk sedang diproses.' });
                 }
 
-                // Simpan trxId ke DB untuk keperluan polling berikutnya
                 await Transaction.updateOne({ deposit_id }, { $set: { trx_id: trxId } });
 
                 let deliverySN = buyRes.data.data?.sn || null;
@@ -1157,7 +1119,7 @@ app.post('/api/check-status', async (req, res) => {
                         `${ATLANTIC_BASE_URL}/transaksi/status`,
                         qs.stringify({
                             api_key: API_KEY,
-                            id: trxId,       // ✅ ID dari response /transaksi/create
+                            id: trxId,       
                             type: 'prabayar'
                         }),
                         { headers: requestHeaders }
@@ -1165,31 +1127,23 @@ app.post('/api/check-status', async (req, res) => {
 
                     const trxData = trxStatusRes.data?.data;
 
-                    // console.log(`[DELIVERY STATUS] trxId: ${trxId} | status: ${trxData?.status} | sn: ${trxData?.sn}`);
-
                     if (trxData?.status === 'success') {
                         deliveryState = 'success';
                         deliverySN = trxData?.sn || deliverySN;
                     } else if (trxData?.status === 'gagal') {
                         deliveryState = 'failed';
                     } else {
-                        // Status lain: pending, processing, dll
                         deliveryState = 'pending_delivery';
                     }
                 } catch (trxErr) {
                     console.error(`[STATUS] Gagal cek status pengiriman trxId: ${trxId} |`, trxErr.message);
                 }
 
-                // ==========================================
-                // STEP 5: Update DB & kirim response
-                // ==========================================
                 if (deliveryState === 'success') {
                     await Transaction.updateOne(
                         { deposit_id },
                         { $set: { status: 'success', sn: deliverySN, updated_at: new Date() } }
                     );
-
-                    // 📲 Kirim notifikasi WhatsApp
                     try {
                         const conf = await Config.findOne({ key: 'qris_settings' });
                         if (conf && conf.wa_gateway_apikey && conf.wa_gateway_session) {
@@ -1208,8 +1162,6 @@ app.post('/api/check-status', async (req, res) => {
                         console.error("Gagal mengirim notifikasi WA:", waErr.message);
                     }
 
-                    // SN dari trxData.sn hasil /transaksi/status dikirim ke frontend
-                    // Frontend akan tampilkan di snDisplay
                     return res.json({ status: true, state: 'success', sn: deliverySN });
 
                 } else if (deliveryState === 'failed') {
@@ -1220,7 +1172,7 @@ app.post('/api/check-status', async (req, res) => {
                     return res.json({ status: true, state: 'failed', message: 'Pengiriman produk gagal.' });
 
                 } else {
-                    // Masih pending — frontend polling ulang, interval tetap jalan
+                
                     await Transaction.updateOne(
                         { deposit_id },
                         { $set: { status: 'pending_delivery', sn: 'Diproses', updated_at: new Date() } }
@@ -1229,7 +1181,7 @@ app.post('/api/check-status', async (req, res) => {
                 }
 
             } else {
-                // Create gagal bukan karena duplicate
+                
                 await Transaction.updateOne(
                     { deposit_id },
                     { $set: { status: 'failed', updated_at: new Date() } }
@@ -1245,7 +1197,6 @@ app.post('/api/check-status', async (req, res) => {
             return res.json({ status: true, state: 'expired' });
 
         } else {
-            // Status deposit masih pending/waiting dari payment gateway
             return res.json({ status: true, state: status });
         }
 
