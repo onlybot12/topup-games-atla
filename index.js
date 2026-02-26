@@ -212,8 +212,14 @@ app.get('/admin/brand', isAdmin, (req, res) => res.render('admin/brand-manage', 
 app.get('/admin/banner', isAdmin, (req, res) => res.render('admin/banner-manage', { currentPage: 'banner' }));
 app.get('/admin/flash-sale', isAdmin, (req, res) => res.render('admin/flash-sale-manage', { currentPage: 'flashsale' }));
 app.get('/admin/vendor', isAdmin, (req, res) => res.render('admin/vendor', { currentPage: 'vendor' }));
-app.get('/admin/transaksi', isAdmin, (req, res) => {
-    res.render('admin/transaksi', { currentPage: 'transaksi' });
+app.get('/admin/transaksi', isAdmin, async (req, res) => {
+    try {
+        // Ambil config terbaru dari DB
+        const config = await Config.findOne({ key: 'qris_settings' }) || { tax_percent: 1.6, vendor_fee_fixed: 200 };
+        res.render('admin/transaksi', { currentPage: 'transaksi', config: config });
+    } catch (e) {
+        res.status(500).send("Error");
+    }
 });
 app.get('/admin/dashboard', isAdmin, async (req, res) => {
     try {
