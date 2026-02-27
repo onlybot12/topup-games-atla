@@ -18,13 +18,11 @@
         }
         main { flex: 1; }
 
-        /* --- ANIMASI REVEAL --- */
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* --- CARD GAME UTAMA (3 KOLOM HP) --- */
         .brand-card-main { 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
             background: #1e293b;
@@ -40,7 +38,6 @@
             border-radius: 16px;
         }
 
-        /* --- POPULAR SECTION --- */
         .popular-container {
             background-color: #1e293b; 
             border-radius: 24px;
@@ -62,11 +59,10 @@
         .popular-card img {
             width: 52px;
             height: 52px;
-            border-radius: 10px;
+            border-radius: 12px;
             object-fit: cover;
         }
 
-        /* --- TIMER --- */
         .timer-box {
             background: #ef4444;
             color: white;
@@ -85,18 +81,17 @@
         .category-tabs::-webkit-scrollbar { display: none; }
         footer a { text-decoration: none !important; }
 
-        /* --- POPUP MODAL --- */
         #popupModal { transition: opacity 0.4s ease; opacity: 0; pointer-events: none; }
         #popupModal.show { opacity: 1; pointer-events: auto; display: flex !important; }
         .popup-content { transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
         #popupModal.show .popup-content { transform: scale(1); }
+        .swiper-pagination-popup { position: relative !important; bottom: 0 !important; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <%- include('../partials/sidebar-user') %>
 
-    <!-- NAVBAR -->
     <header class="sticky top-0 z-50 glass border-b border-slate-800 px-4 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-white active:scale-75 transition-all">
@@ -108,23 +103,24 @@
                     class="w-full bg-slate-900 border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             
-            <!-- NOMOR 1: LOGO HEADER DARI SETTINGS ADMIN
+            <!-- LOGO HEADER 
             <a href="/" class="flex items-center">
                 <% if (config.logo_url) { %>
-                    <img src="<%= config.logo_url %>" alt="<%= config.shop_name %>" class="h-8 w-auto object-contain">
+                    <img src="<%= config.logo_url %>" alt="<%= config.shop_name %>" class="h-7 w-auto object-contain">
                 <% } else { %>
-                    <span class="font-black text-blue-500 text-xl tracking-tighter uppercase"><%= config.shop_name %></span>
+                    <span class="font-black text-blue-500 text-xl tracking-tighter uppercase italic"><%= config.shop_name.split(' ')[0] %></span>
                 <% } %>
-            </a> --->
+            </a>
+           --->
 
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 mt-6 w-full">
 
-        <!-- 1. BANNER SLIDER -->
+    
         <% if (typeof banners !== 'undefined' && banners.length > 0) { %>
-        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10 mx-auto reveal active">
+        <div class="swiper mainSwiper rounded-[24px] overflow-hidden shadow-2xl mb-10 mx-auto">
             <div class="swiper-wrapper">
                 <% banners.forEach(b => { %>
                 <div class="swiper-slide">
@@ -138,9 +134,8 @@
         </div>
         <% } %>
 
-        <!-- 2. FLASH SALE -->
         <% if (typeof flashSales !== 'undefined' && flashSales.length > 0) { %>
-        <section class="mb-10 reveal">
+        <section class="mb-10">
             <div class="flex items-center justify-between mb-4 px-1">
                 <h3 class="font-bold text-white text-base uppercase flex items-center gap-2 italic">
                     <i class="fas fa-bolt text-yellow-400"></i> <%= config.title_flash_sale %>
@@ -167,10 +162,9 @@
         </section>
         <% } %>
 
-        <!-- 3. POPULER SEKARANG -->
         <% const popularBrands = brands.filter(b => b.is_popular); %>
         <% if (popularBrands.length > 0) { %>
-        <section class="popular-container mb-10 shadow-lg reveal">
+        <section class="popular-container mb-10 shadow-lg">
             <div class="flex items-center gap-3 mb-1">
                 <span class="text-2xl animate-bounce">⚠️</span>
                 <h3 class="font-black text-white uppercase text-xl tracking-tight"><%= config.title_popular %></h3>
@@ -191,8 +185,8 @@
         </section>
         <% } %>
 
-        <!-- 4. DAFTAR GAME (3 KOLOM HP) -->
-        <section class="mb-20 reveal">
+        
+        <section class="mb-20">
             <div class="category-tabs flex gap-2 overflow-x-auto pb-4 mb-6 hide-scrollbar">
                 <button onclick="filterCat('All')" class="cat-btn px-6 py-2.5 rounded-full bg-blue-600 text-white text-[11px] font-black uppercase shadow-lg shadow-blue-500/20">Semua</button>
                 <% [...new Set(brands.map(b => b.category))].forEach(cat => { %>
@@ -214,8 +208,8 @@
 
     </main>
 
-    <!-- FOOTER (STYLE PROFESIONAL - NOMOR 2) -->
-    <footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800 mt-auto">
+    
+    <footer class="bg-[#111827] pt-16 pb-12 px-6 border-t border-slate-800 mt-auto reveal">
         <div class="max-w-7xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-left">
                 
@@ -225,7 +219,7 @@
                         <% if (config.logo_url) { %>
                         <img src="<%= config.logo_url %>" alt="Logo" style="height: 140px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
                         <% } else { %>
-                            <span class="text-2xl font-black text-blue-500 uppercase tracking-tighter"><%= config.shop_name %></span>
+                            <span class="text-2xl font-black text-blue-500 uppercase tracking-tighter italic"><%= config.shop_name.split(' ')[0] %></span>
                         <% } %>
                     </div>
                     <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md font-medium">
@@ -238,42 +232,27 @@
                     </div>
                 </div>
 
-                <!-- Navigasi Links (Text Tegak/Profesional) -->
+                <!-- Navigasi -->
                 <div class="grid grid-cols-2 lg:grid-cols-2 gap-8 lg:col-span-2">
                     <div>
                         <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Peta Situs</h4>
-                        <ul class="space-y-4 text-sm text-gray-300 list-none p-0 m-0">
-                            <li><a href="/" class="hover:text-white transition-all font-medium">Beranda</a></li>
-                            <li><a href="/search" class="hover:text-white transition-all font-medium">Masuk</a></li>
-                            <li><a href="/faq" class="hover:text-white transition-all font-medium">Ulasan</a></li>
-                            <li><a href="#" class="hover:text-white transition-all font-medium opacity-50">API Docs</a></li>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="/" class="hover:text-white no-underline">Beranda</a></li>
+                            <li><a href="/search" class="hover:text-white no-underline">Masuk</a></li>
+                            <li><a href="/faq" class="hover:text-white no-underline">Ulasan</a></li>
                         </ul>
                     </div>
                     <div>
                         <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Dukungan</h4>
-                        <ul class="space-y-4 text-sm text-gray-300 list-none p-0 m-0">
-                            <li><a href="<%= config.wa_link %>" class="hover:text-white transition-all font-medium">Whatsapp</a></li>
-                            <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white transition-all font-medium">Whatsapp CS</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Legalitas</h4>
-                        <ul class="space-y-4 text-sm text-gray-300 list-none p-0 m-0">
-                            <li><a href="/faq" class="hover:text-white transition-all font-medium">Kebijakan Privasi</a></li>
-                            <li><a href="/faq" class="hover:text-white transition-all font-medium">Syarat & Ketentuan</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-orange-500 font-bold uppercase tracking-widest text-[11px] mb-6">Partnership</h4>
-                        <ul class="space-y-4 text-sm text-gray-300 list-none p-0 m-0">
-                            <li><a href="#" class="hover:text-white transition-all font-medium">Reseller</a></li>
-                            <li><a href="#" class="hover:text-white transition-all font-medium">Jasa Web Topup</a></li>
+                        <ul class="space-y-4 text-sm text-gray-400 list-none p-0 m-0">
+                            <li><a href="<%= config.wa_link %>" class="hover:text-white no-underline">Whatsapp</a></li>
+                            <li><a href="https://wa.me/<%= config.wa_cs %>" class="hover:text-white no-underline">Whatsapp CS</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- COPYRIGHT (NOMOR 2 - TEKS SESUAI PERMINTAAN) -->
+            <!-- Copyright -->
             <div class="pt-8 border-t border-slate-800 text-center md:text-left">
                 <p class="text-[11px] text-gray-500 font-medium m-0 tracking-wide">
                     © 2026 <%= config.shop_name %> - Top up Game dan Beli Voucher Game termurah dan terpercaya di Indonesia. All rights reserved.
@@ -293,7 +272,7 @@
     <% if (typeof popups !== 'undefined' && popups.length > 0) { %>
     <div id="popupModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closePopup()"></div>
-        <div class="popup-content relative bg-slate-900 border border-slate-800 rounded-[40px] w-full max-w-sm overflow-hidden shadow-2xl shadow-blue-500/10">
+        <div class="popup-content relative bg-slate-900 border border-slate-800 rounded-[40px] w-full max-w-sm overflow-hidden shadow-2xl">
             <button onclick="closePopup()" class="absolute top-5 right-5 z-[160] w-9 h-9 bg-black/40 text-white rounded-full flex items-center justify-center active:scale-75 transition-all"><i class="fas fa-times text-xs"></i></button>
             <div class="swiper popupSwiper">
                 <div class="swiper-wrapper">
