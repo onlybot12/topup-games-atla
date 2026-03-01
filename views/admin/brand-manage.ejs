@@ -176,7 +176,7 @@
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 onEnd: async function () {
-                    const order = [];
+                    const order =[];
                     // Ambil urutan ID terbaru
                     $('.brand-list-item').each(function() {
                         order.push($(this).data('id'));
@@ -231,6 +231,9 @@
                                     <option value="Games">Games</option>
                                     <option value="Pulsa">Pulsa</option>
                                     <option value="E-Wallet">E-Wallet</option>
+                                    <option value="Akun Premium">Akun Premium</option>
+                                    <option value="Voucher">Voucher</option>
+                                    <option value="Data internet">Data internet</option>
                                 </select>
                             </div>
                             <div>
@@ -304,6 +307,10 @@
                                 <select id="e-cat" class="swal2-input !mt-0 !text-sm">
                                     <option value="Games" ${b.category === 'Games' ? 'selected' : ''}>Games</option>
                                     <option value="Pulsa" ${b.category === 'Pulsa' ? 'selected' : ''}>Pulsa</option>
+                                    <option value="E-Wallet" ${b.category === 'E-Wallet' ? 'selected' : ''}>E-Wallet</option>
+                                    <option value="Akun Premium" ${b.category === 'Akun Premium' ? 'selected' : ''}>Akun Premium</option>
+                                    <option value="Voucher" ${b.category === 'Voucher' ? 'selected' : ''}>Voucher</option>
+                                    <option value="Data internet" ${b.category === 'Data internet' ? 'selected' : ''}>Data internet</option>
                                 </select>
                                 <input id="e-icon" class="swal2-input !mt-0 !text-sm" value="${b.icon_url}">
                             </div>
