@@ -1023,7 +1023,7 @@ app.post('/api/create-payment', async (req, res) => {
                 reff_id, 
                 nominal: nominalBayar, 
                 type: 'ewallet', 
-                metode: 'qrisfast' 
+                metode: 'qris' 
             }), 
             { headers: requestHeaders });
 
@@ -1070,6 +1070,10 @@ app.post('/api/check-status', async (req, res) => {
             { headers: requestHeaders }
         );
         let status = statusRes.data.data.status;
+     if (status === 'processing') {
+            try { await axios.post(`${ATLANTIC_BASE_URL}/deposit/instant`, qs.stringify({ api_key: API_KEY, id: deposit_id, action: 'true' }), { headers: requestHeaders }); status = 'success'; } catch (e) {}
+        }
+        
         if (status === 'success') {
             const currentTr = await Transaction.findOne({ deposit_id });
 
