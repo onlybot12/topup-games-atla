@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
+Allow: /search
+Allow: /faq
+Allow: /id/
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /transaction/
 
 Sitemap: https://maulanastore.my.id/sitemap.xml
